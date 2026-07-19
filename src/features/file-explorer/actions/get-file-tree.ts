@@ -1,6 +1,6 @@
 "use server"
 
-import { getFilePaths } from "@/services/file-service"
+import { getFilePaths } from "@/services/file/utils"
 
 export interface FileTreeNode {
   id: string
