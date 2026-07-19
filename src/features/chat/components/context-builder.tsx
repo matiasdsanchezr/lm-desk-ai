@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { useMemo } from "react"
 import { useShallow } from "zustand/shallow"
 import { MentionOption, TextEditor } from "../../text-editor"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface ContextBuilderProps {
   fetchFileState: { error: string | null } | undefined
@@ -183,7 +184,7 @@ export const ContextBuilder = ({
         )}
 
         <form action={handleFetchFileContents} className="flex flex-col gap-4">
-          {/* <div className="flex items-center gap-2 py-1">
+          <div className="flex items-center gap-2 py-1">
             <Checkbox
               id="include-deps"
               checked={store.includeDependencies}
@@ -198,7 +199,7 @@ export const ContextBuilder = ({
               name="includeDependencies"
               value={String(store.includeDependencies)}
             />
-          </div> */}
+          </div>
 
           <div className="flex flex-col gap-2">
             <Label

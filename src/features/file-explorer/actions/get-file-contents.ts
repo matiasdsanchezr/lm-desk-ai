@@ -1,7 +1,7 @@
 "use server"
 
 import { fetchImage } from "@/features/chat/actions/fetch-image"
-import { fileService } from "@/services/file-service"
+import { fileService } from "@/services/file/file-service"
 import { ActionState } from "@/types/action-state"
 import { FileContent } from "@/types/file-content"
 import { ImageFile } from "@/types/image-file"
