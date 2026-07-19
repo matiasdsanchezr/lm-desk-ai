@@ -232,7 +232,7 @@ export const ContextBuilder = ({
             <TextEditor
               value={store.userQuery}
               onChange={store.setUserQuery}
-              placeholder="Ej: Explícame qué hace esta función y propón mejoras de rendimiento."
+              placeholder="Ej: Explícame qué hace esta función."
               className="min-h-32 text-sm md:text-base"
               disabled={isDisabled}
               mentionOptions={mentionOptions}

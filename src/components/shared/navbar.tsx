@@ -22,7 +22,7 @@ export const Navbar = () => {
             className="flex items-center gap-3 transition-opacity hover:opacity-90"
           >
             <div className="flex size-10 items-center justify-center rounded-xl bg-zinc-950 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950">
-              <span className="icon-[mingcute--chat-4-ai-line] size-5" />
+              <span className="icon-[ix--document-ai] size-5" />
             </div>
             <div className="hidden sm:block">
               <h2 className="text-sm font-bold tracking-wider text-zinc-900 uppercase dark:text-zinc-50">
