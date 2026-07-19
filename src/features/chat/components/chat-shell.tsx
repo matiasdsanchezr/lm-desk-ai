@@ -115,6 +115,9 @@ export const ChatShell = ({
           },
         ]
       : [],
+    onFinish: () => {
+      router.refresh()
+    },
   })
 
   const fileErrors = useMemo(

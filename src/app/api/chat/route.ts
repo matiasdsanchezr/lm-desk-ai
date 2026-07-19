@@ -1,13 +1,10 @@
 import { chatHistoryService } from "@/features/chat-history/services/chat-history-service"
-import { config } from "@/lib/config"
 import { streamText } from "@/services/inference/inference-service"
 import { InferenceProviderEnum } from "@/services/inference/schemas/provider-schema"
 import { InferenceModelSchema } from "@/services/inference/types/inference-model"
 import { type UIMessage, convertToModelMessages } from "ai"
 import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
-import { mkdir, writeFile } from "node:fs/promises"
-import path from "node:path"
 import { z } from "zod"
 
 const ChatRequestBodySchema = z.object({
@@ -84,7 +81,7 @@ export async function POST(req: Request) {
 
     return result.toUIMessageStreamResponse({
       sendReasoning: true,
-      onError: (error) => {
+      onError: (error: unknown) => {
         console.error("[/api/chat] Stream error:", error)
         return "Error al generar la respuesta"
       },
@@ -96,22 +93,12 @@ export async function POST(req: Request) {
             .join("\n\n")
 
           if (textContent) {
-            const outputPath = path.join(config.STORAGE_PATH, "outputs")
-            await mkdir(outputPath, { recursive: true })
-            await writeFile(
-              path.join(outputPath, "last-response.md"),
-              textContent,
-              "utf-8"
-            )
-
-            if (userPrompt) {
-              await chatHistoryService.saveResponse({
-                selectedFiles: selectedFiles || [],
-                userPrompt: userPrompt,
-                response: textContent,
-              })
-              revalidatePath("/chat")
-            }
+            await chatHistoryService.saveResponse({
+              selectedFiles: selectedFiles || [],
+              userPrompt: userPrompt ?? "",
+              response: textContent,
+            })
+            revalidatePath("/chat")
           }
         } catch (err) {
           console.error("[/api/chat] Error saving response automatically:", err)

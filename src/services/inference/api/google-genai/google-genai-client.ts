@@ -7,10 +7,7 @@ import {
   createGoogleGenerativeAI,
 } from "@ai-sdk/google"
 import {
-  type GenerateTextResult,
   Output,
-  type StreamTextResult,
-  type ToolSet,
   generateText as aiGenerateText,
   streamText as aiStreamText,
 } from "ai"
@@ -32,7 +29,7 @@ export class GoogleGenAIClient implements InferenceClient {
 
   public generateText = async (
     params: InferenceRequestOptions
-  ): Promise<GenerateTextResult<ToolSet, never>> => {
+  ): ReturnType<typeof aiGenerateText> => {
     const thinkingConfig = getThinkingConfig(params)
     const google = this.getProvider()
 
@@ -62,7 +59,7 @@ export class GoogleGenAIClient implements InferenceClient {
 
   public streamText = (
     params: InferenceRequestOptions
-  ): StreamTextResult<ToolSet, never> => {
+  ): ReturnType<typeof aiStreamText> => {
     const thinkingConfig = getThinkingConfig(params)
     const google = this.getProvider()
 

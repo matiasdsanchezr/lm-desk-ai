@@ -5,13 +5,7 @@ import {
   createOpenAICompatible,
   OpenAICompatibleProvider,
 } from "@ai-sdk/openai-compatible"
-import {
-  type GenerateTextResult,
-  type StreamTextResult,
-  type ToolSet,
-  generateText as aiGenerateText,
-  streamText as aiStreamText,
-} from "ai"
+import { generateText as aiGenerateText, streamText as aiStreamText } from "ai"
 import { InferenceClient } from "../../types/inference-client"
 import { type InferenceRequestOptions } from "../../types/inference-request-options"
 import { jsonOutputInstruction } from "../../utils/json-output-instruction"
@@ -35,7 +29,7 @@ export class NvidiaNimClient implements InferenceClient {
 
   public generateText = async (
     params: InferenceRequestOptions
-  ): Promise<GenerateTextResult<ToolSet, never>> => {
+  ): ReturnType<typeof aiGenerateText> => {
     const nvidiaNim = this.getProvider()
     const system = params.responseJsonSchema
       ? jsonOutputInstruction(params.responseJsonSchema)
@@ -71,7 +65,7 @@ export class NvidiaNimClient implements InferenceClient {
 
   public streamText = (
     params: InferenceRequestOptions
-  ): StreamTextResult<ToolSet, never> => {
+  ): ReturnType<typeof aiStreamText> => {
     const nvidiaNim = this.getProvider()
     const system = params.responseJsonSchema
       ? jsonOutputInstruction(params.responseJsonSchema)

@@ -110,12 +110,14 @@ export class FileService {
   async getFileContentsWithDependencies(
     paths: string[]
   ): Promise<FileContent[]> {
+    // Resolver rutas relativas recibidas del cliente a absolutas
     const uniquePaths = Array.from(
-      new Set(paths.map((p) => path.resolve(p) as AbsolutePath))
+      new Set(
+        paths.map((p) => path.resolve(this.projectRoot, p) as AbsolutePath)
+      )
     )
     const results: FileContent[] = []
 
-    // Procesamiento por lotes para evitar saturar el sistema de archivos
     for (let i = 0; i < uniquePaths.length; i += this.CONCURRENCY_LIMIT) {
       const batch = uniquePaths.slice(i, i + this.CONCURRENCY_LIMIT)
       const batchResults = await Promise.all(
@@ -191,11 +193,12 @@ export class FileService {
       entryPoints: string[],
       includeDeps = true
     ): Promise<FileContent[]> => {
+      const resolvedEntryPoints = entryPoints.map(
+        (p) => path.resolve(this.projectRoot, p) as AbsolutePath
+      )
       const visited = new Set<AbsolutePath>()
       const results = new Map<AbsolutePath, FileContent>()
-      let nodesToProcess: AbsolutePath[] = entryPoints.map(
-        (p) => path.resolve(p) as AbsolutePath
-      )
+      let nodesToProcess: AbsolutePath[] = resolvedEntryPoints
 
       while (nodesToProcess.length > 0) {
         const toProcess = nodesToProcess.filter((p) => !visited.has(p))
@@ -219,7 +222,15 @@ export class FileService {
         }
         if (!includeDeps) break
       }
-      return Array.from(results.values())
+
+      // Convertir todas las rutas absolutas internas a rutas relativas para el cliente
+      return Array.from(results.values()).map((file) => ({
+        ...file,
+        path: path.relative(this.projectRoot, file.path).replace(/\\/g, "/"),
+        dependencies: file.dependencies?.map((dep) =>
+          path.relative(this.projectRoot, dep).replace(/\\/g, "/")
+        ),
+      }))
     }
   )
 }
@@ -253,6 +264,17 @@ export const getFilePaths = cache(
   ) => {
     const stat = await fs.stat(folder).catch(() => null)
     if (!stat?.isDirectory()) throw new Error(`Path invalido: ${folder}`)
-    return recursiveFileSearch(folder, extensions, new Set(ignore))
+
+    const absolutePaths = await recursiveFileSearch(
+      folder,
+      extensions,
+      new Set(ignore)
+    )
+    const resolvedRoot = path.resolve(folder)
+
+    // Retorna rutas relativas al TARGET_PROJECT_PATH
+    return absolutePaths.map((p) =>
+      path.relative(resolvedRoot, p).replace(/\\/g, "/")
+    )
   }
 )
