@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { ActionState } from "@/types/action-state"
 import {
   chatHistoryService,
   SavedResponseMeta,
@@ -12,14 +13,14 @@ export const saveResponse = async (data: {
   selectedFiles: string[]
   userPrompt: string
   response: string
-}) => {
+}): Promise<ActionState<{ id: string }>> => {
   try {
     const result = await chatHistoryService.saveResponse(data)
     revalidatePath("/chat")
-    return { success: true, id: result.id }
+    return { data: { id: result.id } }
   } catch (error) {
     console.error("Error al guardar la respuesta:", error)
-    throw new Error("No se pudo guardar la respuesta generada")
+    return { error: "No se pudo guardar la respuesta generada" }
   }
 }
 
@@ -41,13 +42,15 @@ export const listResponses = async (): Promise<SavedResponseMeta[]> => {
   }
 }
 
-export const deleteResponse = async (id: string) => {
+export const deleteResponse = async (
+  id: string
+): Promise<ActionState<void>> => {
   try {
     await chatHistoryService.deleteResponse(id)
     revalidatePath("/chat")
-    return { success: true }
+    return { data: undefined }
   } catch (error) {
     console.error(`Error al eliminar la respuesta ${id}:`, error)
-    throw new Error("No se pudo eliminar la respuesta")
+    return { error: "No se pudo eliminar la respuesta" }
   }
 }

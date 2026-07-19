@@ -100,25 +100,21 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
     setDeletingId(id)
     setIdToDeleteConfirm(null)
     setDeleteError(null)
-
     startTransition(async () => {
-      try {
-        await deleteResponse(id)
+      const result = await deleteResponse(id)
 
-        if (currentId === id) {
-          resetChatStore()
-          router.replace("/chat")
-        }
-
-        router.refresh()
-      } catch (error) {
-        console.error("Error al eliminar el análisis:", error)
-        setDeleteError(
-          "No se pudo eliminar el análisis. Intenta nuevamente más tarde."
-        )
-      } finally {
+      if (result.error) {
+        setDeleteError(result.error)
         setDeletingId(null)
+        return
       }
+
+      if (currentId === id) {
+        resetChatStore()
+        router.replace("/chat")
+      }
+      router.refresh()
+      setDeletingId(null)
     })
   }, [
     currentId,

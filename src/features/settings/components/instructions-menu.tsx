@@ -10,6 +10,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
@@ -18,7 +28,7 @@ import {
   savePrompt,
   deletePrompt,
 } from "@/features/settings/actions/prompt"
-import { useState, useTransition, useEffect } from "react"
+import { useState, useTransition } from "react"
 import { useSettingsStore } from "../store/settings-store"
 import { cn } from "@/lib/utils"
 
@@ -42,10 +52,17 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
   const [newTemplateName, setNewTemplateName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
+  // Estado para controlar qué plantilla se va a eliminar en el AlertDialog
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   // Sincronizar estado local cuando el servidor actualiza las props
-  useEffect(() => {
+  const [prevAvailablePrompts, setPrevAvailablePrompts] =
+    useState(availablePrompts)
+  if (availablePrompts !== prevAvailablePrompts) {
+    setPrevAvailablePrompts(availablePrompts)
     setPromptsList(availablePrompts)
-  }, [availablePrompts])
+  }
 
   const handleSelectTemplate = (promptId: string) => {
     startTransition(async () => {
@@ -66,12 +83,16 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
     try {
       const cleanName = newTemplateName.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
       const result = await savePrompt(cleanName, draft)
-      if (result.success) {
-        if (!promptsList.includes(result.fileName)) {
-          setPromptsList((prev) => [...prev, result.fileName])
-        }
-        setNewTemplateName("")
+
+      if (result.error) {
+        return
       }
+
+      if (result.data && !promptsList.includes(result.data.fileName)) {
+        setPromptsList((prev) => [...prev, result.data!.fileName])
+      }
+
+      setNewTemplateName("")
     } catch (error) {
       console.error("Error al guardar la plantilla:", error)
     } finally {
@@ -79,25 +100,26 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
     }
   }
 
-  const handleDeleteTemplate = async (
-    promptId: string,
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation() // Prevenir selección accidental al eliminar
-    if (
-      !confirm(
-        `¿Estás seguro de que deseas eliminar la plantilla "${promptId}"?`
-      )
-    )
-      return
+  const handleDeleteClick = (promptId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setTemplateToDelete(promptId)
+  }
 
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) return
+    setIsDeleting(true)
     try {
-      const result = await deletePrompt(promptId)
-      if (result.success) {
-        setPromptsList((prev) => prev.filter((p) => p !== promptId))
+      const result = await deletePrompt(templateToDelete)
+      if (result.error) {
+        alert(result.error)
+        return
       }
+      setPromptsList((prev) => prev.filter((p) => p !== templateToDelete))
     } catch (error) {
       console.error("Error al eliminar la plantilla:", error)
+    } finally {
+      setIsDeleting(false)
+      setTemplateToDelete(null)
     }
   }
 
@@ -153,11 +175,11 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
               disabled={isPending}
               className="w-full justify-center border-dashed border-border/50 text-muted-foreground hover:text-foreground"
             >
-              <span className="icon-[fa6-solid--pen-to-square] mr-2 h-3.5 w-3.5" />
+              <span className="mr-2 icon-[fa6-solid--pen-to-square] h-3.5 w-3.5" />
               Editar Instrucciones
             </Button>
           }
-        />
+        ></DialogTrigger>
         <DialogContent className="flex h-full max-h-[90vh] w-full flex-col border-border/40 bg-background p-4 sm:max-h-[85vh] sm:max-w-6xl">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-sm font-medium tracking-tight">
@@ -184,7 +206,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <span className="icon-[fa6-solid--pen-to-square] mr-1.5 h-3.5 w-3.5" />
+              <span className="mr-1.5 icon-[fa6-solid--pen-to-square] h-3.5 w-3.5" />
               Editor
             </Button>
             <Button
@@ -199,7 +221,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <span className="icon-[fa6-solid--file-lines] mr-1.5 h-3.5 w-3.5" />
+              <span className="mr-1.5 icon-[fa6-solid--file-lines] h-3.5 w-3.5" />
               Plantillas ({promptsList.length})
             </Button>
           </div>
@@ -233,7 +255,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                           className="mr-2 flex flex-1 items-center truncate text-left font-medium text-muted-foreground hover:text-foreground"
                           onClick={() => handleSelectTemplate(p)}
                         >
-                          <span className="icon-[fa6-solid--file-lines] mr-2 h-3 w-3 shrink-0 opacity-70" />
+                          <span className="mr-2 icon-[fa6-solid--file-lines] h-3 w-3 shrink-0 opacity-70" />
                           <span className="truncate">
                             {p.replace(".md", "")}
                           </span>
@@ -241,7 +263,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => handleDeleteTemplate(p, e)}
+                          onClick={(e) => handleDeleteClick(p, e)}
                           className="h-5 w-5 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
                           title="Eliminar plantilla"
                         >
@@ -277,7 +299,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                     className="h-8 px-2.5 text-xs"
                     variant="secondary"
                   >
-                    <span className="icon-[fa6-solid--floppy-disk] mr-1.5 h-3 w-3" />
+                    <span className="mr-1.5 icon-[fa6-solid--floppy-disk] h-3 w-3" />
                     Guardar
                   </Button>
                 </div>
@@ -327,6 +349,42 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* AlertDialog de ShadCN para confirmaciones de eliminación */}
+      <AlertDialog
+        open={templateToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setTemplateToDelete(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar plantilla?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará permanentemente la plantilla{" "}
+              <strong className="text-foreground">
+                “{templateToDelete?.replace(".md", "")}”
+              </strong>
+              . Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleConfirmDelete()
+              }}
+              disabled={isDeleting}
+              className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

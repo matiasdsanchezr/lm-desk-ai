@@ -2,12 +2,9 @@ import "server-only"
 
 import { createOpenAI, OpenAIProvider } from "@ai-sdk/openai"
 import {
-  type GenerateTextResult,
-  Output,
-  type StreamTextResult,
-  type ToolSet,
   generateText as aiGenerateText,
   streamText as aiStreamText,
+  Output,
 } from "ai"
 import { type InferenceClient } from "../../types/inference-client"
 import { type InferenceRequestOptions } from "../../types/inference-request-options"
@@ -34,7 +31,7 @@ export class OpenAiClient implements InferenceClient {
 
   public generateText = async (
     params: InferenceRequestOptions
-  ): Promise<GenerateTextResult<ToolSet, never>> => {
+  ): ReturnType<typeof aiGenerateText> => {
     const { model } = params.inferenceModel
     const provider = this.getProvider()
     const result = await aiGenerateText({
@@ -56,7 +53,7 @@ export class OpenAiClient implements InferenceClient {
 
   public streamText = (
     params: InferenceRequestOptions
-  ): StreamTextResult<ToolSet, never> => {
+  ): ReturnType<typeof aiStreamText> => {
     const { model } = params.inferenceModel
     const provider = this.getProvider()
     const result = aiStreamText({

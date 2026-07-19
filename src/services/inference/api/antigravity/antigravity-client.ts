@@ -6,8 +6,6 @@ import {
   OpenAICompatibleProvider,
 } from "@ai-sdk/openai-compatible"
 import {
-  type GenerateTextResult,
-  type StreamTextResult,
   type ToolSet,
   generateText as aiGenerateText,
   streamText as aiStreamText,
@@ -36,7 +34,7 @@ export class AntigravityClient implements InferenceClient {
 
   public generateText = async (
     params: InferenceRequestOptions
-  ): Promise<GenerateTextResult<ToolSet, never>> => {
+  ): ReturnType<typeof aiGenerateText> => {
     const antigravity = this.getProvider()
     const tools: ToolSet | undefined = params.responseJsonSchema
       ? {
@@ -67,7 +65,7 @@ export class AntigravityClient implements InferenceClient {
 
   public streamText = (
     params: InferenceRequestOptions
-  ): StreamTextResult<ToolSet, never> => {
+  ): ReturnType<typeof aiStreamText> => {
     const antigravity = this.getProvider()
     const tools: ToolSet | undefined = params.responseJsonSchema
       ? {
