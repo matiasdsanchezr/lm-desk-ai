@@ -1,9 +1,5 @@
 import "server-only"
 
-import {
-  InferenceProvider,
-  InferenceProviderEnum,
-} from "@/services/inference/schemas/provider-schema"
 import path from "node:path"
 
 const loadStoragePath = () => {
@@ -17,15 +13,6 @@ const loadStoragePath = () => {
   return storagePath
 }
 
-const loadAiProvider = (): InferenceProvider => {
-  const aiProvider = InferenceProviderEnum.safeParse(process.env.AI_PROVIDER)
-  if (!aiProvider.success) {
-    console.warn("AI_PROVIDER no definido, usando vertex")
-    return "vertex"
-  }
-  return aiProvider.data
-}
-
 const GENAI_API_KEY = process.env.GENAI_API_KEY
 const VERTEX_API_KEY = process.env.VERTEX_API_KEY
 const OPEN_ROUTER_API_KEY = process.env.OPEN_ROUTER_API_KEY
@@ -36,12 +23,10 @@ const TARGET_PROJECT_PATH = process.env.TARGET_PROJECT_PATH
 const ANTIGRAVITY_BASE_URL = process.env.ANTIGRAVITY_BASE_URL
 const ANTIGRAVITY_API_KEY = process.env.ANTIGRAVITY_API_KEY
 const MODEL = process.env.MODEL
-const AI_PROVIDER = loadAiProvider()
 const STORAGE_PATH = loadStoragePath()
 
 if (!TARGET_PROJECT_PATH)
   throw new Error("Se necesita el path del proyecto a analizar")
-if (!AI_PROVIDER) throw new Error("Provedor no especificado")
 if (!MODEL) throw new Error("Modelo no especificado")
 
 export const config = {
@@ -52,7 +37,6 @@ export const config = {
   NVIDIA_NIM_API_KEY,
   OPENAI_BASE_URL,
   OPENAI_API_KEY,
-  AI_PROVIDER,
   MODEL,
   STORAGE_PATH,
   ANTIGRAVITY_BASE_URL,
