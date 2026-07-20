@@ -1,41 +1,28 @@
-# Notas sobre la aplicación
+# Notas - Actualizadas en 2026 (Prioridad sobre tus conocimientos generales)
+
+## Funcionamiento de la App
 
 - Esta app esta diseñada para funcionar localmente y ser usada por un solo usuario
 - El STORAGE_PATH esta en la pc y esta pensada para ser usado en el servidor solamente
 
-# Notas sobre librerias actualizadas
-
-## AI SDK v7
+## AI SDK 7+
 
 - ModelMessage reemplaza el tipo CoreMessage
 - Output.object() es un método para crear un objeto Output con un JSON schema
 - El hook useChat envia mensajes mediante la función `sendMessage`
 - Las imagenes pasadas en el hook `useChat` se hacen mediante la propiedad `files`
 
-## Zod v4
+## Zod 4+
 
-- z.toJSONSchema() es un método para convertir un Zod schema a un JSON schema
-
-## z.prettifyError()
-
-Esto `z.prettifyError()` proporciona una representación en cadena de caracteres legible para humanos del error al usar `schema.safeParse`
-
-const pretty = z.prettifyError(result.error);
+- `z.toJSONSchema()` es un método para convertir un esquema Zod a un JSON schema
+- `z.treeifyError()` es un método para convertir un error de Zod en una representación en cadena de caracteres legible para humanos, similar a z.prettifyError()
+- `z.prettifyError()` es un método para convertir un error de Zod en una representación en cadena de caracteres legible para humanos
+- `z.error.flatten().fieldErrors` esta deprecated. Es reemplazada por `z.treeifyError()`
 
 ## ShadCN 4+
 
-- La prop `aschild` de los componentes de ShadCN ya no exite, ahora es reemplazada por la prop `render` que recibe el componente personalizado a renderizar: `React.ReactElement | render function`. Por ejemplo:
-
-```tsx
-<SidebarMenuButton
-  render={
-    <div>
-      <span>{resp.title}</span>
-    </div>
-  }
-/>
-```
+- `aschild` esta deprecated. Es reemplazada por la prop `render` que recibe el componente personalizado a renderizar o una función render del nuevo componentes. Por ejemplo: `<SidebarMenuButton render={<span>Componente Personalizado</span>}/>`
 
 ## Zustand 5+
 
-- No hay errores de hydration al usar el middleware persist (guardar datos en localStorage). Incluso el Server-Side Rendering (SSR) renderiza algo y el cliente renderiza algo diferente, lo cual es correcto.
+- No hay errores de hydration al usar el middleware persist (guardar datos en localStorage). Si el Server-Side Rendering (SSR) renderiza algo y el cliente renderiza algo diferente, ya no se produce un hydration error
