@@ -1,3 +1,4 @@
+// src/features/chat-history/components/chat-history-sidebar.tsx
 "use client"
 
 import {
@@ -22,16 +23,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useChatStore } from "@/features/chat/store/chat-store"
 import { cn } from "@/lib/utils"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useCallback, useMemo, useState, useTransition } from "react"
 import { deleteResponse } from "../actions/responses"
 import type { SavedResponseMeta } from "../services/chat-history-service"
-
-interface ChatHistorySidebarProps {
-  responses: SavedResponseMeta[]
-}
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   day: "2-digit",
@@ -41,18 +37,18 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
 
 function formatResponseDate(dateValue: Date | string) {
   const date = new Date(dateValue)
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha desconocida"
-  }
-
+  if (Number.isNaN(date.getTime())) return "Fecha desconocida"
   return dateFormatter.format(date)
+}
+
+interface ChatHistorySidebarProps {
+  responses: SavedResponseMeta[]
 }
 
 export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const currentId = searchParams.get("responseId")
+  const params = useParams()
+  const currentId = params?.responseId as string | undefined
 
   const [isPending, startTransition] = useTransition()
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -62,9 +58,8 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { state, toggleSidebar } = useSidebar()
-  const resetChatStore = useChatStore((store) => store.resetAll)
-
   const isCollapsed = state === "collapsed"
+
   const responseToDelete = useMemo(
     () => responses.find((response) => response.id === idToDeleteConfirm),
     [idToDeleteConfirm, responses]
@@ -73,13 +68,9 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
   const handleSelect = useCallback(
     (id: string) => {
       if (id === currentId || deletingId) return
-
-      const params = new URLSearchParams(searchParams.toString())
-      params.set("responseId", id)
-
-      router.push(`/chat?${params.toString()}`)
+      router.push(`/chat/${id}`)
     },
-    [currentId, deletingId, router, searchParams]
+    [currentId, deletingId, router]
   )
 
   const handleNewChat = useCallback(() => {
@@ -96,10 +87,10 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
     if (!idToDeleteConfirm || isPending) return
 
     const id = idToDeleteConfirm
-
     setDeletingId(id)
     setIdToDeleteConfirm(null)
     setDeleteError(null)
+
     startTransition(async () => {
       const result = await deleteResponse(id)
 
@@ -109,21 +100,14 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
         return
       }
 
+      // Si el chat eliminado es el activo, redirigir a nuevo chat
       if (currentId === id) {
-        resetChatStore()
         router.replace("/chat")
       }
       router.refresh()
       setDeletingId(null)
     })
-  }, [
-    currentId,
-    idToDeleteConfirm,
-    isPending,
-    resetChatStore,
-    router,
-    startTransition,
-  ])
+  }, [currentId, idToDeleteConfirm, isPending, router, startTransition])
 
   return (
     <>
@@ -136,7 +120,7 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
       >
         <SidebarHeader
           className={cn(
-            "w- border-b border-zinc-200/50 dark:border-zinc-800/50",
+            "border-b border-zinc-200/50 dark:border-zinc-800/50",
             isCollapsed ? "p-2" : "px-3 py-3"
           )}
         >
@@ -147,11 +131,8 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
             )}
           >
             {!isCollapsed && (
-              <div className="animate-in fade-in flex items-center gap-2 text-sm font-semibold duration-200">
-                <span
-                  aria-hidden="true"
-                  className="icon-[lucide--history] size-4 text-primary"
-                />
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <span className="icon-[lucide--history] size-4 text-primary" />
                 <span>Historial</span>
               </div>
             )}
@@ -166,37 +147,26 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
                 type="button"
                 onClick={handleNewChat}
                 title="Nuevo análisis"
-                aria-label="Crear un nuevo análisis"
                 className={cn(
-                  "inline-flex items-center justify-center gap-1 rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
+                  "inline-flex items-center justify-center gap-1 rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20",
                   isCollapsed ? "size-8" : "px-2.5 py-1.5 text-xs font-medium"
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className="icon-[lucide--plus] size-4"
-                />
+                <span className="icon-[lucide--plus] size-4" />
                 {!isCollapsed && <span>Nuevo</span>}
               </button>
 
               <button
                 type="button"
                 onClick={toggleSidebar}
-                title={
-                  isCollapsed ? "Expandir historial" : "Colapsar historial"
-                }
-                aria-label={
-                  isCollapsed ? "Expandir historial" : "Colapsar historial"
-                }
-                className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <span
-                  aria-hidden="true"
                   className={cn(
                     isCollapsed
                       ? "icon-[lucide--panel-left-open]"
                       : "icon-[lucide--panel-left-close]",
-                    "size-4 transition-transform duration-200"
+                    "size-4"
                   )}
                 />
               </button>
@@ -205,7 +175,7 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
         </SidebarHeader>
 
         {!isCollapsed && (
-          <SidebarContent className="animate-in fade-in p-2 duration-200">
+          <SidebarContent className="p-2">
             <SidebarGroup>
               <SidebarGroupContent>
                 {deleteError && (
@@ -219,14 +189,8 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
 
                 {responses.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground">
-                    <span
-                      aria-hidden="true"
-                      className="mb-2 icon-[lucide--archive-x] size-8 opacity-40"
-                    />
+                    <span className="mb-2 icon-[lucide--archive-x] size-8 opacity-40" />
                     <span>No hay análisis guardados</span>
-                    <span className="mt-1 text-[10px] opacity-70">
-                      Creá uno nuevo para verlo aquí.
-                    </span>
                   </div>
                 ) : (
                   <SidebarMenu className="gap-1.5">
@@ -255,21 +219,15 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
                                 type="button"
                                 onClick={() => handleSelect(response.id)}
                                 disabled={isDeleting}
-                                aria-current={isActive ? "page" : undefined}
-                                aria-label={`Abrir análisis: ${response.title}`}
-                                className="flex w-full flex-col items-start gap-1 p-3 pr-9 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex w-full flex-col items-start gap-1 p-3 pr-9 disabled:opacity-60"
                               >
                                 <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
                                   {response.title || "Análisis sin título"}
                                 </span>
 
                                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                  <span
-                                    aria-hidden="true"
-                                    className="icon-[lucide--calendar] size-3"
-                                  />
+                                  <span className="icon-[lucide--calendar] size-3" />
                                   <time
-                                    suppressHydrationWarning
                                     dateTime={new Date(
                                       response.createdAt
                                     ).toISOString()}
@@ -283,26 +241,19 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
 
                           <SidebarMenuAction
                             type="button"
-                            onClick={(event) => {
-                              event.preventDefault()
-                              event.stopPropagation()
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
                               requestDelete(response.id)
                             }}
                             disabled={isPending || isDeleting}
                             showOnHover
-                            aria-label={`Eliminar análisis: ${response.title}`}
-                            className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                            className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-destructive/10 hover:text-destructive"
                           >
                             {isDeleting ? (
-                              <span
-                                aria-hidden="true"
-                                className="icon-[lucide--loader-2] size-3.5 animate-spin"
-                              />
+                              <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
                             ) : (
-                              <span
-                                aria-hidden="true"
-                                className="icon-[lucide--trash-2] size-3.5"
-                              />
+                              <span className="icon-[lucide--trash-2] size-3.5" />
                             )}
                           </SidebarMenuAction>
                         </SidebarMenuItem>
@@ -319,9 +270,7 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
       <AlertDialog
         open={idToDeleteConfirm !== null}
         onOpenChange={(open) => {
-          if (!open && !isPending) {
-            setIdToDeleteConfirm(null)
-          }
+          if (!open && !isPending) setIdToDeleteConfirm(null)
         }}
       >
         <AlertDialogContent>
@@ -331,15 +280,13 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
               {responseToDelete?.title ? (
                 <>
                   Se eliminará permanentemente{" "}
-                  <strong>“{responseToDelete.title}”</strong>. Esta acción no se
-                  puede deshacer.
+                  <strong>“{responseToDelete.title}”</strong>.
                 </>
               ) : (
-                "Esta acción no se puede deshacer. El historial seleccionado se eliminará permanentemente."
+                "Esta acción no se puede deshacer."
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction

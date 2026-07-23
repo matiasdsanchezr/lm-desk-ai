@@ -1,7 +1,7 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { ActionState } from "@/types/action-state"
+import { revalidatePath } from "next/cache"
 import {
   chatHistoryService,
   SavedResponseMeta,
@@ -24,21 +24,26 @@ export const saveResponse = async (data: {
   }
 }
 
-export const loadResponse = async (id: string): Promise<SavedResponse> => {
+export const loadResponse = async (
+  id: string
+): Promise<ActionState<SavedResponse>> => {
   try {
-    return await chatHistoryService.loadResponse(id)
-  } catch (error) {
-    console.error(`Error al cargar la respuesta ${id}:`, error)
-    throw new Error("No se pudo cargar la respuesta especificada")
+    const result = await chatHistoryService.loadResponse(id)
+    return { data: result }
+  } catch {
+    return { error: "No se pudo cargar la respuesta especificada" }
   }
 }
 
-export const listResponses = async (): Promise<SavedResponseMeta[]> => {
+export const listResponses = async (): Promise<
+  ActionState<SavedResponseMeta[]>
+> => {
   try {
-    return await chatHistoryService.listResponses()
+    const result = await chatHistoryService.listResponses()
+    return { data: result }
   } catch (error) {
     console.error("Error al listar las respuestas:", error)
-    return []
+    return { error: "No se pudieron listar las respuestas" }
   }
 }
 
@@ -48,7 +53,7 @@ export const deleteResponse = async (
   try {
     await chatHistoryService.deleteResponse(id)
     revalidatePath("/chat")
-    return { data: undefined }
+    return {}
   } catch (error) {
     console.error(`Error al eliminar la respuesta ${id}:`, error)
     return { error: "No se pudo eliminar la respuesta" }

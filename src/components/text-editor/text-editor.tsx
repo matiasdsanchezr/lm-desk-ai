@@ -23,7 +23,7 @@ import {
 } from "lexical"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
-import { $createMentionNode, MentionNode } from "../nodes/mention-node"
+import { $createMentionNode, MentionNode } from "./nodes/mention-node"
 
 export interface MentionOption {
   id: string

@@ -1,5 +1,6 @@
 "use client"
 
+import { MentionOption, TextEditor } from "@/components/text-editor/text-editor"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,17 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useChatStore } from "@/features/chat/store/chat-store"
-import { FileExplorer } from "@/features/file-explorer"
-import { FileTreeNode } from "@/features/file-explorer/actions/get-file-tree"
-import { useSettingsStore } from "@/features/settings/store/settings-store"
+import { FileExplorerView } from "@/features/file-explorer/components/file-explorer-view"
+import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { cn } from "@/lib/utils"
 import { useMemo } from "react"
 import { useShallow } from "zustand/shallow"
-import { MentionOption, TextEditor } from "../../text-editor"
-import { Checkbox } from "@/components/ui/checkbox"
 
 interface ContextBuilderProps {
   fetchFileState: { error: string | null } | undefined
@@ -30,6 +29,7 @@ interface ContextBuilderProps {
   showFileExplorer: boolean
   treeNodes: FileTreeNode[]
   totalFiles: number
+  systemPrompt: string
   handleFetchFileContents: (formData: FormData) => void
   setShowFileExplorer: (show: boolean) => void
 }
@@ -37,6 +37,7 @@ interface ContextBuilderProps {
 export const ContextBuilder = ({
   treeNodes,
   totalFiles,
+  systemPrompt,
   isDisabled,
   isFetchingFiles,
   showFileExplorer,
@@ -56,11 +57,6 @@ export const ContextBuilder = ({
       setImageUrls: s.setImageUrls,
       setIncludeDependencies: s.setIncludeDependencies,
       setSelectedFiles: s.setSelectedFiles,
-    }))
-  )
-  const settingsStore = useSettingsStore(
-    useShallow((s) => ({
-      systemPrompt: s.systemPrompt,
     }))
   )
 
@@ -138,7 +134,7 @@ export const ContextBuilder = ({
         </div>
 
         {showFileExplorer && (
-          <FileExplorer
+          <FileExplorerView
             treeNodes={treeNodes}
             totalFiles={totalFiles}
             disabled={isDisabled}
@@ -254,11 +250,7 @@ export const ContextBuilder = ({
           {store.selectedFiles.map((path) => (
             <input key={path} type="hidden" name="filePath" value={path} />
           ))}
-          <input
-            type="hidden"
-            name="systemPrompt"
-            value={settingsStore.systemPrompt}
-          />
+          <input type="hidden" name="systemPrompt" value={systemPrompt} />
 
           {!isReadyToReview && (
             <Button

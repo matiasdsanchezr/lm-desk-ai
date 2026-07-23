@@ -1,34 +1,49 @@
 import { FileContent } from "@/types/file-content"
 import { renderTemplate } from "./templates"
 
-const DEFAULT_INSTRUCTIONS = `## INSTRUCCIONES DEL SISTEMA
+const DEFAULT_INSTRUCTIONS = `\
 <system_instructions>
 {{systemPrompt}}
 </system_instructions>`
 
-const DEFAULT_CONTEXT = `## CONTEXTO DEL PROYECTO
+const DEFAULT_CONTEXT = `\
 <context>
-{{context}}
+{{filesContent}}
 </context>`
 
 const DEFAULT_TASK = `## TAREA DEL USUARIO
-<task>
-{{userInput}}
-</task>`
 
-const DEFAULT_FILE = `<file path="{{path}}">
+{{userInput}}`
+
+const DEFAULT_FILE = `\
+<file path="{{path}}" language="{{lang}}">
 {{content}}
 </file>`
 
 const SECTIONS_SEPARATOR = "\n\n---\n\n"
 
-const formatFileContext = (files: FileContent[]): string => {
+const SYSTEM_TAGS_REGEX =
+  /<(\/?(?:system_instructions|context|file|userInput)\b[^>]*)>/gi
+
+export const sanitizeXmlContent = (content: string): string => {
+  if (!content) return ""
+  return content.replace(SYSTEM_TAGS_REGEX, "&lt;$1&gt;")
+}
+
+const formatFilesContent = (files: FileContent[]): string => {
+  const validFiles = files.filter((f) => !f.error && f.content)
+
+  if (validFiles.length === 0) {
+    return ""
+  }
+
   const template = DEFAULT_FILE
-  return files
+  return validFiles
     .map((file) =>
       renderTemplate(template, {
         path: file.path,
-        content: file.content || "",
+        lang: file.language ?? "",
+        content: sanitizeXmlContent(file.content ?? ""),
       })
     )
     .join("\n")
@@ -40,27 +55,38 @@ export class PromptBuilder {
   private task?: string
 
   addSystem(prompt: string): this {
-    const template = DEFAULT_INSTRUCTIONS
-    this.system = renderTemplate(template, { systemPrompt: prompt })
+    const trimmedPrompt = prompt.trim()
+    if (!trimmedPrompt) {
+      this.system = undefined
+      return this
+    }
+
+    this.system = renderTemplate(DEFAULT_INSTRUCTIONS, {
+      systemPrompt: trimmedPrompt,
+    })
     return this
   }
 
   addContext(files: FileContent[]): this {
-    if (files.length === 0) {
+    const formattedFilesContent = formatFilesContent(files)
+    if (!formattedFilesContent) {
       this.context = undefined
       return this
     }
 
-    const template = DEFAULT_CONTEXT
-    this.context = renderTemplate(template, {
-      context: formatFileContext(files),
+    this.context = renderTemplate(DEFAULT_CONTEXT, {
+      filesContent: formattedFilesContent,
     })
     return this
   }
 
   addTask(input: string): this {
-    const template = DEFAULT_TASK
-    this.task = renderTemplate(template, { userInput: input })
+    const trimmedInput = input.trim()
+    if (!trimmedInput) {
+      this.task = undefined
+      return this
+    }
+    this.task = renderTemplate(DEFAULT_TASK, { userInput: trimmedInput })
     return this
   }
 

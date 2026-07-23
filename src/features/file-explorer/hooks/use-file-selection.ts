@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import type { FileTreeNode } from "../actions/get-file-tree"
-import { type NodeState } from "../types/node-state"
+import type { FileTreeNode } from "../types/file-tree-node"
+import type { NodeState } from "../types/node-state"
 
 interface UseFileSelectionOptions {
   treeNodes: FileTreeNode[]
@@ -36,37 +36,6 @@ export function useFileSelection({
 
   const selectedSet = useMemo(() => new Set(selectedFiles), [selectedFiles])
 
-  const toggleFile = useCallback(
-    (node: FileTreeNode) => {
-      if (node.isFile) {
-        const filePath = node.filePath
-        if (!filePath) return
-
-        const isSelected = selectedSet.has(filePath)
-        onSelectionChange(
-          isSelected
-            ? selectedFiles.filter((f) => f !== filePath)
-            : [...selectedFiles, filePath]
-        )
-      } else {
-        const files = folderToFiles.get(node.id) ?? []
-        if (files.length === 0) return
-
-        const allSelected = files.every((f) => selectedSet.has(f))
-
-        if (allSelected) {
-          // Deseleccionar todos los archivos de esta carpeta
-          onSelectionChange(selectedFiles.filter((f) => !files.includes(f)))
-        } else {
-          // Seleccionar solo los archivos faltantes (diferencia simétrica)
-          const newFiles = files.filter((f) => !selectedSet.has(f))
-          onSelectionChange([...selectedFiles, ...newFiles])
-        }
-      }
-    },
-    [selectedFiles, selectedSet, onSelectionChange, folderToFiles]
-  )
-
   const getNodeState = useCallback(
     (node: FileTreeNode): NodeState => {
       if (node.isFile) {
@@ -91,20 +60,34 @@ export function useFileSelection({
     [selectedSet, folderToFiles]
   )
 
-  const selectAll = useCallback(() => {
-    const allFiles: string[] = []
+  const toggleFile = useCallback(
+    (node: FileTreeNode) => {
+      if (node.isFile) {
+        const filePath = node.filePath
+        if (!filePath) return
 
-    const collect = (node: FileTreeNode) => {
-      if (node.isFile && node.filePath) {
-        allFiles.push(node.filePath)
+        const isSelected = selectedSet.has(filePath)
+        onSelectionChange(
+          isSelected
+            ? selectedFiles.filter((f) => f !== filePath)
+            : [...selectedFiles, filePath]
+        )
       } else {
-        node.children.forEach(collect)
-      }
-    }
+        const files = folderToFiles.get(node.id) ?? []
+        if (files.length === 0) return
 
-    treeNodes.forEach(collect)
-    onSelectionChange(allFiles)
-  }, [treeNodes, onSelectionChange])
+        const allSelected = files.every((f) => selectedSet.has(f))
+
+        if (allSelected) {
+          onSelectionChange(selectedFiles.filter((f) => !files.includes(f)))
+        } else {
+          const newFiles = files.filter((f) => !selectedSet.has(f))
+          onSelectionChange([...selectedFiles, ...newFiles])
+        }
+      }
+    },
+    [selectedFiles, selectedSet, onSelectionChange, folderToFiles]
+  )
 
   const clearSelection = useCallback(() => {
     onSelectionChange([])
@@ -113,9 +96,8 @@ export function useFileSelection({
   return {
     selectedSet,
     folderToFiles,
-    toggleFile,
     getNodeState,
-    selectAll,
+    toggleFile,
     clearSelection,
     totalSelected: selectedFiles.length,
   }

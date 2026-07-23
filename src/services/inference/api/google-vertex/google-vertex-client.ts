@@ -4,12 +4,9 @@ import { config } from "@/lib/config"
 import { type GoogleLanguageModelOptions } from "@ai-sdk/google"
 import { createVertex, GoogleVertexProvider } from "@ai-sdk/google-vertex"
 import {
-  type GenerateTextResult,
-  type StreamTextResult,
-  type ToolSet,
-  Output,
   generateText as aiGenerateText,
   streamText as aiStreamText,
+  Output,
 } from "ai"
 import { InferenceClient } from "../../types/inference-client"
 import { type InferenceRequestOptions } from "../../types/inference-request-options"
@@ -30,7 +27,7 @@ export class GoogleVertexClient implements InferenceClient {
 
   public generateText = async (
     params: InferenceRequestOptions
-  ): Promise<GenerateTextResult<ToolSet, never>> => {
+  ): ReturnType<typeof aiGenerateText> => {
     const vertex = this.getProvider()
     const thinkingConfig = getThinkingConfig(params)
     const result = await aiGenerateText({
@@ -46,7 +43,6 @@ export class GoogleVertexClient implements InferenceClient {
         : undefined,
       maxRetries: params.maxRetries ?? 0,
       providerOptions: {
-        // Provider options correcto segun documentación
         vertex: {
           ...googleDefaultOptions,
           thinkingConfig,
@@ -60,7 +56,7 @@ export class GoogleVertexClient implements InferenceClient {
 
   public streamText = (
     params: InferenceRequestOptions
-  ): StreamTextResult<ToolSet, never> => {
+  ): ReturnType<typeof aiStreamText> => {
     const vertex = this.getProvider()
     const thinkingConfig = getThinkingConfig(params)
     const result = aiStreamText({

@@ -2,11 +2,11 @@
 
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
-import { FileTreeNode } from "@/features/file-explorer/actions/get-file-tree"
+import { type FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { PromptBuilder } from "@/utils/build-prompt"
 import { useChat } from "@ai-sdk/react"
-import { FileUIPart } from "ai"
+import { type FileUIPart } from "ai"
 import { useRouter } from "next/navigation"
 import { useActionState, useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
@@ -20,20 +20,20 @@ interface InitialResponse {
   response: string
 }
 
-interface ChatShellProps {
+interface ChatWorkspaceProps {
   totalFiles: number
   treeNodes: FileTreeNode[]
   initialResponse?: InitialResponse | null
 }
 
-export const ChatShell = ({
+export const ChatWorkspace = ({
   totalFiles,
   treeNodes,
   initialResponse,
-}: ChatShellProps) => {
+}: ChatWorkspaceProps) => {
   const router = useRouter()
 
-  const store = useChatStore(
+  const chatState = useChatStore(
     useShallow((s) => ({
       selectedFiles: s.selectedFiles,
       userQuery: s.userQuery,
@@ -47,7 +47,7 @@ export const ChatShell = ({
     }))
   )
 
-  const settingsStore = useSettingsStore(
+  const settings = useSettingsStore(
     useShallow((s) => ({
       config: s.config,
       systemPrompt: s.systemPrompt,
@@ -75,13 +75,13 @@ export const ChatShell = ({
           }
         }
         if (data.fileContents) {
-          store.setFileContents(data.fileContents)
-          store.setImages(data.imageFiles)
+          chatState.setFileContents(data.fileContents)
+          chatState.setImages(data.imageFiles)
 
           const promptBuilder = new PromptBuilder()
-            .addSystem(settingsStore.systemPrompt)
+            .addSystem(settings.systemPrompt)
             .addContext(data.fileContents)
-            .addTask(store.userQuery)
+            .addTask(chatState.userQuery)
 
           setUserPrompt(promptBuilder.buildContextAndTask())
           setFinalPrompt(promptBuilder.build())
@@ -122,19 +122,19 @@ export const ChatShell = ({
 
   const fileErrors = useMemo(
     () =>
-      store.fileContents
+      chatState.fileContents
         .filter((file) => file.error)
         .map((file) => `${file.path}: ${file.error}`),
-    [store.fileContents]
+    [chatState.fileContents]
   )
 
   const validFiles = useMemo(
-    () => store.fileContents.filter((f) => !f.error && f.content),
-    [store.fileContents]
+    () => chatState.fileContents.filter((f) => !f.error && f.content),
+    [chatState.fileContents]
   )
 
   const isReadyToReview =
-    isPromptGenerated && (!!store.userQuery || !!initialResponse)
+    isPromptGenerated && (!!chatState.userQuery || !!initialResponse)
   const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 
@@ -142,7 +142,7 @@ export const ChatShell = ({
     clearError()
     setMessages([])
 
-    const files: FileUIPart[] = store.images.map((i) => ({
+    const files: FileUIPart[] = chatState.images.map((i) => ({
       type: "file",
       mediaType: i.mimeType,
       url: `data:${i.mimeType};base64,${i.base64}`,
@@ -152,36 +152,36 @@ export const ChatShell = ({
       { text: userPrompt, files },
       {
         body: {
-          system: settingsStore.systemPrompt,
-          provider: settingsStore.config.provider,
-          model: settingsStore.config.model,
-          temperature: settingsStore.temperature,
-          topP: settingsStore.topP,
-          selectedFiles: store.selectedFiles,
+          system: settings.systemPrompt,
+          provider: settings.config.provider,
+          model: settings.config.model,
+          temperature: settings.temperature,
+          topP: settings.topP,
+          selectedFiles: chatState.selectedFiles,
           userPrompt: userPrompt,
-          userQuery: store.userQuery,
+          userQuery: chatState.userQuery,
         },
       }
     )
   }
 
   const handleModifyQuery = () => {
-    store.resetChatResult()
+    chatState.resetChatResult()
     setIsPromptGenerated(false)
   }
 
   const handleResetAll = () => {
-    store.resetAll()
+    chatState.resetAll()
     setIsPromptGenerated(false)
     router.push("/chat")
   }
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
-      {/* --- SECCIÓN 1: Configuración de la Consulta --- */}
       <ContextBuilder
         treeNodes={treeNodes}
         totalFiles={totalFiles}
+        systemPrompt={settings.systemPrompt}
         isDisabled={isDisabled}
         isFetchingFiles={isFetchingFiles}
         showFileExplorer={showFileExplorer}
@@ -192,7 +192,6 @@ export const ChatShell = ({
         isReadyToReview={isReadyToReview}
       />
 
-      {/* --- SECCIÓN 2: Prompt Generado y Acciones --- */}
       {isReadyToReview && (
         <PromptReviewer
           isStreaming={isStreaming}
@@ -205,7 +204,6 @@ export const ChatShell = ({
         />
       )}
 
-      {/* --- SECCIÓN 3: Respuesta de la IA --- */}
       {(messages.length > 1 || error) && (
         <div className="space-y-4">
           <AIResponseViewer
