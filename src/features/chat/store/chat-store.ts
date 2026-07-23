@@ -1,4 +1,4 @@
-import { AgentResponse } from "@/types/agent-response"
+import { AgentResponse as GeneratedContent } from "@/types/agent-response"
 import { FileContent } from "@/types/file-content"
 import { ImageFile } from "@/types/image-file"
 import { create } from "zustand"
@@ -8,7 +8,7 @@ interface ChatState {
   selectedFiles: string[]
   userQuery: string
   fileContents: FileContent[]
-  agentResponse: AgentResponse
+  generatedContent: GeneratedContent
   includeDependencies: boolean
   imageUrls: string
   images: ImageFile[]
@@ -19,7 +19,7 @@ interface ChatActions {
   setUserQuery: (query: string) => void
   setImageUrls: (urls: string) => void
   setFileContents: (data: FileContent[]) => void
-  setAgentResponse: (response: AgentResponse) => void
+  setAgentResponse: (response: GeneratedContent) => void
   setImages: (images: ImageFile[]) => void
   setIncludeDependencies: (val: boolean) => void
   resetChatResult: () => void
@@ -30,7 +30,7 @@ const initialState: ChatState = {
   selectedFiles: [],
   userQuery: "",
   fileContents: [],
-  agentResponse: { response: "" },
+  generatedContent: { response: "" },
   includeDependencies: true,
   imageUrls: "",
   images: [],
@@ -44,13 +44,13 @@ export const useChatStore = create<ChatState & ChatActions>()(
       setUserQuery: (query) => set({ userQuery: query }),
       setImageUrls: (urls) => set({ imageUrls: urls }),
       setFileContents: (data) => set({ fileContents: data }),
-      setAgentResponse: (response) => set({ agentResponse: response }),
+      setAgentResponse: (response) => set({ generatedContent: response }),
       setIncludeDependencies: (val) => set({ includeDependencies: val }),
       setImages: (images) => set({ images }),
       resetChatResult: () =>
         set({
           fileContents: [],
-          agentResponse: { response: "" },
+          generatedContent: { response: "" },
         }),
 
       resetAll: () => set(initialState),
@@ -60,7 +60,7 @@ export const useChatStore = create<ChatState & ChatActions>()(
       partialize: (state) => ({
         selectedFiles: state.selectedFiles,
         userQuery: state.userQuery,
-        agentResponse: state.agentResponse,
+        agentResponse: state.generatedContent,
         includeDependencies: state.includeDependencies,
         images: state.images,
       }),

@@ -22,3 +22,11 @@ export const ALLOWED_NON_CODE_EXTENSIONS = new Set<Extension>([
   ".css",
   ".txt",
 ])
+
+export const IMAGE_EXTENSIONS = new Set<Extension>([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+])

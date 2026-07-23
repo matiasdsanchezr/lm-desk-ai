@@ -3,16 +3,18 @@ import path from "node:path"
 import { AbsolutePath, LanguageStrategy } from "../types"
 
 const JS_TS_IMPORT_REGEX =
-  /(?:import|export)\s+(?:[\w*\s{},]*\s+from\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*\)/g
+  /(?:import|export)\s+(?:[\w*\s{},]*\s+from\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*/g
 
 export const jsTsStrategy: LanguageStrategy = {
   extensions: new Set([".ts", ".tsx", ".js", ".jsx", ".mjs"]),
-  extractImports(content) {
+
+  extractImports(content: string): string[] {
     const matches = [...content.matchAll(JS_TS_IMPORT_REGEX)]
     return matches
       .map((match) => match[1] || match[2])
-      .filter(Boolean) as string[]
+      .filter((specifier): specifier is string => Boolean(specifier))
   },
+
   async resolveImport(importSpecifier, currentFile, projectRoot) {
     let resolvedPath: string | null = null
 
@@ -54,6 +56,7 @@ export const jsTsStrategy: LanguageStrategy = {
         continue
       }
     }
+
     return null
   },
 }

@@ -1,9 +1,5 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useVirtualizer } from "@tanstack/react-virtual"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,11 +11,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { useCallback, useMemo, useRef, useState, useTransition } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { useVirtualizer } from "@tanstack/react-virtual"
 import { useRouter } from "next/navigation"
-import type { FileTreeNode } from "../actions/get-file-tree"
-import { TreeNodeRow } from "../components/tree-node-row"
+import { useCallback, useMemo, useRef, useState, useTransition } from "react"
 import { useFileSelection } from "../hooks/use-file-selection"
+import { useTreeExpansion } from "../hooks/use-tree-expansion"
+import type { FileTreeNode } from "../types/file-tree-node"
+import { TreeNodeRow } from "./tree-node-row"
 
 interface FileExplorerProps {
   treeNodes: FileTreeNode[]
@@ -34,32 +35,7 @@ interface FlattenedNode {
   depth: number
 }
 
-function useTreeExpansion(initialExpanded?: Set<string>) {
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
-    initialExpanded ?? new Set()
-  )
-
-  const toggleExpand = useCallback((nodeId: string) => {
-    setExpandedNodes((prev) => {
-      const next = new Set(prev)
-      if (next.has(nodeId)) {
-        next.delete(nodeId)
-      } else {
-        next.add(nodeId)
-      }
-      return next
-    })
-  }, [])
-
-  const isExpanded = useCallback(
-    (nodeId: string) => expandedNodes.has(nodeId),
-    [expandedNodes]
-  )
-
-  return { toggleExpand, isExpanded, expandedNodes }
-}
-
-export function FileExplorer({
+export function FileExplorerView({
   treeNodes,
   totalFiles,
   disabled = false,
@@ -70,17 +46,12 @@ export function FileExplorer({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  const {
-    selectedSet,
-    folderToFiles,
-    toggleFile,
-    clearSelection,
-    totalSelected,
-  } = useFileSelection({
-    treeNodes,
-    selectedFiles,
-    onSelectionChange,
-  })
+  const { getNodeState, toggleFile, clearSelection, totalSelected } =
+    useFileSelection({
+      treeNodes,
+      selectedFiles,
+      onSelectionChange,
+    })
 
   const { isExpanded, toggleExpand, expandedNodes } = useTreeExpansion()
   const [activeTab, setActiveTab] = useState<"tree" | "selected">("tree")
@@ -115,34 +86,30 @@ export function FileExplorer({
   const treeScrollRef = useRef<HTMLDivElement>(null)
   const selectedScrollRef = useRef<HTMLDivElement>(null)
 
-  const treeVirtualizerOptions = useMemo(
-    () => ({
-      count: visibleTreeNodes.length,
-      getScrollElement: () => treeScrollRef.current,
-      estimateSize: () => 32,
-      overscan: 10,
-    }),
-    [visibleTreeNodes.length]
+  const getTreeScrollElement = useCallback(() => treeScrollRef.current, [])
+  const getSelectedScrollElement = useCallback(
+    () => selectedScrollRef.current,
+    []
   )
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- opted out of memoization via "use no memo"
-  const treeVirtualizer = useVirtualizer(treeVirtualizerOptions)
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const treeVirtualizer = useVirtualizer({
+    count: visibleTreeNodes.length,
+    getScrollElement: getTreeScrollElement,
+    estimateSize: () => 32,
+    overscan: 10,
+  })
 
-  const selectedVirtualizerOptions = useMemo(
-    () => ({
-      count: sortedSelectedFiles.length,
-      getScrollElement: () => selectedScrollRef.current,
-      estimateSize: () => 64,
-      overscan: 5,
-      measureElement:
-        typeof window !== "undefined"
-          ? (el: Element) => el.getBoundingClientRect().height
-          : undefined,
-    }),
-    [sortedSelectedFiles.length]
-  )
-
-  const selectedVirtualizer = useVirtualizer(selectedVirtualizerOptions)
+  const selectedVirtualizer = useVirtualizer({
+    count: sortedSelectedFiles.length,
+    getScrollElement: getSelectedScrollElement,
+    estimateSize: () => 64,
+    overscan: 5,
+    measureElement:
+      typeof window !== "undefined"
+        ? (el: Element) => el.getBoundingClientRect().height
+        : undefined,
+  })
 
   const measureSelectedElement = useCallback(
     (el: HTMLDivElement | null) => {
@@ -159,7 +126,7 @@ export function FileExplorer({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Tabs para dispositivos móviles */}
+      {/* Selector móvil */}
       <div className="flex gap-1 rounded-lg bg-muted p-1 md:hidden">
         <Button
           onClick={() => setActiveTab("tree")}
@@ -233,9 +200,8 @@ export function FileExplorer({
             style={{ contain: "content" }}
           >
             <div
-              role="treegrid"
+              role="tree"
               aria-label="Explorador de archivos"
-              aria-rowcount={visibleTreeNodes.length}
               style={{
                 height: `${treeVirtualizer.getTotalSize()}px`,
                 width: "100%",
@@ -249,11 +215,10 @@ export function FileExplorer({
                     key={node.id}
                     node={node}
                     depth={depth}
-                    selectedSet={selectedSet}
-                    folderToFiles={folderToFiles}
+                    nodeState={getNodeState(node)}
                     onToggleSelection={toggleFile}
                     onToggleExpand={toggleExpand}
-                    isExpanded={isExpanded}
+                    isExpanded={isExpanded(node.id)}
                     disabled={disabled || isPending}
                     rowIndex={virtualRow.index}
                     totalVisibleNodes={visibleTreeNodes.length}
@@ -302,7 +267,7 @@ export function FileExplorer({
                         </span>
                       </Button>
                     }
-                  ></AlertDialogTrigger>
+                  />
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Limpiar selección?</AlertDialogTitle>

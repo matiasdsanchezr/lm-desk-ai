@@ -58,6 +58,7 @@ export class AntigravityClient implements InferenceClient {
       system: params.system,
       messages: params.messages,
       abortSignal: params.signal,
+      reasoning: "high",
     })
 
     return result
@@ -89,6 +90,7 @@ export class AntigravityClient implements InferenceClient {
       system: params.system,
       messages: params.messages,
       abortSignal: params.signal,
+      reasoning: "high",
     })
 
     return result

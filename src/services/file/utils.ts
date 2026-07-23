@@ -1,10 +1,10 @@
+import { config } from "@/lib/config"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { cache } from "react"
-import { config } from "@/lib/config"
-import { Extension } from "./types"
 import { DEFAULT_IGNORE } from "./constants"
-import { ALLOWED_EXTENSIONS } from "./strategies"
+import { ALLOWED_EXTENSIONS } from "./strategies/strategy-registry"
+import { AbsolutePath, Extension } from "./types"
 
 async function recursiveFileSearch(
   dir: string,
@@ -46,3 +46,21 @@ export const getFilePaths = cache(
     )
   }
 )
+
+/**
+ * Normaliza y verifica que una ruta absoluta resida estrictamente dentro de la raíz del proyecto.
+ * Previene ataques de travesía de directorios (Path Traversal).
+ */
+export function validateAndSanitizePath(
+  targetPath: string,
+  projectRoot: string
+): AbsolutePath | null {
+  const resolvedRoot = path.resolve(projectRoot)
+  const resolvedTarget = path.resolve(resolvedRoot, targetPath)
+
+  if (!resolvedTarget.startsWith(resolvedRoot)) {
+    return null
+  }
+
+  return resolvedTarget as AbsolutePath
+}
