@@ -1,5 +1,5 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { listResponses } from "@/features/chat-history/actions/responses"
+import { listChats } from "@/features/chat-history/actions/chat-history-actions"
 import { ChatHistorySidebar } from "@/features/chat-history/components/chat-history-sidebar"
 import { ChatWorkspace } from "@/features/chat/components/chat-workspace"
 import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic"
 export default async function NewChatPage({}: NewChatPageProps) {
   const [treeStructure, responses] = await Promise.all([
     generateTreeStructure(),
-    listResponses(),
+    listChats(),
   ])
 
   return (

@@ -2,6 +2,7 @@
 
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
+import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { type FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { PromptBuilder } from "@/utils/build-prompt"
@@ -33,23 +34,35 @@ export const ChatWorkspace = ({
 }: ChatWorkspaceProps) => {
   const router = useRouter()
 
-  const chatState = useChatStore(
+  const { userQuery, resetGeneratedContent, resetAllChat } = useChatStore(
+    useShallow((s) => ({
+      userQuery: s.userQuery,
+      resetGeneratedContent: s.resetGeneratedContent,
+      resetAllChat: s.resetAll,
+    }))
+  )
+
+  const {
+    selectedFiles,
+    fileContents,
+    images,
+    setFileContents,
+    setImages,
+    resetFiles,
+  } = useFileExplorerStore(
     useShallow((s) => ({
       selectedFiles: s.selectedFiles,
-      userQuery: s.userQuery,
       fileContents: s.fileContents,
-      imageUrls: s.imageUrls,
       images: s.images,
       setFileContents: s.setFileContents,
       setImages: s.setImages,
-      resetChatResult: s.resetChatResult,
-      resetAll: s.resetAll,
+      resetFiles: s.resetFiles,
     }))
   )
 
   const settings = useSettingsStore(
     useShallow((s) => ({
-      config: s.config,
+      modelConfig: s.modelConfig,
       systemPrompt: s.systemPrompt,
       temperature: s.temperature,
       topP: s.topP,
@@ -57,14 +70,12 @@ export const ChatWorkspace = ({
   )
 
   const [showFileExplorer, setShowFileExplorer] = useState(true)
-  const [isPromptGenerated, setIsPromptGenerated] = useState(!!initialResponse)
   const [userPrompt, setUserPrompt] = useState(
     initialResponse?.userPrompt ?? ""
   )
   const [finalPrompt, setFinalPrompt] = useState(
     initialResponse?.userPrompt ?? ""
   )
-
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
@@ -75,17 +86,17 @@ export const ChatWorkspace = ({
           }
         }
         if (data.fileContents) {
-          chatState.setFileContents(data.fileContents)
-          chatState.setImages(data.imageFiles)
+          setFileContents(data.fileContents)
+          setImages(data.imageFiles)
 
           const promptBuilder = new PromptBuilder()
             .addSystem(settings.systemPrompt)
             .addContext(data.fileContents)
-            .addTask(chatState.userQuery)
+            .addTask(userQuery)
 
           setUserPrompt(promptBuilder.buildContextAndTask())
           setFinalPrompt(promptBuilder.build())
-          setIsPromptGenerated(true)
+
           return { error: null }
         }
       },
@@ -122,19 +133,18 @@ export const ChatWorkspace = ({
 
   const fileErrors = useMemo(
     () =>
-      chatState.fileContents
+      fileContents
         .filter((file) => file.error)
         .map((file) => `${file.path}: ${file.error}`),
-    [chatState.fileContents]
+    [fileContents]
   )
 
   const validFiles = useMemo(
-    () => chatState.fileContents.filter((f) => !f.error && f.content),
-    [chatState.fileContents]
+    () => fileContents.filter((f) => !f.error && f.content),
+    [fileContents]
   )
 
-  const isReadyToReview =
-    isPromptGenerated && (!!chatState.userQuery || !!initialResponse)
+  const isReadyToReview = !!finalPrompt && (!!userQuery || !!initialResponse)
   const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 
@@ -142,7 +152,7 @@ export const ChatWorkspace = ({
     clearError()
     setMessages([])
 
-    const files: FileUIPart[] = chatState.images.map((i) => ({
+    const files: FileUIPart[] = images.map((i) => ({
       type: "file",
       mediaType: i.mimeType,
       url: `data:${i.mimeType};base64,${i.base64}`,
@@ -153,31 +163,32 @@ export const ChatWorkspace = ({
       {
         body: {
           system: settings.systemPrompt,
-          provider: settings.config.provider,
-          model: settings.config.model,
+          provider: settings.modelConfig.provider,
+          model: settings.modelConfig.model,
           temperature: settings.temperature,
           topP: settings.topP,
-          selectedFiles: chatState.selectedFiles,
-          userPrompt: userPrompt,
-          userQuery: chatState.userQuery,
+          selectedFiles,
+          userPrompt,
+          userQuery,
         },
       }
     )
   }
 
   const handleModifyQuery = () => {
-    chatState.resetChatResult()
-    setIsPromptGenerated(false)
+    resetGeneratedContent()
+    setFinalPrompt("")
   }
 
   const handleResetAll = () => {
-    chatState.resetAll()
-    setIsPromptGenerated(false)
+    resetAllChat()
+    resetFiles()
+    setFinalPrompt("")
     router.push("/chat")
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-350 flex-col gap-6">
       <ContextBuilder
         treeNodes={treeNodes}
         totalFiles={totalFiles}

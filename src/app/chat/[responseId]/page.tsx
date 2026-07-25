@@ -1,8 +1,8 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
 import {
-  listResponses,
-  loadResponse,
-} from "@/features/chat-history/actions/responses"
+  listChats,
+  loadChat,
+} from "@/features/chat-history/actions/chat-history-actions"
 import { ChatHistorySidebar } from "@/features/chat-history/components/chat-history-sidebar"
 import { ChatWorkspace } from "@/features/chat/components/chat-workspace"
 import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
@@ -18,9 +18,9 @@ export default async function ExistingChatPage({
   const { responseId } = await params
 
   const [initialResponse, treeStructure, responses] = await Promise.all([
-    loadResponse(responseId),
+    loadChat(responseId),
     generateTreeStructure(),
-    listResponses(),
+    listChats(),
   ])
 
   if (!initialResponse.data || initialResponse.error) {

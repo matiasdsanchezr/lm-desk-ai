@@ -14,8 +14,8 @@ import { useSettingsStore } from "../store/settings-store"
 export const ProviderMenu = () => {
   const { config, setConfig } = useSettingsStore(
     useShallow((s) => ({
-      config: s.config,
-      setConfig: s.setConfig,
+      config: s.modelConfig,
+      setConfig: s.setModelConfig,
     }))
   )
 

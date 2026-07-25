@@ -15,13 +15,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { FileExplorerView } from "@/features/file-explorer/components/file-explorer-view"
+import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { cn } from "@/lib/utils"
 import { useMemo } from "react"
 import { useShallow } from "zustand/shallow"
 
 interface ContextBuilderProps {
-  fetchFileState: { error: string | null } | undefined
+  fetchFileState?: { error: string | null }
   fileErrors: string[]
   isReadyToReview: boolean
   isDisabled: boolean
@@ -47,16 +48,28 @@ export const ContextBuilder = ({
   handleFetchFileContents,
   isReadyToReview,
 }: ContextBuilderProps) => {
-  const store = useChatStore(
+  const { userQuery, setUserQuery } = useChatStore(
+    useShallow((s) => ({
+      userQuery: s.userQuery,
+      setUserQuery: s.setUserQuery,
+    }))
+  )
+
+  const {
+    selectedFiles,
+    imageUrls,
+    includeDependencies,
+    setImageUrls,
+    setSelectedFiles,
+    setIncludeDependencies,
+  } = useFileExplorerStore(
     useShallow((s) => ({
       selectedFiles: s.selectedFiles,
-      userQuery: s.userQuery,
       imageUrls: s.imageUrls,
       includeDependencies: s.includeDependencies,
-      setUserQuery: s.setUserQuery,
       setImageUrls: s.setImageUrls,
-      setIncludeDependencies: s.setIncludeDependencies,
       setSelectedFiles: s.setSelectedFiles,
+      setIncludeDependencies: s.setIncludeDependencies,
     }))
   )
 
@@ -75,6 +88,15 @@ export const ContextBuilder = ({
     treeNodes.forEach(traverse)
     return options
   }, [treeNodes])
+
+  const handleFormAction = (formData: FormData) => {
+    formData.append("includeDependencies", String(includeDependencies))
+    formData.append("imageUrls", imageUrls)
+    formData.append("systemPrompt", systemPrompt)
+    selectedFiles.forEach((path) => formData.append("filePath", path))
+
+    handleFetchFileContents(formData)
+  }
 
   return (
     <Card
@@ -122,13 +144,13 @@ export const ContextBuilder = ({
               {showFileExplorer ? "Ocultar archivos" : "Ver archivos"}
             </span>
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
-              {store.selectedFiles.length}
+              {selectedFiles.length}
             </span>
           </Button>
 
-          {store.selectedFiles.length > 0 && (
+          {selectedFiles.length > 0 && (
             <span className="text-xs text-muted-foreground">
-              {store.selectedFiles.length} archivo(s) seleccionado(s)
+              {selectedFiles.length} archivo(s) seleccionado(s)
             </span>
           )}
         </div>
@@ -138,8 +160,8 @@ export const ContextBuilder = ({
             treeNodes={treeNodes}
             totalFiles={totalFiles}
             disabled={isDisabled}
-            selectedFiles={store.selectedFiles}
-            onSelectionChange={store.setSelectedFiles}
+            selectedFiles={selectedFiles}
+            onSelectionChange={setSelectedFiles}
           />
         )}
 
@@ -179,22 +201,17 @@ export const ContextBuilder = ({
           </Alert>
         )}
 
-        <form action={handleFetchFileContents} className="flex flex-col gap-4">
+        <form action={handleFormAction} className="flex flex-col gap-4">
           <div className="flex items-center gap-2 py-1">
             <Checkbox
               id="include-deps"
-              checked={store.includeDependencies}
-              onCheckedChange={(val) => store.setIncludeDependencies(!!val)}
+              checked={includeDependencies}
+              onCheckedChange={(val) => setIncludeDependencies(!!val)}
               disabled={isDisabled}
             />
             <Label htmlFor="include-deps" className="cursor-pointer">
               Incluir dependencias de los archivos seleccionados
             </Label>
-            <input
-              type="hidden"
-              name="includeDependencies"
-              value={String(store.includeDependencies)}
-            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -208,16 +225,11 @@ export const ContextBuilder = ({
             <Textarea
               id="imageUrls"
               name="imageUrls"
-              value={store.imageUrls}
-              onChange={(e) => store.setImageUrls(e.target.value)}
+              value={imageUrls}
+              onChange={(e) => setImageUrls(e.target.value)}
               placeholder={`https://ejemplo.com/captura1.png\nhttps://ejemplo.com/captura2.png`}
               className="min-h-20 font-mono text-xs"
               disabled={isDisabled}
-            />
-            <input
-              type="hidden"
-              name="imageUrls"
-              value={String(store.imageUrls)}
             />
             <p className="text-[10px] text-muted-foreground">
               Pega una URL por línea. Estas imágenes se enviarán como contexto
@@ -227,15 +239,15 @@ export const ContextBuilder = ({
 
           <div className="flex flex-col gap-2">
             <TextEditor
-              value={store.userQuery}
-              onChange={store.setUserQuery}
+              value={userQuery}
+              onChange={setUserQuery}
               placeholder="Ej: Explícame qué hace esta función."
               className="min-h-32 text-sm md:text-base"
               disabled={isDisabled}
               mentionOptions={mentionOptions}
               onMentionSelect={(filePath) => {
-                if (!store.selectedFiles.includes(filePath)) {
-                  store.setSelectedFiles([...store.selectedFiles, filePath])
+                if (!selectedFiles.includes(filePath)) {
+                  setSelectedFiles([...selectedFiles, filePath])
                 }
               }}
             />
@@ -243,19 +255,14 @@ export const ContextBuilder = ({
               <span>
                 Selecciona al menos un archivo para generar el prompt.
               </span>
-              <span>{store.userQuery.trim().length} caracteres</span>
+              <span>{userQuery.trim().length} caracteres</span>
             </div>
           </div>
-
-          {store.selectedFiles.map((path) => (
-            <input key={path} type="hidden" name="filePath" value={path} />
-          ))}
-          <input type="hidden" name="systemPrompt" value={systemPrompt} />
 
           {!isReadyToReview && (
             <Button
               type="submit"
-              disabled={!store.userQuery.trim() || isFetchingFiles}
+              disabled={!userQuery.trim() || isFetchingFiles}
               className="inline-flex max-w-60 items-center gap-2"
             >
               {isFetchingFiles ? (
