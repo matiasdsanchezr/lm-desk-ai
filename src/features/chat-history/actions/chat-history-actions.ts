@@ -8,7 +8,7 @@ import {
   type SavedResponse,
 } from "../services/chat-history-service"
 
-export const saveResponse = async (data: {
+export const saveChat = async (data: {
   title?: string
   selectedFiles: string[]
   userPrompt: string
@@ -24,7 +24,7 @@ export const saveResponse = async (data: {
   }
 }
 
-export const loadResponse = async (
+export const loadChat = async (
   id: string
 ): Promise<ActionState<SavedResponse>> => {
   try {
@@ -35,7 +35,7 @@ export const loadResponse = async (
   }
 }
 
-export const listResponses = async (): Promise<
+export const listChats = async (): Promise<
   ActionState<SavedResponseMeta[]>
 > => {
   try {
@@ -47,9 +47,7 @@ export const listResponses = async (): Promise<
   }
 }
 
-export const deleteResponse = async (
-  id: string
-): Promise<ActionState<void>> => {
+export const deleteChat = async (id: string): Promise<ActionState<void>> => {
   try {
     await chatHistoryService.deleteResponse(id)
     revalidatePath("/chat")

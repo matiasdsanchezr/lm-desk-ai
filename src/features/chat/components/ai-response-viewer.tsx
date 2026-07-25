@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card"
 import { createCodePlugin } from "@streamdown/code"
 import { UIDataTypes, UIMessage, UITools } from "ai"
+import { useMemo } from "react"
 import { Streamdown } from "streamdown"
 
 interface AIResponseSectionProps {
@@ -31,17 +32,30 @@ export const AIResponseViewer = ({
 }: AIResponseSectionProps) => {
   const lastMessage = messages[messages.length - 1]
 
-  const reasoningText =
-    lastMessage?.parts
-      ?.filter((part) => part.type === "reasoning")
-      .map((part) => (part.type === "reasoning" ? part.text : ""))
-      .join("\n") ?? "Sin razonamiento"
+  const { reasoningText, responseText } = useMemo(() => {
+    if (!lastMessage?.parts) {
+      return {
+        reasoningText: "Sin razonamiento",
+        responseText: "Sin respuesta",
+      }
+    }
 
-  const responseText =
-    lastMessage?.parts
-      ?.filter((part) => part.type === "text")
-      .map((part) => (part.type === "text" ? part.text : ""))
-      .join(" ") ?? "Sin respuesta"
+    let reasoning = ""
+    let text = ""
+
+    for (const part of lastMessage.parts) {
+      if (part.type === "reasoning") {
+        reasoning += (reasoning ? "\n" : "") + part.text
+      } else if (part.type === "text") {
+        text += (text ? " " : "") + part.text
+      }
+    }
+
+    return {
+      reasoningText: reasoning || "Sin razonamiento",
+      responseText: text || "Sin respuesta",
+    }
+  }, [lastMessage?.parts])
 
   return (
     <Card className="overflow-hidden border-border/60 shadow-md transition-all">

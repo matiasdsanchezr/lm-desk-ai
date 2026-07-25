@@ -1,4 +1,3 @@
-// src/features/chat-history/components/chat-history-sidebar.tsx
 "use client"
 
 import {
@@ -26,7 +25,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useMemo, useState, useTransition } from "react"
-import { deleteResponse } from "../actions/responses"
+import { deleteChat } from "../actions/chat-history-actions"
 import type { SavedResponseMeta } from "../services/chat-history-service"
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
@@ -92,7 +91,7 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
     setDeleteError(null)
 
     startTransition(async () => {
-      const result = await deleteResponse(id)
+      const result = await deleteChat(id)
 
       if (result.error) {
         setDeleteError(result.error)
@@ -228,6 +227,7 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
                                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                                   <span className="icon-[lucide--calendar] size-3" />
                                   <time
+                                    suppressHydrationWarning
                                     dateTime={new Date(
                                       response.createdAt
                                     ).toISOString()}
