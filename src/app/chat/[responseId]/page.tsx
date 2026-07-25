@@ -17,13 +17,13 @@ export default async function ExistingChatPage({
 }: ExistingChatPageProps) {
   const { responseId } = await params
 
-  const [initialResponse, treeStructure, responses] = await Promise.all([
+  const [initialChat, treeStructure, responses] = await Promise.all([
     loadChat(responseId),
     generateTreeStructure(),
     listChats(),
   ])
 
-  if (!initialResponse.data || initialResponse.error) {
+  if (!initialChat.data || initialChat.error) {
     notFound()
   }
 
@@ -37,7 +37,7 @@ export default async function ExistingChatPage({
               key={responseId}
               totalFiles={treeStructure.totalFiles}
               treeNodes={treeStructure.treeNodes}
-              initialResponse={initialResponse.data}
+              initialChat={initialChat.data}
             />
           </div>
         </div>

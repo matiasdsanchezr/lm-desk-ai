@@ -29,7 +29,7 @@ export default async function NewChatPage({}: NewChatPageProps) {
                 key="new-chat"
                 totalFiles={treeStructure.totalFiles}
                 treeNodes={treeStructure.treeNodes}
-                initialResponse={null}
+                initialChat={null}
               />
             </div>
           </div>

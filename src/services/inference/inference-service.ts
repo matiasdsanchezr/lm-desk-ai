@@ -1,3 +1,5 @@
+import "server-only"
+
 import { config } from "@/lib/config"
 import { AntigravityClient } from "./api/antigravity/antigravity-client"
 import { GoogleGenAIClient } from "./api/google-genai/google-genai-client"
