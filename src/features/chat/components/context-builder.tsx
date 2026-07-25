@@ -220,7 +220,7 @@ export const ContextBuilder = ({
               className="flex items-center gap-2 text-sm font-medium"
             >
               <span className="icon-[fa7-solid--images] text-muted-foreground" />
-              Imágenes de referencia (URLs)
+              Cargar Imágenes (URLs)
             </Label>
             <Textarea
               id="imageUrls"

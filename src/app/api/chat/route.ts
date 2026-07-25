@@ -2,7 +2,13 @@ import { chatHistoryService } from "@/features/chat-history/services/chat-histor
 import { streamText } from "@/services/inference/inference-service"
 import { InferenceProviderEnum } from "@/services/inference/schemas/provider-schema"
 import { InferenceModelSchema } from "@/services/inference/types/inference-model"
-import { type UIMessage, convertToModelMessages } from "ai"
+import {
+  type UIMessage,
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  toUIMessageStream,
+} from "ai"
 import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 import { z } from "zod"
@@ -72,38 +78,60 @@ export async function POST(req: Request) {
       )
     }
 
-    const result = streamText({
-      system,
-      messages: modelMessages,
-      inferenceModel: inferenceModelResult.data,
-      config: { temperature, topP },
-    })
+    return createUIMessageStreamResponse({
+      status: 200,
+      statusText: "OK",
+      stream: createUIMessageStream({
+        execute({ writer }) {
+          const result = streamText({
+            system,
+            messages: modelMessages,
+            inferenceModel: inferenceModelResult.data,
+            config: { temperature, topP },
+          })
 
-    return result.toUIMessageStreamResponse({
-      sendReasoning: true,
-      onError: (error: unknown) => {
-        console.error("[/api/chat] Stream error:", error)
-        return "Error al generar la respuesta"
-      },
-      onFinish: async ({ responseMessage }) => {
-        try {
-          const textContent = responseMessage.parts
-            .filter((part) => part.type === "text")
-            .map((part) => part.text)
-            .join("\n\n")
+          writer.merge(
+            toUIMessageStream({
+              stream: result.stream,
+              sendReasoning: true,
+              onError: (error: unknown) => {
+                console.error("[/api/chat] Stream error:", error)
+                return "Error al generar la respuesta"
+              },
+              onFinish: async ({ responseMessage }) => {
+                try {
+                  let textContent = ""
+                  let reasoningContent = ""
 
-          if (textContent) {
-            await chatHistoryService.saveResponse({
-              selectedFiles: selectedFiles || [],
-              userPrompt: userPrompt ?? "",
-              response: textContent,
+                  for (const part of responseMessage.parts) {
+                    if (part.type === "text") {
+                      textContent += (textContent ? "\n\n" : "") + part.text
+                    } else if (part.type === "reasoning") {
+                      reasoningContent +=
+                        (reasoningContent ? "\n\n" : "") + part.text
+                    }
+                  }
+
+                  if (textContent) {
+                    await chatHistoryService.saveResponse({
+                      selectedFiles: selectedFiles || [],
+                      userPrompt: userPrompt ?? "",
+                      reasoning: reasoningContent,
+                      response: textContent,
+                    })
+                    revalidatePath("/chat")
+                  }
+                } catch (err) {
+                  console.error(
+                    "[/api/chat] Error saving response automatically:",
+                    err
+                  )
+                }
+              },
             })
-            revalidatePath("/chat")
-          }
-        } catch (err) {
-          console.error("[/api/chat] Error saving response automatically:", err)
-        }
-      },
+          )
+        },
+      }),
     })
   } catch (error) {
     console.error("[/api/chat] Unhandled error:", error)

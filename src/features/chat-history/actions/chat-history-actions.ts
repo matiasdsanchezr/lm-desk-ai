@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache"
 import {
   chatHistoryService,
   SavedResponseMeta,
-  type SavedResponse,
 } from "../services/chat-history-service"
+import { SavedChat } from "../types/saved-chat"
 
 export const saveChat = async (data: {
   title?: string
@@ -24,9 +24,7 @@ export const saveChat = async (data: {
   }
 }
 
-export const loadChat = async (
-  id: string
-): Promise<ActionState<SavedResponse>> => {
+export const loadChat = async (id: string): Promise<ActionState<SavedChat>> => {
   try {
     const result = await chatHistoryService.loadResponse(id)
     return { data: result }

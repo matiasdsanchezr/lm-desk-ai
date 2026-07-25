@@ -1,5 +1,6 @@
 "use client"
 
+import { SavedChat } from "@/features/chat-history/types/saved-chat"
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
@@ -15,22 +16,16 @@ import { AIResponseViewer } from "./ai-response-viewer"
 import { ContextBuilder } from "./context-builder"
 import { PromptReviewer } from "./prompt-reviewer"
 
-interface InitialResponse {
-  id: string
-  userPrompt: string
-  response: string
-}
-
 interface ChatWorkspaceProps {
   totalFiles: number
   treeNodes: FileTreeNode[]
-  initialResponse?: InitialResponse | null
+  initialChat?: SavedChat | null
 }
 
 export const ChatWorkspace = ({
   totalFiles,
   treeNodes,
-  initialResponse,
+  initialChat,
 }: ChatWorkspaceProps) => {
   const router = useRouter()
 
@@ -70,12 +65,8 @@ export const ChatWorkspace = ({
   )
 
   const [showFileExplorer, setShowFileExplorer] = useState(true)
-  const [userPrompt, setUserPrompt] = useState(
-    initialResponse?.userPrompt ?? ""
-  )
-  const [finalPrompt, setFinalPrompt] = useState(
-    initialResponse?.userPrompt ?? ""
-  )
+  const [userPrompt, setUserPrompt] = useState(initialChat?.userPrompt ?? "")
+  const [finalPrompt, setFinalPrompt] = useState(initialChat?.userPrompt ?? "")
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
@@ -112,17 +103,20 @@ export const ChatWorkspace = ({
     clearError,
     stop,
   } = useChat({
-    messages: initialResponse
+    messages: initialChat
       ? [
           {
-            id: `${initialResponse.id}-user`,
+            id: `${initialChat.id}-user`,
             role: "user",
-            parts: [{ type: "text", text: initialResponse.userPrompt }],
+            parts: [{ type: "text", text: initialChat.userPrompt }],
           },
           {
-            id: `${initialResponse.id}-assistant`,
+            id: `${initialChat.id}-assistant`,
             role: "assistant",
-            parts: [{ type: "text", text: initialResponse.response }],
+            parts: [
+              { type: "reasoning", text: initialChat.reasoning ?? "" },
+              { type: "text", text: initialChat.response },
+            ],
           },
         ]
       : [],
@@ -144,7 +138,7 @@ export const ChatWorkspace = ({
     [fileContents]
   )
 
-  const isReadyToReview = !!finalPrompt && (!!userQuery || !!initialResponse)
+  const isReadyToReview = !!finalPrompt && (!!userQuery || !!initialChat)
   const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 

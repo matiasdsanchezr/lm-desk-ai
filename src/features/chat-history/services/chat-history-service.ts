@@ -1,20 +1,12 @@
 import { config } from "@/lib/config"
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"
+import { SavedChat } from "../types/saved-chat"
 
 const GENERATED_DIR = path.join(config.STORAGE_PATH, "chats")
 
-export interface SavedResponse {
-  id: string
-  title: string
-  createdAt: string
-  selectedFiles: string[]
-  userPrompt: string
-  response: string
-}
-
 export type SavedResponseMeta = Pick<
-  SavedResponse,
+  SavedChat,
   "id" | "title" | "createdAt"
 >
 
@@ -30,20 +22,22 @@ export const chatHistoryService = {
     title?: string
     selectedFiles: string[]
     userPrompt: string
+    reasoning?: string
     response: string
-  }): Promise<SavedResponse> {
+  }): Promise<SavedChat> {
     await ensureDirectoryExists()
 
     const id = `response-${Date.now()}`
     const title = data.title ?? id
     const createdAt = new Date().toISOString()
 
-    const payload: SavedResponse = {
+    const payload: SavedChat = {
       id,
       title,
       createdAt,
       selectedFiles: data.selectedFiles,
       userPrompt: data.userPrompt,
+      reasoning: data.reasoning,
       response: data.response,
     }
 
@@ -56,11 +50,11 @@ export const chatHistoryService = {
   /**
    * Obtiene una respuesta por su ID.
    */
-  async loadResponse(id: string): Promise<SavedResponse> {
+  async loadResponse(id: string): Promise<SavedChat> {
     const fileName = id.endsWith(".json") ? id : `${id}.json`
     const filePath = path.join(GENERATED_DIR, fileName)
     const content = await readFile(filePath, "utf-8")
-    return JSON.parse(content) as SavedResponse
+    return JSON.parse(content) as SavedChat
   },
 
   /**
@@ -68,11 +62,11 @@ export const chatHistoryService = {
    */
   async updateResponse(
     id: string,
-    updates: Partial<Omit<SavedResponse, "id" | "createdAt">>
-  ): Promise<SavedResponse> {
+    updates: Partial<Omit<SavedChat, "id" | "createdAt">>
+  ): Promise<SavedChat> {
     const currentResponse = await chatHistoryService.loadResponse(id)
 
-    const updatedResponse: SavedResponse = {
+    const updatedResponse: SavedChat = {
       ...currentResponse,
       ...updates,
     }
@@ -97,7 +91,7 @@ export const chatHistoryService = {
       try {
         const filePath = path.join(GENERATED_DIR, file)
         const content = await readFile(filePath, "utf-8")
-        const fullData = JSON.parse(content) as SavedResponse
+        const fullData = JSON.parse(content) as SavedChat
 
         responses.push({
           id: fullData.id,
