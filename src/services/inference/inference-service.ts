@@ -15,29 +15,39 @@ const _clientCache = new Map<InferenceProvider, InferenceClient>()
 
 const PROVIDER_FACTORIES: Record<InferenceProvider, () => InferenceClient> = {
   nvidiaNim: () => {
-    if (!config.NVIDIA_NIM_API_KEY) throw new Error("Falta NVIDIA_NIM_API_KEY")
+    if (!config.NVIDIA_NIM_API_KEY) {
+      throw new Error("Falta NVIDIA_NIM_API_KEY")
+    }
     return new NvidiaNimClient()
   },
   openRouter: () => {
-    if (!config.OPEN_ROUTER_API_KEY)
+    if (!config.OPEN_ROUTER_API_KEY) {
       throw new Error("Falta OPEN_ROUTER_API_KEY")
+    }
     return new OpenRouterClient()
   },
   vertex: () => {
-    if (!config.VERTEX_API_KEY) throw new Error("Falta VERTEX_API_KEY")
+    if (!config.VERTEX_API_KEY) {
+      throw new Error("Falta VERTEX_API_KEY")
+    }
     return new GoogleVertexClient()
   },
   genai: () => {
-    if (!config.GENAI_API_KEY) throw new Error("Falta GENAI_API_KEY")
+    if (!config.GENAI_API_KEY) {
+      throw new Error("Falta GENAI_API_KEY")
+    }
     return new GoogleGenAIClient()
   },
   antigravity: () => {
-    if (!config.ANTIGRAVITY_API_KEY)
+    if (!config.ANTIGRAVITY_API_KEY) {
       throw new Error("Falta ANTIGRAVITY_API_KEY")
+    }
     return new AntigravityClient()
   },
   openai: () => {
-    if (!config.OPENAI_API_KEY) throw new Error("Falta OPENAI_API_KEY")
+    if (!config.OPENAI_API_KEY) {
+      throw new Error("Falta OPENAI_API_KEY")
+    }
     return new OpenAiClient(
       config.OPENAI_BASE_URL ?? "https://api.openai.com/v1",
       config.OPENAI_API_KEY
