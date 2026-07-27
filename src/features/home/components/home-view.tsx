@@ -24,7 +24,7 @@ export const HomeView = () => {
 
         {/* Bento Grid de Características */}
         <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {/* Tarjeta Bento 1 (Grande - Selección de Archivos) */}
+          {/* Tarjeta - Selección de Archivos */}
           <div className="group relative col-span-1 overflow-hidden rounded-3xl border border-zinc-200/80 bg-zinc-50/50 p-8 md:col-span-2 dark:border-zinc-800/80 dark:bg-zinc-900/30">
             <div className="flex h-full flex-col justify-between space-y-6">
               <div className="space-y-2">
@@ -39,7 +39,6 @@ export const HomeView = () => {
                 </p>
               </div>
 
-              {/* Mini-interfaz visual interactiva simulada */}
               <div className="rounded-xl border border-zinc-200 bg-white p-4 font-mono text-[10px] dark:border-zinc-800 dark:bg-zinc-950">
                 <div className="flex items-center gap-2 border-b pb-2 dark:border-zinc-800">
                   <span className="icon-[lucide--code-2] size-3.5 text-primary" />
@@ -65,7 +64,7 @@ export const HomeView = () => {
             </div>
           </div>
 
-          {/* Tarjeta Bento 2 (Pequeña - Menciones @) */}
+          {/* Tarjeta - Menciones @ */}
           <div className="group relative overflow-hidden rounded-3xl border border-zinc-200/80 bg-zinc-50/50 p-8 dark:border-zinc-800/80 dark:bg-zinc-900/30">
             <div className="flex h-full flex-col justify-between space-y-6">
               <div className="space-y-2">
@@ -83,7 +82,6 @@ export const HomeView = () => {
                 </p>
               </div>
 
-              {/* Input simulado */}
               <div className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
                 <div className="font-mono text-[10px] text-zinc-400">
                   Prompt Editor
@@ -102,7 +100,7 @@ export const HomeView = () => {
             </div>
           </div>
 
-          {/* Tarjeta Bento 3 (Pequeña - Formato XML/Markdown) */}
+          {/* Tarjeta - Formato XML/Markdown */}
           <div className="group relative overflow-hidden rounded-3xl border border-zinc-200/80 bg-zinc-50/50 p-8 dark:border-zinc-800/80 dark:bg-zinc-900/30">
             <div className="flex h-full flex-col justify-between space-y-6">
               <div className="space-y-2">
@@ -125,7 +123,7 @@ export const HomeView = () => {
             </div>
           </div>
 
-          {/* Tarjeta Bento 4 (Grande - Integración de Modelos) */}
+          {/* Tarjeta - Integración de Modelos */}
           <div className="group relative col-span-1 overflow-hidden rounded-3xl border border-zinc-200/80 bg-zinc-50/50 p-8 md:col-span-2 dark:border-zinc-800/80 dark:bg-zinc-900/30">
             <div className="flex h-full flex-col justify-between space-y-6">
               <div className="space-y-2">
@@ -133,7 +131,7 @@ export const HomeView = () => {
                 <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
                   LM Desk genera prompts empaquetados en un formato XML/Markdown
                   estandarizado, ideal para arquitecturas de razonamiento
-                  profundo como Claude 3.5 Sonnet, GPT-4o y Gemini 1.5 Pro.
+                  profundo como Claude, GPT y Gemini.
                 </p>
               </div>
 
@@ -159,17 +157,31 @@ export const HomeView = () => {
           </div>
         </div>
 
-        {/* Banner CTA Final Rediseñado estilo Terminal */}
+        {/* Enlace a la documentación de despliegue y uso */}
+        <Link
+          href="/about"
+          className="group mx-auto mt-12 flex w-full max-w-2xl items-center gap-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/50 p-5 transition-all hover:border-primary/40 hover:bg-zinc-50 dark:border-zinc-800/80 dark:bg-zinc-900/30 dark:hover:border-primary/40 dark:hover:bg-zinc-900/50"
+        >
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+            <span className="icon-[lucide--book-open] size-6" />
+          </div>
+          <div className="flex-1 space-y-1">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              Guía de Despliegue y Uso
+            </h3>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Consulta los pasos específicos para configurar, desplegar y
+              utilizar LM Desk localmente en nuestra documentación completa.
+            </p>
+          </div>
+          <span className="icon-[lucide--arrow-right] size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+        </Link>
+
+        {/* Banner CTA Final */}
         <div className="relative mt-24 overflow-hidden rounded-3xl bg-zinc-950 p-8 text-zinc-100 sm:p-12">
-          {/* Decoración de cuadrícula de fondo */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#3f3f4620_1px,transparent_1px),linear-gradient(to_bottom,#3f3f4620_1px,transparent_1px)] bg-[size:20px_20px] opacity-30" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#3f3f4620_1px,transparent_1px),linear-gradient(to_bottom,#3f3f4620_1px,transparent_1px)] bg-size-[20px_20px] opacity-30" />
 
           <div className="relative z-10 flex flex-col items-center gap-6 text-center">
-            <div className="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-900 px-3 py-1 font-mono text-xs text-zinc-400">
-              <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
-              Ready to compile context
-            </div>
-
             <div className="space-y-3">
               <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
                 ¿Listo para potenciar tu desarrollo?
@@ -179,7 +191,6 @@ export const HomeView = () => {
                 desordenada. Deja que LM Desk estructure el contexto por ti.
               </p>
             </div>
-
             <Link
               href="/chat"
               className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-sm font-semibold text-primary-foreground transition-all hover:scale-[1.02]"

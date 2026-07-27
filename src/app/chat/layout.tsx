@@ -1,5 +1,11 @@
 import { SettingsDrawer } from "@/features/settings/components/settings-drawer"
+import { Metadata } from "next"
 import React, { Suspense } from "react"
+
+export const metadata: Metadata = {
+  title: "Chat | LM Desk",
+  description: "Generar consultas para LLMs sobre tus archivos locales.",
+}
 
 export default async function ChatLayout({
   children,

@@ -14,7 +14,7 @@ export function Hero({ className }: { className?: string }) {
       {/* Grid Decorativo Avanzado */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] bg-[size:14px_24px]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] bg-size-[14px_24px]"
       />
 
       {/* Luces de Neón / Glows */}
@@ -22,8 +22,8 @@ export function Hero({ className }: { className?: string }) {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 flex justify-center overflow-hidden"
       >
-        <div className="w-[1000px] flex-none translate-y-[-20%] justify-center">
-          <div className="h-[350px] w-[600px] rounded-full bg-primary/15 opacity-50 blur-[120px] md:h-[500px] md:w-[900px]" />
+        <div className="w-250 flex-none translate-y-[-20%] justify-center">
+          <div className="h-87.5 w-150 rounded-full bg-primary/15 opacity-50 blur-[120px] md:h-125 md:w-225" />
         </div>
       </div>
 
@@ -36,7 +36,7 @@ export function Hero({ className }: { className?: string }) {
           >
             Optimiza tus Prompts para LLMs con{" "}
             <span className="relative inline-block">
-              <span className="relative z-10 bg-gradient-to-r from-primary via-violet-500 to-indigo-500 bg-clip-text text-transparent">
+              <span className="relative z-10 bg-linear-to-r from-primary via-violet-500 to-indigo-500 bg-clip-text text-transparent">
                 LM Desk
               </span>
               <span className="absolute bottom-1 left-0 -z-10 h-2 w-full -rotate-1 rounded bg-primary/10" />
