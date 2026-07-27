@@ -1,7 +1,7 @@
 "use client"
 
 import { SavedChat } from "@/features/chat-history/types/saved-chat"
-import { useChatStore } from "@/features/chat/store/chat-store"
+import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { type FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
@@ -14,6 +14,7 @@ import { useActionState, useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
 import { AIResponseViewer } from "./ai-response-viewer"
 import { ContextBuilder } from "./context-builder"
+import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
@@ -29,31 +30,25 @@ export const ChatWorkspace = ({
 }: ChatWorkspaceProps) => {
   const router = useRouter()
 
-  const { userQuery, resetGeneratedContent, resetAllChat } = useChatStore(
+  const { userQuery, userPrompt, finalPrompt } = useChatStore(
     useShallow((s) => ({
       userQuery: s.userQuery,
-      resetGeneratedContent: s.resetGeneratedContent,
-      resetAllChat: s.resetAll,
+      userPrompt: s.userPrompt,
+      finalPrompt: s.finalPrompt,
     }))
   )
+  const { setPrompts } = useChatActions()
 
-  const {
-    selectedFiles,
-    fileContents,
-    images,
-    setFileContents,
-    setImages,
-    resetFiles,
-  } = useFileExplorerStore(
-    useShallow((s) => ({
-      selectedFiles: s.selectedFiles,
-      fileContents: s.fileContents,
-      images: s.images,
-      setFileContents: s.setFileContents,
-      setImages: s.setImages,
-      resetFiles: s.resetFiles,
-    }))
-  )
+  const { selectedFiles, fileContents, images, setFileContents, setImages } =
+    useFileExplorerStore(
+      useShallow((s) => ({
+        selectedFiles: s.selectedFiles,
+        fileContents: s.fileContents,
+        images: s.images,
+        setFileContents: s.setFileContents,
+        setImages: s.setImages,
+      }))
+    )
 
   const settings = useSettingsStore(
     useShallow((s) => ({
@@ -65,8 +60,6 @@ export const ChatWorkspace = ({
   )
 
   const [showFileExplorer, setShowFileExplorer] = useState(true)
-  const [userPrompt, setUserPrompt] = useState(initialChat?.userPrompt ?? "")
-  const [finalPrompt, setFinalPrompt] = useState(initialChat?.userPrompt ?? "")
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
@@ -85,15 +78,17 @@ export const ChatWorkspace = ({
             .addContext(data.fileContents)
             .addTask(userQuery)
 
-          setUserPrompt(promptBuilder.buildContextAndTask())
-          setFinalPrompt(promptBuilder.build())
+          setPrompts({
+            userPrompt: promptBuilder.buildContextAndTask(),
+            finalPrompt: promptBuilder.build(),
+          })
 
           return { error: null }
         }
       },
       { error: null }
     )
-
+  console.log(initialChat?.messages)
   const {
     messages,
     status,
@@ -103,23 +98,7 @@ export const ChatWorkspace = ({
     clearError,
     stop,
   } = useChat({
-    messages: initialChat
-      ? [
-          {
-            id: `${initialChat.id}-user`,
-            role: "user",
-            parts: [{ type: "text", text: initialChat.userPrompt }],
-          },
-          {
-            id: `${initialChat.id}-assistant`,
-            role: "assistant",
-            parts: [
-              { type: "reasoning", text: initialChat.reasoning ?? "" },
-              { type: "text", text: initialChat.response },
-            ],
-          },
-        ]
-      : [],
+    messages: initialChat?.messages,
     onFinish: () => {
       router.refresh()
     },
@@ -133,27 +112,22 @@ export const ChatWorkspace = ({
     [fileContents]
   )
 
-  const validFiles = useMemo(
-    () => fileContents.filter((f) => !f.error && f.content),
-    [fileContents]
-  )
-
   const isReadyToReview = !!finalPrompt && (!!userQuery || !!initialChat)
   const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 
   const handleSendToAI = () => {
     clearError()
-    setMessages([])
+    setMessages([]) // Reiniciar chat para enviar solo un mensaje y contexto
 
-    const files: FileUIPart[] = images.map((i) => ({
+    const imageFiles: FileUIPart[] = images.map((i) => ({
       type: "file",
       mediaType: i.mimeType,
       url: `data:${i.mimeType};base64,${i.base64}`,
     }))
 
     sendMessage(
-      { text: userPrompt, files },
+      { text: userPrompt, files: imageFiles },
       {
         body: {
           system: settings.systemPrompt,
@@ -163,22 +137,9 @@ export const ChatWorkspace = ({
           topP: settings.topP,
           selectedFiles,
           userPrompt,
-          userQuery,
         },
       }
     )
-  }
-
-  const handleModifyQuery = () => {
-    resetGeneratedContent()
-    setFinalPrompt("")
-  }
-
-  const handleResetAll = () => {
-    resetAllChat()
-    resetFiles()
-    setFinalPrompt("")
-    router.push("/chat")
   }
 
   return (
@@ -200,16 +161,14 @@ export const ChatWorkspace = ({
       {isReadyToReview && (
         <PromptReviewer
           isStreaming={isStreaming}
-          validFiles={validFiles}
-          finalPrompt={finalPrompt}
           handleSendToAI={handleSendToAI}
           stop={stop}
-          onModifyQuery={handleModifyQuery}
-          onResetAll={handleResetAll}
-        />
+        >
+          <GeneratedPrompt />
+        </PromptReviewer>
       )}
 
-      {(messages.length > 1 || error) && (
+      {(messages.length > 0 || error) && (
         <div className="space-y-4">
           <AIResponseViewer
             messages={messages}

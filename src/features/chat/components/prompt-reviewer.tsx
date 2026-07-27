@@ -9,28 +9,35 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { FileContent } from "@/types/file-content"
-import { GeneratedPrompt } from "./generated-prompt"
+import { useChatActions } from "@/features/chat/store/chat-store"
+import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
+import React from "react"
 
 interface PromptReviewerProps {
   isStreaming: boolean
-  validFiles: FileContent[]
-  finalPrompt: string
   handleSendToAI: () => void
   stop: () => void
-  onModifyQuery: () => void
-  onResetAll: () => void
+  children?: React.ReactNode
 }
 
 export const PromptReviewer = ({
   isStreaming,
-  validFiles,
-  finalPrompt,
   handleSendToAI,
   stop,
-  onModifyQuery,
-  onResetAll,
+  children,
 }: PromptReviewerProps) => {
+  const { clearPrompts, resetAll: resetAllChat } = useChatActions()
+  const resetFiles = useFileExplorerStore((s) => s.resetFiles)
+
+  const handleModifyQuery = () => {
+    clearPrompts()
+  }
+
+  const handleResetAll = () => {
+    resetAllChat()
+    resetFiles()
+  }
+
   return (
     <Card className="animate-in border-border/60 shadow-sm transition-all duration-300 fade-in-50 slide-in-from-bottom-2">
       <CardHeader className="pb-4">
@@ -48,10 +55,7 @@ export const PromptReviewer = ({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <GeneratedPrompt
-          fileContents={validFiles}
-          generatedPrompt={finalPrompt}
-        />
+        {children}
 
         <Separator className="my-1" />
 
@@ -93,7 +97,7 @@ export const PromptReviewer = ({
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={onModifyQuery}
+              onClick={handleModifyQuery}
               disabled={isStreaming}
               className="inline-flex h-9 flex-1 items-center justify-center gap-2 text-xs sm:flex-initial"
             >
@@ -103,7 +107,7 @@ export const PromptReviewer = ({
 
             <Button
               variant="ghost"
-              onClick={onResetAll}
+              onClick={handleResetAll}
               disabled={isStreaming}
               className="inline-flex h-9 flex-1 items-center justify-center gap-2 text-xs text-muted-foreground hover:bg-destructive/5 hover:text-destructive sm:flex-initial"
             >

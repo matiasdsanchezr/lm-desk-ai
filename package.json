@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/run.mjs --dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/run.mjs",
     "lint": "eslint"
   },
   "dependencies": {
@@ -17,6 +17,7 @@
     "@base-ui/react": "^1.6.0",
     "@hono/node-server": "^2.0.11",
     "@lexical/react": "^0.48.0",
+    "@next/env": "^16.2.12",
     "@radix-ui/react-accordion": "^1.2.16",
     "@radix-ui/react-use-controllable-state": "^1.2.3",
     "@streamdown/cjk": "^1.0.3",

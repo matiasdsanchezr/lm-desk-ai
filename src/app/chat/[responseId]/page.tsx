@@ -12,6 +12,8 @@ interface ExistingChatPageProps {
   params: Promise<{ responseId: string }>
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function ExistingChatPage({
   params,
 }: ExistingChatPageProps) {
@@ -23,7 +25,7 @@ export default async function ExistingChatPage({
     listChats(),
   ])
 
-  if (!initialChat.data || initialChat.error) {
+  if (!initialChat.data || initialChat.error || responses.error) {
     notFound()
   }
 

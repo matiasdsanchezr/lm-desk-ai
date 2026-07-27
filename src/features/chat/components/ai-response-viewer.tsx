@@ -30,32 +30,34 @@ export const AIResponseViewer = ({
   error,
   isStreaming,
 }: AIResponseSectionProps) => {
-  const lastMessage = messages[messages.length - 1]
+  const lastMessage = messages.at(-1)
 
   const { reasoningText, responseText } = useMemo(() => {
-    if (!lastMessage?.parts) {
+    if (!lastMessage) {
       return {
-        reasoningText: "Sin razonamiento",
-        responseText: "Sin respuesta",
+        reasoningText: "",
+        responseText: "",
       }
     }
 
     let reasoning = ""
     let text = ""
 
-    for (const part of lastMessage.parts) {
-      if (part.type === "reasoning") {
-        reasoning += (reasoning ? "\n" : "") + part.text
-      } else if (part.type === "text") {
-        text += (text ? " " : "") + part.text
+    if (lastMessage.parts && lastMessage.parts.length > 0) {
+      for (const part of lastMessage.parts) {
+        if (part.type === "reasoning") {
+          reasoning += (reasoning ? "\n" : "") + part.text
+        } else if (part.type === "text") {
+          text += (text ? " " : "") + part.text
+        }
       }
     }
 
     return {
-      reasoningText: reasoning || "Sin razonamiento",
-      responseText: text || "Sin respuesta",
+      reasoningText: reasoning,
+      responseText: text,
     }
-  }, [lastMessage?.parts])
+  }, [lastMessage])
 
   return (
     <Card className="overflow-hidden border-border/60 shadow-md transition-all">
@@ -74,7 +76,7 @@ export const AIResponseViewer = ({
               </CardDescription>
             </div>
           </div>
-          {messages.length > 1 && (
+          {messages.length > 0 && (
             <Badge variant="outline" className="h-6 gap-1 bg-background/50">
               <span className="icon-[fa7-solid--check-double] text-[10px] text-green-600" />
               Generado
@@ -84,12 +86,14 @@ export const AIResponseViewer = ({
       </CardHeader>
       <CardContent className="p-0">
         <div className="min-h-50 transition-all duration-500 ease-in-out">
-          {messages.length > 1 ? (
+          {messages.length > 0 ? (
             <div className="prose prose-sm dark:prose-invert overflow-anchor-none max-w-none p-6">
-              <Reasoning className="w-full" isStreaming={isStreaming}>
-                <ReasoningTrigger />
-                <ReasoningContent>{reasoningText}</ReasoningContent>
-              </Reasoning>
+              {reasoningText && (
+                <Reasoning className="w-full" isStreaming={isStreaming}>
+                  <ReasoningTrigger />
+                  <ReasoningContent>{reasoningText}</ReasoningContent>
+                </Reasoning>
+              )}
               <Streamdown
                 plugins={{
                   code: createCodePlugin({

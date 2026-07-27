@@ -13,7 +13,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useChatStore } from "@/features/chat/store/chat-store"
+import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { FileExplorerView } from "@/features/file-explorer/components/file-explorer-view"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
@@ -48,12 +48,8 @@ export const ContextBuilder = ({
   handleFetchFileContents,
   isReadyToReview,
 }: ContextBuilderProps) => {
-  const { userQuery, setUserQuery } = useChatStore(
-    useShallow((s) => ({
-      userQuery: s.userQuery,
-      setUserQuery: s.setUserQuery,
-    }))
-  )
+  const userQuery = useChatStore((s) => s.userQuery)
+  const { setUserQuery } = useChatActions()
 
   const {
     selectedFiles,
