@@ -6,7 +6,7 @@ import { getFileContents } from "@/features/file-explorer/actions/get-file-conte
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { type FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
-import { PromptBuilder } from "@/utils/build-prompt"
+import { PromptBuilder } from "@/utils/prompt-builder"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
 import { useRouter } from "next/navigation"

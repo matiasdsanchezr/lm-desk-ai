@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Aplicación para analizar código mediante LLMs y generar sugerencias de mejoras.",
   openGraph: {
     title: "Code Advisor",
-    description: "Next.js · TypeScript · Node.js · GenAi · Vertex · NVIDIA NIM",
+    description: "Next.js - TypeScript - Node.js - GenAI - Vertex - NVIDIA NIM",
     locale: "es_AR",
   },
   keywords: ["AI", "LLM", "Coding", "Agent"],
