@@ -88,7 +88,6 @@ export const ChatWorkspace = ({
       },
       { error: null }
     )
-  console.log(initialChat?.messages)
   const {
     messages,
     status,

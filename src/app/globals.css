@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 @plugin "@iconify/tailwind4";
 @source "../../node_modules/streamdown/dist/*.js";
-@source "../**/*.{js,jsx,ts,tsx,css}";
+@source "../**/*.{js,jsx,ts,tsx,css}" not "../../storage/**/*";
 
 @custom-variant dark (&:is(.dark *));
 
