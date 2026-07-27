@@ -3,10 +3,10 @@ import { streamText } from "@/services/inference/inference-service"
 import { InferenceProviderEnum } from "@/services/inference/schemas/provider-schema"
 import { InferenceModelSchema } from "@/services/inference/types/inference-model"
 import {
-  type UIMessage,
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  safeValidateUIMessages,
   toUIMessageStream,
 } from "ai"
 import { revalidatePath } from "next/cache"
@@ -21,7 +21,6 @@ const ChatRequestBodySchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   selectedFiles: z.array(z.string()).optional(),
-  userPrompt: z.string().optional(),
 })
 
 export async function POST(req: Request) {
@@ -51,7 +50,6 @@ export async function POST(req: Request) {
       temperature,
       topP,
       selectedFiles,
-      userPrompt,
     } = parsedBody.data
 
     const inferenceModelResult = InferenceModelSchema.safeParse({
@@ -68,15 +66,14 @@ export async function POST(req: Request) {
       )
     }
 
-    let modelMessages
-    try {
-      modelMessages = await convertToModelMessages(messages as UIMessage[])
-    } catch (err) {
-      return NextResponse.json(
-        { error: "Invalid messages format", details: String(err) },
-        { status: 400 }
-      )
+    const validatedMessages = await safeValidateUIMessages({
+      messages,
+    })
+    if (!validatedMessages.success) {
+      throw new Error(validatedMessages.error.message)
     }
+
+    const modelMessages = await convertToModelMessages(validatedMessages.data)
 
     return createUIMessageStreamResponse({
       status: 200,
@@ -93,12 +90,13 @@ export async function POST(req: Request) {
           writer.merge(
             toUIMessageStream({
               stream: result.stream,
+              originalMessages: validatedMessages.data,
               sendReasoning: true,
               onError: (error: unknown) => {
                 console.error("[/api/chat] Stream error:", error)
                 return "Error al generar la respuesta"
               },
-              onFinish: async ({ responseMessage }) => {
+              onFinish: async ({ messages, responseMessage }) => {
                 try {
                   let textContent = ""
                   let reasoningContent = ""
@@ -115,9 +113,7 @@ export async function POST(req: Request) {
                   if (textContent) {
                     await chatHistoryService.saveResponse({
                       selectedFiles: selectedFiles || [],
-                      userPrompt: userPrompt ?? "",
-                      reasoning: reasoningContent,
-                      response: textContent,
+                      messages,
                     })
                     revalidatePath("/chat")
                   }

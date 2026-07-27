@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useMemo, useState, useTransition } from "react"
 import { deleteChat } from "../actions/chat-history-actions"
-import type { SavedResponseMeta } from "../services/chat-history-service"
+import type { SavedChatMeta } from "../types/saved-chat"
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   day: "2-digit",
@@ -41,7 +41,7 @@ function formatResponseDate(dateValue: Date | string) {
 }
 
 interface ChatHistorySidebarProps {
-  responses: SavedResponseMeta[]
+  responses: SavedChatMeta[]
 }
 
 export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
@@ -99,7 +99,6 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
         return
       }
 
-      // Si el chat eliminado es el activo, redirigir a nuevo chat
       if (currentId === id) {
         router.replace("/chat")
       }
@@ -197,7 +196,7 @@ export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
                       const isActive = currentId === response.id
                       const isDeleting = deletingId === response.id
                       const formattedDate = formatResponseDate(
-                        response.createdAt
+                        response.createdAt || "0"
                       )
 
                       return (

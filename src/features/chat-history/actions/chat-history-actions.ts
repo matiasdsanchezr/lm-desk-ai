@@ -2,18 +2,16 @@
 
 import { ActionState } from "@/types/action-state"
 import { revalidatePath } from "next/cache"
-import {
-  chatHistoryService,
-  SavedResponseMeta,
-} from "../services/chat-history-service"
-import { SavedChat } from "../types/saved-chat"
+import { chatHistoryService } from "../services/chat-history-service"
+import type {
+  SaveChatInput,
+  SavedChat,
+  SavedChatMeta,
+} from "../types/saved-chat"
 
-export const saveChat = async (data: {
-  title?: string
-  selectedFiles: string[]
-  userPrompt: string
-  response: string
-}): Promise<ActionState<{ id: string }>> => {
+export const saveChat = async (
+  data: SaveChatInput
+): Promise<ActionState<{ id: string }>> => {
   try {
     const result = await chatHistoryService.saveResponse(data)
     revalidatePath("/chat")
@@ -33,9 +31,7 @@ export const loadChat = async (id: string): Promise<ActionState<SavedChat>> => {
   }
 }
 
-export const listChats = async (): Promise<
-  ActionState<SavedResponseMeta[]>
-> => {
+export const listChats = async (): Promise<ActionState<SavedChatMeta[]>> => {
   try {
     const result = await chatHistoryService.listResponses()
     return { data: result }

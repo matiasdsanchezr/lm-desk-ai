@@ -1,14 +1,14 @@
 import { config } from "@/lib/config"
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { SavedChat } from "../types/saved-chat"
+import type {
+  SaveChatInput,
+  SavedChat,
+  SavedChatMeta,
+  UpdateChatInput,
+} from "../types/saved-chat"
 
 const GENERATED_DIR = path.join(config.STORAGE_PATH, "chats")
-
-export type SavedResponseMeta = Pick<
-  SavedChat,
-  "id" | "title" | "createdAt"
->
 
 async function ensureDirectoryExists() {
   await mkdir(GENERATED_DIR, { recursive: true })
@@ -18,13 +18,7 @@ export const chatHistoryService = {
   /**
    * Guarda una respuesta en el sistema de archivos local.
    */
-  async saveResponse(data: {
-    title?: string
-    selectedFiles: string[]
-    userPrompt: string
-    reasoning?: string
-    response: string
-  }): Promise<SavedChat> {
+  async saveResponse(data: SaveChatInput): Promise<SavedChat> {
     await ensureDirectoryExists()
 
     const id = `response-${Date.now()}`
@@ -36,9 +30,7 @@ export const chatHistoryService = {
       title,
       createdAt,
       selectedFiles: data.selectedFiles,
-      userPrompt: data.userPrompt,
-      reasoning: data.reasoning,
-      response: data.response,
+      messages: data.messages,
     }
 
     const filePath = path.join(GENERATED_DIR, `${id}.json`)
@@ -62,7 +54,7 @@ export const chatHistoryService = {
    */
   async updateResponse(
     id: string,
-    updates: Partial<Omit<SavedChat, "id" | "createdAt">>
+    updates: UpdateChatInput
   ): Promise<SavedChat> {
     const currentResponse = await chatHistoryService.loadResponse(id)
 
@@ -81,12 +73,12 @@ export const chatHistoryService = {
   /**
    * Lista todas las respuestas ordenadas por fecha de creación descendente.
    */
-  async listResponses(): Promise<SavedResponseMeta[]> {
+  async listResponses(): Promise<SavedChatMeta[]> {
     await ensureDirectoryExists()
     const files = await readdir(GENERATED_DIR)
     const jsonFiles = files.filter((file) => file.endsWith(".json"))
 
-    const responses: SavedResponseMeta[] = []
+    const responses: SavedChatMeta[] = []
     for (const file of jsonFiles) {
       try {
         const filePath = path.join(GENERATED_DIR, file)

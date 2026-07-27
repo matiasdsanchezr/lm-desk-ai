@@ -1,39 +1,48 @@
-import type { AgentResponse as GeneratedContent } from "@/types/agent-response"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 interface ChatState {
   userQuery: string
-  generatedContent: GeneratedContent
+  userPrompt: string
+  finalPrompt: string
 }
 
 interface ChatActions {
-  setUserQuery: (query: string) => void
-  setAgentResponse: (response: GeneratedContent) => void
-  resetGeneratedContent: () => void
-  resetAll: () => void
+  actions: {
+    setUserQuery: (query: string) => void
+    setPrompts: (prompts: { userPrompt: string; finalPrompt: string }) => void
+    clearPrompts: () => void
+    resetAll: () => void
+  }
 }
 
 const initialState: ChatState = {
   userQuery: "",
-  generatedContent: { response: "" },
+  userPrompt: "",
+  finalPrompt: "",
 }
 
 export const useChatStore = create<ChatState & ChatActions>()(
   persist(
     (set) => ({
       ...initialState,
-      setUserQuery: (query) => set({ userQuery: query }),
-      setAgentResponse: (response) => set({ generatedContent: response }),
-      resetGeneratedContent: () => set({ generatedContent: { response: "" } }),
-      resetAll: () => set(initialState),
+      actions: {
+        setUserQuery: (userQuery) => set({ userQuery }),
+        setPrompts: ({ userPrompt, finalPrompt }) =>
+          set({ userPrompt, finalPrompt }),
+        clearPrompts: () => set({ userPrompt: "", finalPrompt: "" }),
+        resetAll: () => set(initialState),
+      },
     }),
     {
       name: "chat-state",
       partialize: (state) => ({
         userQuery: state.userQuery,
-        generatedContent: state.generatedContent,
+        userPrompt: state.userPrompt,
+        finalPrompt: state.finalPrompt,
       }),
     }
   )
 )
+
+export const useChatActions = () => useChatStore((state) => state.actions)

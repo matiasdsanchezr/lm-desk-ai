@@ -8,24 +8,26 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Textarea } from "@/components/ui/textarea"
-import { FileContent } from "@/types/file-content"
+import { useChatStore } from "@/features/chat/store/chat-store"
+import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
-export const GeneratedPrompt = ({
-  fileContents,
-  generatedPrompt,
-}: {
-  fileContents: FileContent[]
-  generatedPrompt: string
-}) => {
+export const GeneratedPrompt = () => {
   const [copied, setCopied] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const validFiles = fileContents.filter((f) => !f.error && f.content)
+
+  const finalPrompt = useChatStore((s) => s.finalPrompt)
+  const fileContents = useFileExplorerStore((s) => s.fileContents)
+
+  const validFiles = useMemo(
+    () => fileContents.filter((f) => !f.error && f.content),
+    [fileContents]
+  )
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(generatedPrompt)
+      await navigator.clipboard.writeText(finalPrompt)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
@@ -93,7 +95,7 @@ export const GeneratedPrompt = ({
 
         <Textarea
           readOnly
-          value={generatedPrompt}
+          value={finalPrompt}
           className="max-h-125 min-h-64 resize-y bg-background font-mono text-xs focus-visible:ring-1"
           aria-label="Código fuente unificado"
         />
@@ -102,8 +104,8 @@ export const GeneratedPrompt = ({
             Haga clic dentro y use Ctrl+A para seleccionar manualmente
           </span>
           <span>
-            {generatedPrompt.length.toLocaleString()} caracteres · ~
-            {Math.ceil(generatedPrompt.length / 4).toLocaleString()} tokens
+            {finalPrompt.length.toLocaleString()} caracteres · ~
+            {Math.ceil(finalPrompt.length / 4).toLocaleString()} tokens
           </span>
         </div>
       </CollapsibleContent>
