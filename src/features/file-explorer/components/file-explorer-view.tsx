@@ -154,7 +154,7 @@ export function FileExplorerView({
         </Button>
       </div>
 
-      <div className="flex min-h-[300px] flex-col overflow-hidden rounded-xl border bg-card md:h-[500px] md:flex-row">
+      <div className="flex min-h-75 flex-col overflow-hidden rounded-xl border bg-card md:h-125 md:flex-row">
         {/* PANEL IZQUIERDO: ÁRBOL */}
         <div
           className={cn(

@@ -18,7 +18,7 @@ export const chatHistoryService = {
   /**
    * Guarda una respuesta en el sistema de archivos local.
    */
-  async saveResponse(data: SaveChatInput): Promise<SavedChat> {
+  async saveChat(data: SaveChatInput): Promise<SavedChat> {
     await ensureDirectoryExists()
 
     const id = `response-${Date.now()}`
@@ -42,7 +42,7 @@ export const chatHistoryService = {
   /**
    * Obtiene una respuesta por su ID.
    */
-  async loadResponse(id: string): Promise<SavedChat> {
+  async loadChat(id: string): Promise<SavedChat> {
     const fileName = id.endsWith(".json") ? id : `${id}.json`
     const filePath = path.join(GENERATED_DIR, fileName)
     const content = await readFile(filePath, "utf-8")
@@ -52,11 +52,8 @@ export const chatHistoryService = {
   /**
    * Actualiza campos específicos de una respuesta existente por su ID.
    */
-  async updateResponse(
-    id: string,
-    updates: UpdateChatInput
-  ): Promise<SavedChat> {
-    const currentResponse = await chatHistoryService.loadResponse(id)
+  async updateChat(id: string, updates: UpdateChatInput): Promise<SavedChat> {
+    const currentResponse = await chatHistoryService.loadChat(id)
 
     const updatedResponse: SavedChat = {
       ...currentResponse,
@@ -73,7 +70,7 @@ export const chatHistoryService = {
   /**
    * Lista todas las respuestas ordenadas por fecha de creación descendente.
    */
-  async listResponses(): Promise<SavedChatMeta[]> {
+  async listChats(): Promise<SavedChatMeta[]> {
     await ensureDirectoryExists()
     const files = await readdir(GENERATED_DIR)
     const jsonFiles = files.filter((file) => file.endsWith(".json"))
@@ -104,7 +101,7 @@ export const chatHistoryService = {
   /**
    * Elimina un archivo de respuesta por su ID.
    */
-  async deleteResponse(id: string): Promise<void> {
+  async deleteChat(id: string): Promise<void> {
     const fileName = id.endsWith(".json") ? id : `${id}.json`
     const filePath = path.join(GENERATED_DIR, fileName)
     await unlink(filePath)

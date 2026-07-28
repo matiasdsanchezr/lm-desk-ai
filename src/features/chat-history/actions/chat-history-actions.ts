@@ -7,47 +7,62 @@ import type {
   SaveChatInput,
   SavedChat,
   SavedChatMeta,
+  UpdateChatInput,
 } from "../types/saved-chat"
 
 export const saveChat = async (
   data: SaveChatInput
 ): Promise<ActionState<{ id: string }>> => {
   try {
-    const result = await chatHistoryService.saveResponse(data)
+    const result = await chatHistoryService.saveChat(data)
     revalidatePath("/chat")
     return { data: { id: result.id } }
   } catch (error) {
-    console.error("Error al guardar la respuesta:", error)
-    return { error: "No se pudo guardar la respuesta generada" }
+    console.error("Error al guardar el chat:", error)
+    return { error: "No se pudo guardar el chat" }
   }
 }
 
 export const loadChat = async (id: string): Promise<ActionState<SavedChat>> => {
   try {
-    const result = await chatHistoryService.loadResponse(id)
+    const result = await chatHistoryService.loadChat(id)
     return { data: result }
   } catch {
-    return { error: "No se pudo cargar la respuesta especificada" }
+    return { error: "No se pudo cargar el chat especificado" }
   }
 }
 
 export const listChats = async (): Promise<ActionState<SavedChatMeta[]>> => {
   try {
-    const result = await chatHistoryService.listResponses()
+    const result = await chatHistoryService.listChats()
     return { data: result }
   } catch (error) {
-    console.error("Error al listar las respuestas:", error)
-    return { error: "No se pudieron listar las respuestas" }
+    console.error("Error al listar los chats:", error)
+    return { error: "No se pudieron listar los chats" }
   }
 }
 
 export const deleteChat = async (id: string): Promise<ActionState<void>> => {
   try {
-    await chatHistoryService.deleteResponse(id)
+    await chatHistoryService.deleteChat(id)
     revalidatePath("/chat")
     return {}
   } catch (error) {
-    console.error(`Error al eliminar la respuesta ${id}:`, error)
-    return { error: "No se pudo eliminar la respuesta" }
+    console.error(`Error al eliminar el chat ${id}:`, error)
+    return { error: "No se pudo eliminar el chat" }
+  }
+}
+
+export const updateChat = async (
+  id: string,
+  updates: UpdateChatInput
+): Promise<ActionState<void>> => {
+  try {
+    await chatHistoryService.updateChat(id, updates)
+    revalidatePath("/chat")
+    return {}
+  } catch (error) {
+    console.error(`Error al actualizar el chat ${id}:`, error)
+    return { error: "No se pudo actualizar el chat" }
   }
 }

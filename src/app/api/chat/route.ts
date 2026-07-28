@@ -111,7 +111,7 @@ export async function POST(req: Request) {
                   }
 
                   if (textContent) {
-                    await chatHistoryService.saveResponse({
+                    await chatHistoryService.saveChat({
                       selectedFiles: selectedFiles || [],
                       messages,
                     })
