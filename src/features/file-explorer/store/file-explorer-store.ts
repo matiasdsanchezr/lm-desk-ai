@@ -1,4 +1,4 @@
-import { FileContent } from "@/types/file-content"
+import { FileContent } from "@/services/file/types"
 import { ImageFile } from "@/types/image-file"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"

@@ -3,7 +3,7 @@ import { Metadata } from "next"
 import React, { Suspense } from "react"
 
 export const metadata: Metadata = {
-  title: "Chat | LM Desk",
+  title: "Chat - LM Desk",
   description: "Generar consultas para LLMs sobre tus archivos locales.",
 }
 

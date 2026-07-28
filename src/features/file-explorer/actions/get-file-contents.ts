@@ -2,7 +2,7 @@
 
 import { loadLocalImages, loadProjectGraph } from "@/services/file/file-service"
 import { ActionState } from "@/types/action-state"
-import { FileContent } from "@/types/file-content"
+import { FileContent } from "@/services/file/types"
 import { ImageFile } from "@/types/image-file"
 import { fetchImage, isImagePath } from "@/utils/images"
 import { z } from "zod"
