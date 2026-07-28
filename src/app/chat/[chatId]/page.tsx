@@ -9,7 +9,7 @@ import { generateTreeStructure } from "@/features/file-explorer/actions/get-file
 import { notFound } from "next/navigation"
 
 interface ExistingChatPageProps {
-  params: Promise<{ responseId: string }>
+  params: Promise<{ chatId: string }>
 }
 
 export const dynamic = "force-dynamic"
@@ -17,10 +17,10 @@ export const dynamic = "force-dynamic"
 export default async function ExistingChatPage({
   params,
 }: ExistingChatPageProps) {
-  const { responseId } = await params
+  const { chatId } = await params
 
   const [initialChat, treeStructure, responses] = await Promise.all([
-    loadChat(responseId),
+    loadChat(chatId),
     generateTreeStructure(),
     listChats(),
   ])
@@ -33,10 +33,10 @@ export default async function ExistingChatPage({
     <section className="min-h-0 w-full flex-1">
       <SidebarProvider className="h-full items-stretch">
         <div className="flex h-full w-full items-stretch overflow-hidden">
-          <ChatHistorySidebar responses={responses.data ?? []} />
+          <ChatHistorySidebar savedChats={responses.data ?? []} />
           <div className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
             <ChatWorkspace
-              key={responseId}
+              key={chatId}
               totalFiles={treeStructure.totalFiles}
               treeNodes={treeStructure.treeNodes}
               initialChat={initialChat.data}
