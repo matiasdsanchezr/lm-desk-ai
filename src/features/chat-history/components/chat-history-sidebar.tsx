@@ -1,15 +1,12 @@
+// src/features/chat-history/components/chat-history-sidebar.tsx
 "use client"
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
@@ -23,8 +20,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { MoreHorizontal } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { useCallback, useMemo, useState, useTransition } from "react"
+import { useCallback, useState, useTransition } from "react"
 import { deleteChat } from "../actions/chat-history-actions"
 import type { SavedChatMeta } from "../types/saved-chat"
 
@@ -34,270 +32,253 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   year: "numeric",
 })
 
-function formatResponseDate(dateValue: Date | string) {
+function formatChatDate(dateValue: Date | string) {
   const date = new Date(dateValue)
   if (Number.isNaN(date.getTime())) return "Fecha desconocida"
   return dateFormatter.format(date)
 }
 
 interface ChatHistorySidebarProps {
-  responses: SavedChatMeta[]
+  savedChats: SavedChatMeta[]
 }
 
-export function ChatHistorySidebar({ responses }: ChatHistorySidebarProps) {
+interface ChatHistoryItemProps {
+  chat: SavedChatMeta
+  isActive: boolean
+  isMobile: boolean
+  currentId?: string
+  onSelect: (id: string) => void
+}
+
+function ChatHistoryItem({
+  chat,
+  isActive,
+  isMobile,
+  currentId,
+  onSelect,
+}: ChatHistoryItemProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [isConfirming, setIsConfirming] = useState(false)
+
+  const formattedDate = formatChatDate(chat.createdAt || "0")
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      const res = await deleteChat(chat.id)
+      if (!res.error && currentId === chat.id) {
+        router.push("/chat")
+      }
+    })
+  }
+
+  return (
+    <SidebarMenuItem className="group/menu-item relative">
+      <SidebarMenuButton
+        isActive={isActive}
+        className={cn(
+          "h-auto w-full cursor-pointer rounded-lg border text-left transition-colors hover:bg-muted/50",
+          isActive
+            ? "border-primary/30 bg-muted"
+            : "border-zinc-200/40 bg-background/50 dark:border-zinc-800/40"
+        )}
+        render={
+          <button
+            type="button"
+            onClick={() => onSelect(chat.id)}
+            className="flex w-full flex-col items-start gap-1 p-3 disabled:opacity-60"
+          >
+            <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
+              {chat.title || "Análisis sin título"}
+            </span>
+
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span className="icon-[lucide--calendar] size-3" />
+              <time
+                suppressHydrationWarning
+                dateTime={new Date(chat.createdAt).toISOString()}
+              >
+                {formattedDate}
+              </time>
+            </div>
+          </button>
+        }
+      />
+
+      <DropdownMenu
+        onOpenChange={(open) => {
+          if (!open) setIsConfirming(false)
+        }}
+      >
+        <DropdownMenuTrigger
+          render={
+            <SidebarMenuAction showOnHover>
+              <MoreHorizontal />
+              <span className="sr-only">Menú de opciones</span>
+            </SidebarMenuAction>
+          }
+        />
+        <DropdownMenuContent
+          className="w-52"
+          side={isMobile ? "bottom" : "right"}
+          align={isMobile ? "end" : "start"}
+        >
+          <DropdownMenuItem>
+            <span className="icon-[lucide--edit] size-3.5" />
+            <span>Editar título</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            disabled={isPending}
+            className={cn(
+              "cursor-pointer transition-colors",
+              isConfirming
+                ? "bg-destructive/10 text-destructive focus:bg-destructive focus:text-destructive-foreground font-medium"
+                : "text-destructive focus:bg-destructive/10 focus:text-destructive"
+            )}
+            closeOnClick={false}
+            onClick={(e) => {
+              if (!isConfirming) {
+                e.preventDefault()
+                setIsConfirming(true)
+              } else {
+                handleDelete()
+              }
+            }}
+          >
+            {isPending ? (
+              <>
+                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
+                <span>Eliminando...</span>
+              </>
+            ) : isConfirming ? (
+              <>
+                <span className="icon-[lucide--alert-triangle] size-3.5" />
+                <span>¿Confirmar eliminación?</span>
+              </>
+            ) : (
+              <>
+                <span className="icon-[lucide--trash-2] size-3.5" />
+                <span>Eliminar</span>
+              </>
+            )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </SidebarMenuItem>
+  )
+}
+
+export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
   const router = useRouter()
   const params = useParams()
-  const currentId = params?.responseId as string | undefined
+  const currentId = params?.chatId as string | undefined
 
-  const [isPending, startTransition] = useTransition()
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [idToDeleteConfirm, setIdToDeleteConfirm] = useState<string | null>(
-    null
-  )
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-
-  const { state, toggleSidebar } = useSidebar()
+  const { state, isMobile, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed"
-
-  const responseToDelete = useMemo(
-    () => responses.find((response) => response.id === idToDeleteConfirm),
-    [idToDeleteConfirm, responses]
-  )
 
   const handleSelect = useCallback(
     (id: string) => {
-      if (id === currentId || deletingId) return
       router.push(`/chat/${id}`)
     },
-    [currentId, deletingId, router]
+    [router]
   )
 
   const handleNewChat = useCallback(() => {
-    setDeleteError(null)
     router.push("/chat")
   }, [router])
 
-  const requestDelete = useCallback((id: string) => {
-    setDeleteError(null)
-    setIdToDeleteConfirm(id)
-  }, [])
-
-  const confirmDelete = useCallback(() => {
-    if (!idToDeleteConfirm || isPending) return
-
-    const id = idToDeleteConfirm
-    setDeletingId(id)
-    setIdToDeleteConfirm(null)
-    setDeleteError(null)
-
-    startTransition(async () => {
-      const result = await deleteChat(id)
-
-      if (result.error) {
-        setDeleteError(result.error)
-        setDeletingId(null)
-        return
-      }
-
-      if (currentId === id) {
-        router.replace("/chat")
-      }
-      router.refresh()
-      setDeletingId(null)
-    })
-  }, [currentId, idToDeleteConfirm, isPending, router, startTransition])
-
   return (
-    <>
-      <Sidebar
-        collapsible="icon"
+    <Sidebar
+      collapsible="icon"
+      className={cn(
+        "h-full shrink-0 border-r border-zinc-200/50 bg-zinc-50/50 transition-all duration-300 dark:border-zinc-800/50 dark:bg-zinc-950/20",
+        isCollapsed ? "w-12" : "w-full md:w-80"
+      )}
+    >
+      <SidebarHeader
         className={cn(
-          "h-full shrink-0 border-r border-zinc-200/50 bg-zinc-50/50 transition-all duration-300 dark:border-zinc-800/50 dark:bg-zinc-950/20",
-          isCollapsed ? "w-12" : "w-full md:w-80"
+          "border-b border-zinc-200/50 dark:border-zinc-800/50",
+          isCollapsed ? "p-2" : "px-3 py-3"
         )}
       >
-        <SidebarHeader
+        <div
           className={cn(
-            "border-b border-zinc-200/50 dark:border-zinc-800/50",
-            isCollapsed ? "p-2" : "px-3 py-3"
+            "flex items-center gap-2",
+            isCollapsed ? "flex-col justify-center" : "justify-between"
           )}
         >
+          {!isCollapsed && (
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <span className="icon-[lucide--history] size-4 text-primary" />
+              <span>Historial</span>
+            </div>
+          )}
+
           <div
             className={cn(
-              "flex items-center gap-2",
-              isCollapsed ? "flex-col justify-center" : "justify-between"
+              "flex items-center gap-1.5",
+              isCollapsed && "flex-col"
             )}
           >
-            {!isCollapsed && (
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <span className="icon-[lucide--history] size-4 text-primary" />
-                <span>Historial</span>
-              </div>
-            )}
-
-            <div
+            <button
+              type="button"
+              onClick={handleNewChat}
+              title="Nuevo análisis"
               className={cn(
-                "flex items-center gap-1.5",
-                isCollapsed && "flex-col"
+                "inline-flex items-center justify-center gap-1 rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20",
+                isCollapsed ? "size-8" : "px-2.5 py-1.5 text-xs font-medium"
               )}
             >
-              <button
-                type="button"
-                onClick={handleNewChat}
-                title="Nuevo análisis"
+              <span className="icon-[lucide--plus] size-4" />
+              {!isCollapsed && <span>Nuevo</span>}
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <span
                 className={cn(
-                  "inline-flex items-center justify-center gap-1 rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20",
-                  isCollapsed ? "size-8" : "px-2.5 py-1.5 text-xs font-medium"
+                  isCollapsed
+                    ? "icon-[lucide--panel-left-open]"
+                    : "icon-[lucide--panel-left-close]",
+                  "size-4"
                 )}
-              >
-                <span className="icon-[lucide--plus] size-4" />
-                {!isCollapsed && <span>Nuevo</span>}
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <span
-                  className={cn(
-                    isCollapsed
-                      ? "icon-[lucide--panel-left-open]"
-                      : "icon-[lucide--panel-left-close]",
-                    "size-4"
-                  )}
-                />
-              </button>
-            </div>
+              />
+            </button>
           </div>
-        </SidebarHeader>
+        </div>
+      </SidebarHeader>
 
-        {!isCollapsed && (
-          <SidebarContent className="p-2">
-            <SidebarGroup>
-              <SidebarGroupContent>
-                {deleteError && (
-                  <div
-                    role="alert"
-                    className="mb-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-                  >
-                    {deleteError}
-                  </div>
-                )}
-
-                {responses.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground">
-                    <span className="mb-2 icon-[lucide--archive-x] size-8 opacity-40" />
-                    <span>No hay análisis guardados</span>
-                  </div>
-                ) : (
-                  <SidebarMenu className="gap-1.5">
-                    {responses.map((response) => {
-                      const isActive = currentId === response.id
-                      const isDeleting = deletingId === response.id
-                      const formattedDate = formatResponseDate(
-                        response.createdAt || "0"
-                      )
-
-                      return (
-                        <SidebarMenuItem
-                          key={response.id}
-                          className="group/menu-item relative"
-                        >
-                          <SidebarMenuButton
-                            isActive={isActive}
-                            className={cn(
-                              "h-auto w-full cursor-pointer rounded-lg border text-left transition-colors hover:bg-muted/50",
-                              isActive
-                                ? "border-primary/30 bg-muted"
-                                : "border-zinc-200/40 bg-background/50 dark:border-zinc-800/40"
-                            )}
-                            render={
-                              <button
-                                type="button"
-                                onClick={() => handleSelect(response.id)}
-                                disabled={isDeleting}
-                                className="flex w-full flex-col items-start gap-1 p-3 pr-9 disabled:opacity-60"
-                              >
-                                <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
-                                  {response.title || "Análisis sin título"}
-                                </span>
-
-                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                  <span className="icon-[lucide--calendar] size-3" />
-                                  <time
-                                    suppressHydrationWarning
-                                    dateTime={new Date(
-                                      response.createdAt
-                                    ).toISOString()}
-                                  >
-                                    {formattedDate}
-                                  </time>
-                                </div>
-                              </button>
-                            }
-                          />
-
-                          <SidebarMenuAction
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              requestDelete(response.id)
-                            }}
-                            disabled={isPending || isDeleting}
-                            showOnHover
-                            className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            {isDeleting ? (
-                              <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
-                            ) : (
-                              <span className="icon-[lucide--trash-2] size-3.5" />
-                            )}
-                          </SidebarMenuAction>
-                        </SidebarMenuItem>
-                      )
-                    })}
-                  </SidebarMenu>
-                )}
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        )}
-      </Sidebar>
-
-      <AlertDialog
-        open={idToDeleteConfirm !== null}
-        onOpenChange={(open) => {
-          if (!open && !isPending) setIdToDeleteConfirm(null)
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar este análisis?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {responseToDelete?.title ? (
-                <>
-                  Se eliminará permanentemente{" "}
-                  <strong>“{responseToDelete.title}”</strong>.
-                </>
+      {!isCollapsed && (
+        <SidebarContent className="p-2">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {savedChats.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground">
+                  <span className="mb-2 icon-[lucide--archive-x] size-8 opacity-40" />
+                  <span>No hay análisis guardados</span>
+                </div>
               ) : (
-                "Esta acción no se puede deshacer."
+                <SidebarMenu className="gap-1.5">
+                  {savedChats.map((chat) => (
+                    <ChatHistoryItem
+                      key={chat.id}
+                      chat={chat}
+                      isActive={currentId === chat.id}
+                      isMobile={isMobile}
+                      currentId={currentId}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </SidebarMenu>
               )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isPending}
-              className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
-            >
-              {isPending ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      )}
+    </Sidebar>
   )
 }
