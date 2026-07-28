@@ -1,12 +1,5 @@
-// src/features/chat-history/components/chat-history-sidebar.tsx
 "use client"
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Sidebar,
   SidebarContent,
@@ -14,159 +7,16 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
-import { MoreHorizontal } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { useCallback, useState, useTransition } from "react"
-import { deleteChat } from "../actions/chat-history-actions"
+import { useCallback } from "react"
 import type { SavedChatMeta } from "../types/saved-chat"
-
-const dateFormatter = new Intl.DateTimeFormat("es-AR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-})
-
-function formatChatDate(dateValue: Date | string) {
-  const date = new Date(dateValue)
-  if (Number.isNaN(date.getTime())) return "Fecha desconocida"
-  return dateFormatter.format(date)
-}
+import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
   savedChats: SavedChatMeta[]
-}
-
-interface ChatHistoryItemProps {
-  chat: SavedChatMeta
-  isActive: boolean
-  isMobile: boolean
-  currentId?: string
-  onSelect: (id: string) => void
-}
-
-function ChatHistoryItem({
-  chat,
-  isActive,
-  isMobile,
-  currentId,
-  onSelect,
-}: ChatHistoryItemProps) {
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [isConfirming, setIsConfirming] = useState(false)
-
-  const formattedDate = formatChatDate(chat.createdAt || "0")
-
-  const handleDelete = () => {
-    startTransition(async () => {
-      const res = await deleteChat(chat.id)
-      if (!res.error && currentId === chat.id) {
-        router.push("/chat")
-      }
-    })
-  }
-
-  return (
-    <SidebarMenuItem className="group/menu-item relative">
-      <SidebarMenuButton
-        isActive={isActive}
-        className={cn(
-          "h-auto w-full cursor-pointer rounded-lg border text-left transition-colors hover:bg-muted/50",
-          isActive
-            ? "border-primary/30 bg-muted"
-            : "border-zinc-200/40 bg-background/50 dark:border-zinc-800/40"
-        )}
-        render={
-          <button
-            type="button"
-            onClick={() => onSelect(chat.id)}
-            className="flex w-full flex-col items-start gap-1 p-3 disabled:opacity-60"
-          >
-            <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
-              {chat.title || "Análisis sin título"}
-            </span>
-
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <span className="icon-[lucide--calendar] size-3" />
-              <time
-                suppressHydrationWarning
-                dateTime={new Date(chat.createdAt).toISOString()}
-              >
-                {formattedDate}
-              </time>
-            </div>
-          </button>
-        }
-      />
-
-      <DropdownMenu
-        onOpenChange={(open) => {
-          if (!open) setIsConfirming(false)
-        }}
-      >
-        <DropdownMenuTrigger
-          render={
-            <SidebarMenuAction showOnHover>
-              <MoreHorizontal />
-              <span className="sr-only">Menú de opciones</span>
-            </SidebarMenuAction>
-          }
-        />
-        <DropdownMenuContent
-          className="w-52"
-          side={isMobile ? "bottom" : "right"}
-          align={isMobile ? "end" : "start"}
-        >
-          <DropdownMenuItem>
-            <span className="icon-[lucide--edit] size-3.5" />
-            <span>Editar título</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            disabled={isPending}
-            className={cn(
-              "cursor-pointer transition-colors",
-              isConfirming
-                ? "bg-destructive/10 text-destructive focus:bg-destructive focus:text-destructive-foreground font-medium"
-                : "text-destructive focus:bg-destructive/10 focus:text-destructive"
-            )}
-            closeOnClick={false}
-            onClick={(e) => {
-              if (!isConfirming) {
-                e.preventDefault()
-                setIsConfirming(true)
-              } else {
-                handleDelete()
-              }
-            }}
-          >
-            {isPending ? (
-              <>
-                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
-                <span>Eliminando...</span>
-              </>
-            ) : isConfirming ? (
-              <>
-                <span className="icon-[lucide--alert-triangle] size-3.5" />
-                <span>¿Confirmar eliminación?</span>
-              </>
-            ) : (
-              <>
-                <span className="icon-[lucide--trash-2] size-3.5" />
-                <span>Eliminar</span>
-              </>
-            )}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </SidebarMenuItem>
-  )
 }
 
 export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
