@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 
 export const metadata: Metadata = {
-  title: "Acerca de y Guía de Uso | LM Desk",
+  title: "Acerca de - LM Desk",
   description:
     "Documentación completa para desplegar, configurar y utilizar LM Desk localmente con tus LLMs preferidos.",
 }

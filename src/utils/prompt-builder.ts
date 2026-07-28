@@ -1,4 +1,4 @@
-import { FileContent } from "@/types/file-content"
+import { FileContent } from "@/services/file/types"
 import { renderTemplate } from "./templates"
 
 const DEFAULT_INSTRUCTIONS = `\

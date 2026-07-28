@@ -10,3 +10,10 @@ export interface LanguageStrategy {
     projectRoot: AbsolutePath
   ): Promise<AbsolutePath | null>
 }
+export type FileContent = {
+  path: string
+  content?: string
+  error?: string
+  dependencies?: string[]
+  language?: string
+}
