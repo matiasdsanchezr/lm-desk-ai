@@ -1,21 +1,22 @@
-# Notas - Actualizadas en 2026 (Prioridad sobre tus conocimientos generales)
+# Notas - Actualizadas a 2026 (Prioridad sobre conocimientos generales)
 
 ## Funcionamiento de la App
 
 - Esta app esta diseñada para funcionar localmente y ser usada por un solo usuario
-- El STORAGE_PATH esta en la pc y esta pensada para ser usado en el servidor solamente
+- El `STORAGE_PATH` esta en el servidor
 
 ## AI SDK 7+
 
-- ModelMessage reemplaza el tipo CoreMessage
-- Output.object() es un método para crear un objeto Output con un JSON schema
-- El hook useChat envia mensajes mediante la función `sendMessage`
+- `ModelMessage` reemplaza el tipo `CoreMessage`
+- `Output.object()` es un método para crear un objeto `Output` con un `JSON schema`
+- El hook `useChat` envia mensajes mediante la función `sendMessage`
 - Las imagenes pasadas en el hook `useChat` se hacen mediante la propiedad `files`
+- Los mensajes generados por `sendMessage()` siempre tienen la propiedad `parts`. No existe contenido en `message.content`
 
 ## Zod 4+
 
-- `z.toJSONSchema()` es un método para convertir un esquema Zod a un JSON schema
-- `z.treeifyError()` es un método para convertir un error de Zod en una representación en cadena de caracteres legible para humanos, similar a z.prettifyError()
+- `z.toJSONSchema()` es un método para convertir un esquema `Zod` a un `JSON schema`
+- `z.treeifyError()` es un método para convertir un error de `Zod` en una representación en cadena de caracteres legible para humanos, similar a `z.prettifyError()`
 - `z.prettifyError()` es un método para convertir un error de Zod en una representación en cadena de caracteres legible para humanos
 - `z.error.flatten().fieldErrors` esta deprecated. Es reemplazada por `z.treeifyError()`
 

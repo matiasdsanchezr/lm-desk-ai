@@ -14,6 +14,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 const ChatRequestBodySchema = z.object({
+  chatId: z.string().optional(),
   provider: InferenceProviderEnum,
   messages: z.array(z.unknown()),
   model: z.string(),
@@ -21,6 +22,7 @@ const ChatRequestBodySchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   selectedFiles: z.array(z.string()).optional(),
+  includeReasoning: z.boolean().default(true),
 })
 
 export async function POST(req: Request) {
@@ -43,6 +45,7 @@ export async function POST(req: Request) {
       )
     }
     const {
+      chatId,
       provider,
       messages,
       model,
@@ -50,6 +53,7 @@ export async function POST(req: Request) {
       temperature,
       topP,
       selectedFiles,
+      includeReasoning,
     } = parsedBody.data
 
     const inferenceModelResult = InferenceModelSchema.safeParse({
@@ -73,7 +77,19 @@ export async function POST(req: Request) {
       throw new Error(validatedMessages.error.message)
     }
 
-    const modelMessages = await convertToModelMessages(validatedMessages.data)
+    const messagesToProcess = includeReasoning
+      ? validatedMessages.data
+      : validatedMessages.data.map((msg) => {
+          if (msg.role === "assistant" && Array.isArray(msg.parts)) {
+            return {
+              ...msg,
+              parts: msg.parts.filter((part) => part.type !== "reasoning"),
+            }
+          }
+          return msg
+        })
+
+    const modelMessages = await convertToModelMessages(messagesToProcess)
 
     return createUIMessageStreamResponse({
       status: 200,
@@ -99,22 +115,31 @@ export async function POST(req: Request) {
               onFinish: async ({ messages, responseMessage }) => {
                 try {
                   let textContent = ""
-                  let reasoningContent = ""
-
                   for (const part of responseMessage.parts) {
                     if (part.type === "text") {
                       textContent += (textContent ? "\n\n" : "") + part.text
-                    } else if (part.type === "reasoning") {
-                      reasoningContent +=
-                        (reasoningContent ? "\n\n" : "") + part.text
                     }
                   }
 
                   if (textContent) {
-                    await chatHistoryService.saveChat({
-                      selectedFiles: selectedFiles || [],
-                      messages,
-                    })
+                    if (chatId) {
+                      try {
+                        await chatHistoryService.updateChat(chatId, {
+                          messages,
+                        })
+                      } catch {
+                        await chatHistoryService.saveChat({
+                          id: chatId,
+                          selectedFiles: selectedFiles || [],
+                          messages,
+                        })
+                      }
+                    } else {
+                      await chatHistoryService.saveChat({
+                        selectedFiles: selectedFiles || [],
+                        messages,
+                      })
+                    }
                     revalidatePath("/chat")
                   }
                 } catch (err) {

@@ -21,7 +21,7 @@ export const chatHistoryService = {
   async saveChat(data: SaveChatInput): Promise<SavedChat> {
     await ensureDirectoryExists()
 
-    const id = `response-${Date.now()}`
+    const id = data.id ?? `response-${Date.now()}`
     const title = data.title ?? id
     const createdAt = new Date().toISOString()
 

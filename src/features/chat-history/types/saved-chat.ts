@@ -11,6 +11,7 @@ export interface SavedChat {
 export type SavedChatMeta = Pick<SavedChat, "id" | "title" | "createdAt">
 
 export interface SaveChatInput {
+  id?: string
   title?: string
   selectedFiles: string[]
   messages: UIMessage[]
