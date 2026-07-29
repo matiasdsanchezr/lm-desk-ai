@@ -29,12 +29,16 @@ export const ChatWorkspace = ({
   initialChat,
 }: ChatWorkspaceProps) => {
   const router = useRouter()
+  const [activeChatId, setActiveChatId] = useState<string | undefined>(
+    initialChat?.id
+  )
 
-  const { userQuery, userPrompt, finalPrompt } = useChatStore(
+  const { userQuery, userPrompt, finalPrompt, includeReasoning } = useChatStore(
     useShallow((s) => ({
       userQuery: s.userQuery,
       userPrompt: s.userPrompt,
       finalPrompt: s.finalPrompt,
+      includeReasoning: s.includeReasoning,
     }))
   )
   const { setPrompts } = useChatActions()
@@ -88,18 +92,15 @@ export const ChatWorkspace = ({
       },
       { error: null }
     )
-  const {
-    messages,
-    status,
-    error,
-    setMessages,
-    sendMessage,
-    clearError,
-    stop,
-  } = useChat({
+
+  const { messages, status, error, sendMessage, clearError, stop } = useChat({
     messages: initialChat?.messages,
     onFinish: () => {
-      router.refresh()
+      if (!initialChat && activeChatId) {
+        router.push(`/chat/${activeChatId}`)
+      } else {
+        router.refresh()
+      }
     },
   })
 
@@ -117,7 +118,10 @@ export const ChatWorkspace = ({
 
   const handleSendToAI = () => {
     clearError()
-    setMessages([]) // Reiniciar chat para enviar solo un mensaje y contexto
+    const chatIdToUse = activeChatId ?? `response-${Date.now()}`
+    if (!activeChatId) {
+      setActiveChatId(chatIdToUse)
+    }
 
     const imageFiles: FileUIPart[] = images.map((i) => ({
       type: "file",
@@ -129,6 +133,7 @@ export const ChatWorkspace = ({
       { text: userPrompt, files: imageFiles },
       {
         body: {
+          chatId: chatIdToUse,
           system: settings.systemPrompt,
           provider: settings.modelConfig.provider,
           model: settings.modelConfig.model,
@@ -136,6 +141,30 @@ export const ChatWorkspace = ({
           topP: settings.topP,
           selectedFiles,
           userPrompt,
+        },
+      }
+    )
+  }
+
+  const handleSendFollowUp = (text: string) => {
+    clearError()
+    const chatIdToUse = activeChatId ?? `response-${Date.now()}`
+    if (!activeChatId) {
+      setActiveChatId(chatIdToUse)
+    }
+
+    sendMessage(
+      { text },
+      {
+        body: {
+          chatId: chatIdToUse,
+          system: settings.systemPrompt,
+          provider: settings.modelConfig.provider,
+          model: settings.modelConfig.model,
+          temperature: settings.temperature,
+          topP: settings.topP,
+          selectedFiles,
+          includeReasoning,
         },
       }
     )
@@ -173,6 +202,7 @@ export const ChatWorkspace = ({
             messages={messages}
             error={error}
             isStreaming={isStreaming}
+            onSendFollowUp={handleSendFollowUp}
           />
         </div>
       )}
