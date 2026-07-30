@@ -41,3 +41,5 @@ yarn-error.log*
 next-env.d.ts
 /storage
 !/storage/prompts/default.md
+!/storage/prompts/nextjs-expert.md
+!/storage/prompts/prompt-engineering-expert
