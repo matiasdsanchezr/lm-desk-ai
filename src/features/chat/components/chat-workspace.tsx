@@ -12,7 +12,7 @@ import { type FileUIPart } from "ai"
 import { useRouter } from "next/navigation"
 import { useActionState, useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
-import { AIResponseViewer } from "./ai-response-viewer"
+import { ChatThread } from "./chat-thread"
 import { ContextBuilder } from "./context-builder"
 import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
@@ -39,7 +39,6 @@ function ChatWorkspaceContent({
   )
   const { setPrompts } = useChatActions()
 
-  // Añadir includeReasoning desde el store
   const includeReasoning = useChatStore((s) => s.includeReasoning)
 
   const { selectedFiles, fileContents, images, setFileContents, setImages } =
@@ -191,7 +190,7 @@ function ChatWorkspaceContent({
 
       {(messages.length > 0 || error) && (
         <div className="space-y-4">
-          <AIResponseViewer
+          <ChatThread
             messages={messages}
             error={error}
             isStreaming={isStreaming}
