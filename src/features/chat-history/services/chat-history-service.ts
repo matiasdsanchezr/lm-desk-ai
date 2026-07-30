@@ -1,6 +1,6 @@
-import { config } from "@/lib/config"
-import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises"
-import path from "node:path"
+// src/features/chat-history/services/chat-history-service.ts
+import type { Prisma } from "@/generated/prisma/client"
+import { prisma } from "@/lib/prisma"
 import type {
   SaveChatInput,
   SavedChat,
@@ -8,102 +8,111 @@ import type {
   UpdateChatInput,
 } from "../types/saved-chat"
 
-const GENERATED_DIR = path.join(config.STORAGE_PATH, "chats")
-
-async function ensureDirectoryExists() {
-  await mkdir(GENERATED_DIR, { recursive: true })
-}
-
 export const chatHistoryService = {
   /**
-   * Guarda una respuesta en el sistema de archivos local.
+   * Guarda o crea una nueva respuesta/chat en la base de datos.
    */
   async saveChat(data: SaveChatInput): Promise<SavedChat> {
-    await ensureDirectoryExists()
+    const title = data.title ?? `response-${Date.now()}`
 
-    const id = data.id ?? `response-${Date.now()}`
-    const title = data.title ?? id
-    const createdAt = new Date().toISOString()
+    const record = await prisma.chat.create({
+      data: {
+        ...(data.id ? { id: data.id } : {}),
+        title,
+        selectedFiles: data.selectedFiles,
+        messages: data.messages as unknown as Prisma.InputJsonValue,
+      },
+    })
 
-    const payload: SavedChat = {
-      id,
-      title,
-      createdAt,
-      selectedFiles: data.selectedFiles,
-      messages: data.messages,
+    return {
+      id: record.id,
+      title: record.title,
+      createdAt: record.createdAt.toISOString(),
+      selectedFiles: record.selectedFiles,
+      messages: record.messages as unknown as SavedChat["messages"],
     }
-
-    const filePath = path.join(GENERATED_DIR, `${id}.json`)
-    await writeFile(filePath, JSON.stringify(payload, null, 2), "utf-8")
-
-    return payload
   },
 
   /**
-   * Obtiene una respuesta por su ID.
+   * Obtiene un chat por su ID.
    */
   async loadChat(id: string): Promise<SavedChat> {
-    const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(GENERATED_DIR, fileName)
-    const content = await readFile(filePath, "utf-8")
-    return JSON.parse(content) as SavedChat
+    // Eliminar la extensión .json si viniera en un ID antiguo
+    const cleanId = id.replace(/\.json$/, "")
+    const record = await prisma.chat.findUnique({
+      where: { id: cleanId },
+    })
+
+    if (!record) {
+      throw new Error(`Chat con ID ${id} no encontrado`)
+    }
+
+    return {
+      id: record.id,
+      title: record.title,
+      createdAt: record.createdAt.toISOString(),
+      selectedFiles: record.selectedFiles,
+      messages: record.messages as unknown as SavedChat["messages"],
+    }
   },
 
   /**
-   * Actualiza campos específicos de una respuesta existente por su ID.
+   * Actualiza campos específicos de un chat existente.
    */
   async updateChat(id: string, updates: UpdateChatInput): Promise<SavedChat> {
-    const currentResponse = await chatHistoryService.loadChat(id)
+    const cleanId = id.replace(/\.json$/, "")
 
-    const updatedResponse: SavedChat = {
-      ...currentResponse,
-      ...updates,
+    const record = await prisma.chat.update({
+      where: { id: cleanId },
+      data: {
+        ...(updates.title !== undefined ? { title: updates.title } : {}),
+        ...(updates.selectedFiles !== undefined
+          ? { selectedFiles: updates.selectedFiles }
+          : {}),
+        ...(updates.messages !== undefined
+          ? { messages: updates.messages as unknown as Prisma.InputJsonValue }
+          : {}),
+      },
+    })
+
+    return {
+      id: record.id,
+      title: record.title,
+      createdAt: record.createdAt.toISOString(),
+      selectedFiles: record.selectedFiles,
+      messages: record.messages as unknown as SavedChat["messages"],
     }
-
-    const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(GENERATED_DIR, fileName)
-    await writeFile(filePath, JSON.stringify(updatedResponse, null, 2), "utf-8")
-
-    return updatedResponse
   },
 
   /**
-   * Lista todas las respuestas ordenadas por fecha de creación descendente.
+   * Lista todos los chats ordenados por fecha de creación descendente.
    */
   async listChats(): Promise<SavedChatMeta[]> {
-    await ensureDirectoryExists()
-    const files = await readdir(GENERATED_DIR)
-    const jsonFiles = files.filter((file) => file.endsWith(".json"))
+    const records = await prisma.chat.findMany({
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
 
-    const responses: SavedChatMeta[] = []
-    for (const file of jsonFiles) {
-      try {
-        const filePath = path.join(GENERATED_DIR, file)
-        const content = await readFile(filePath, "utf-8")
-        const fullData = JSON.parse(content) as SavedChat
-
-        responses.push({
-          id: fullData.id,
-          title: fullData.title,
-          createdAt: fullData.createdAt,
-        })
-      } catch (err) {
-        console.error(`Error leyendo el archivo de respuesta ${file}:`, err)
-      }
-    }
-
-    return responses.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    return records.map((record) => ({
+      id: record.id,
+      title: record.title,
+      createdAt: record.createdAt.toISOString(),
+    }))
   },
 
   /**
-   * Elimina un archivo de respuesta por su ID.
+   * Elimina un chat por su ID.
    */
   async deleteChat(id: string): Promise<void> {
-    const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(GENERATED_DIR, fileName)
-    await unlink(filePath)
+    const cleanId = id.replace(/\.json$/, "")
+    await prisma.chat.delete({
+      where: { id: cleanId },
+    })
   },
 }

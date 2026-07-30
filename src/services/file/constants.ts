@@ -21,6 +21,8 @@ export const ALLOWED_NON_CODE_EXTENSIONS = new Set<Extension>([
   ".json",
   ".css",
   ".txt",
+  ".prisma",
+  ".yaml",
 ])
 
 export const IMAGE_EXTENSIONS = new Set<Extension>([
