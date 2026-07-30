@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useChatActions } from "@/features/chat/store/chat-store"
 import { cn } from "@/lib/utils"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback } from "react"
@@ -20,6 +21,7 @@ interface ChatHistorySidebarProps {
 }
 
 export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
+  const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()
   const currentId = params?.chatId as string | undefined
@@ -35,8 +37,14 @@ export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
   )
 
   const handleNewChat = useCallback(() => {
+    clearPrompts()
+    if (!currentId) {
+      router.refresh()
+      return
+    }
+
     router.push("/chat")
-  }, [router])
+  }, [router, currentId])
 
   return (
     <Sidebar

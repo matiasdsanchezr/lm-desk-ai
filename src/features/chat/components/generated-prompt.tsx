@@ -17,7 +17,7 @@ export const GeneratedPrompt = () => {
   const [copied, setCopied] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 
-  const finalPrompt = useChatStore((s) => s.finalPrompt)
+  const standalonePrompt = useChatStore((s) => s.standalonePrompt)
   const fileContents = useFileExplorerStore((s) => s.fileContents)
 
   const validFiles = useMemo(
@@ -27,7 +27,7 @@ export const GeneratedPrompt = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(finalPrompt)
+      await navigator.clipboard.writeText(standalonePrompt)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
@@ -95,7 +95,7 @@ export const GeneratedPrompt = () => {
 
         <Textarea
           readOnly
-          value={finalPrompt}
+          value={standalonePrompt}
           className="max-h-125 min-h-64 resize-y bg-background font-mono text-xs focus-visible:ring-1"
           aria-label="Código fuente unificado"
         />
@@ -104,8 +104,8 @@ export const GeneratedPrompt = () => {
             Haga clic dentro y use Ctrl+A para seleccionar manualmente
           </span>
           <span>
-            {finalPrompt.length.toLocaleString()} caracteres · ~
-            {Math.ceil(finalPrompt.length / 4).toLocaleString()} tokens
+            {standalonePrompt.length.toLocaleString()} caracteres · ~
+            {Math.ceil(standalonePrompt.length / 4).toLocaleString()} tokens
           </span>
         </div>
       </CollapsibleContent>

@@ -1,15 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,17 +10,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import {
+  deletePrompt,
   loadPrompt,
   savePrompt,
-  deletePrompt,
 } from "@/features/settings/actions/prompt"
+import { cn } from "@/lib/utils"
 import { useState, useTransition } from "react"
 import { useSettingsStore } from "../store/settings-store"
-import { cn } from "@/lib/utils"
 
 interface Props {
   availablePrompts: string[]
@@ -179,7 +179,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
               Editar Instrucciones
             </Button>
           }
-        ></DialogTrigger>
+        />
         <DialogContent className="flex h-full max-h-[90vh] w-full flex-col border-border/40 bg-background p-4 sm:max-h-[85vh] sm:max-w-6xl">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-sm font-medium tracking-tight">
@@ -239,7 +239,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                 <Label className="text-xs font-medium text-muted-foreground">
                   Plantillas disponibles
                 </Label>
-                <div className="flex max-h-[180px] flex-col gap-1.5 overflow-y-auto pr-1 md:max-h-[300px]">
+                <div className="flex max-h-45 flex-col gap-1.5 overflow-y-auto pr-1 md:max-h-75">
                   {promptsList.length === 0 ? (
                     <p className="text-[11px] text-muted-foreground italic">
                       No hay plantillas guardadas.
@@ -323,7 +323,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                 id="prompt"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                className="min-h-[200px] flex-1 resize-none border-border/40 bg-muted/20 font-mono text-xs leading-relaxed text-foreground focus-visible:ring-1 focus-visible:ring-primary/40 md:min-h-[300px]"
+                className="min-h-50 flex-1 resize-none border-border/40 bg-muted/20 font-mono text-xs leading-relaxed text-foreground focus-visible:ring-1 focus-visible:ring-primary/40 md:min-h-75"
                 placeholder="Escribe las instrucciones personalizadas aquí..."
               />
             </div>
