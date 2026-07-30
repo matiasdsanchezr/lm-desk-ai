@@ -144,26 +144,23 @@ function ChatWorkspaceContent({
     )
   }
 
-  // --- Función para preguntas de seguimiento ---
   const handleSendFollowUp = (text: string) => {
     if (!text.trim() || isStreaming) return
 
-    let fullText = text
-    if (includeReasoning) {
-      // Busca el último mensaje del asistente con razonamiento
-      const lastAssistant = [...messages]
-        .reverse()
-        .find((m) => m.role === "assistant")
-      const reasoningPart = lastAssistant?.parts?.find(
-        (p) => p.type === "reasoning"
-      )
-      if (reasoningPart) {
-        fullText = `[Razonamiento previo]: ${reasoningPart.text}\n\n[Pregunta de seguimiento]: ${text}`
+    sendMessage(
+      { text },
+      {
+        body: {
+          system: settings.systemPrompt,
+          provider: settings.modelConfig.provider,
+          model: settings.modelConfig.model,
+          temperature: settings.temperature,
+          topP: settings.topP,
+          selectedFiles,
+          includeReasoning,
+        },
       }
-    }
-
-    // Envía el mensaje manteniendo el historial de la conversación
-    sendMessage({ text: fullText })
+    )
   }
 
   return (
@@ -198,7 +195,7 @@ function ChatWorkspaceContent({
             messages={messages}
             error={error}
             isStreaming={isStreaming}
-            onSendFollowUp={handleSendFollowUp} // ← Se pasa la función
+            onSendFollowUp={handleSendFollowUp}
           />
         </div>
       )}
