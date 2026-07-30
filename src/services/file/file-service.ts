@@ -1,23 +1,36 @@
 import "server-only"
 
-import fs from "node:fs/promises"
+import { config } from "@/lib/config"
+import { supabase } from "@/lib/supabase"
+import type { ImageFile } from "@/types/image-file"
+import { getImageMimeType } from "@/utils/images"
 import path from "node:path"
 import { cache } from "react"
-import { config } from "@/lib/config"
-import { FileContent } from "./types"
-import { ImageFile } from "@/types/image-file"
-import { getImageMimeType } from "@/utils/images"
-import { AbsolutePath, Extension } from "./types"
-import { validateAndSanitizePath } from "./utils"
 import {
   ALLOWED_EXTENSIONS,
   getStrategyForExtension,
 } from "./strategies/strategy-registry"
+import type { AbsolutePath, Extension, FileContent } from "./types"
+import { toProjectRelativePath, validateAndSanitizePath } from "./utils"
 
+const BUCKET_NAME = process.env.SUPABASE_STORAGE_BUCKET || "public"
 const CONCURRENCY_LIMIT = 20
 
+function normalizeProjectRoot(value: string): AbsolutePath {
+  const normalized = path.posix
+    .normalize((value || "").replace(/\\/g, "/"))
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "")
+
+  return (normalized === "." ? "" : normalized) as AbsolutePath
+}
+
 /**
- * Lee un archivo de manera segura procesando sus dependencias mediante la estrategia adecuada.
+ * Descarga y lee un archivo desde Supabase Storage procesando sus dependencias
+ * mediante la estrategia adecuada.
+ *
+ * currentPath y projectRoot siempre están en formato real del bucket:
+ *   "documents/matias/texto.txt"
  */
 const processFile = cache(
   async (
@@ -34,7 +47,18 @@ const processFile = cache(
     }
 
     try {
-      const content = await fs.readFile(currentPath, "utf-8")
+      const { data, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .download(currentPath)
+
+      if (error || !data) {
+        throw new Error(
+          error?.message ||
+            `No se pudo descargar el archivo "${currentPath}" de Supabase`
+        )
+      }
+
+      const content = await data.text()
       const dependencies = new Set<string>()
       const strategy = getStrategyForExtension(ext)
 
@@ -47,6 +71,7 @@ const processFile = cache(
             currentPath,
             projectRoot
           )
+
           if (resolved) {
             dependencies.add(resolved)
           }
@@ -71,7 +96,7 @@ const processFile = cache(
 )
 
 /**
- * Carga contenidos en lotes concurrentes para evitar agotar FDs (File Descriptors).
+ * Carga contenidos desde Supabase Storage en lotes concurrentes.
  */
 async function getFileContentsWithDependencies(
   paths: AbsolutePath[],
@@ -92,30 +117,47 @@ async function getFileContentsWithDependencies(
 }
 
 /**
- * Carga imágenes locales codificadas en Base64 de forma segura.
+ * Carga imágenes almacenadas en Supabase Storage codificadas en Base64 de forma segura.
+ * filePaths debe venir en formato relativo al proyecto:
+ *   "/assets/logo.png"
  */
 export async function loadLocalImages(
   filePaths: string[],
-  projectRoot: string = config.TARGET_PROJECT_PATH
+  projectRoot: string = config.TARGET_PROJECT_PATH || ""
 ): Promise<ImageFile[]> {
-  const root = path.resolve(projectRoot)
-
   const images = await Promise.all(
     filePaths.map(async (filePath) => {
-      const safePath = validateAndSanitizePath(filePath, root)
+      const safePath = validateAndSanitizePath(filePath, projectRoot)
       if (!safePath) {
         console.error(`Acceso denegado fuera de la raíz: ${filePath}`)
         return null
       }
 
       try {
-        const fileBuffer = await fs.readFile(safePath)
+        const { data, error } = await supabase.storage
+          .from(BUCKET_NAME)
+          .download(safePath)
+
+        if (error || !data) {
+          console.error(
+            `Error al descargar la imagen de Supabase (${filePath}):`,
+            error?.message
+          )
+          return null
+        }
+
+        const arrayBuffer = await data.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString("base64")
+
         return {
-          mimeType: getImageMimeType(filePath),
-          base64: fileBuffer.toString("base64"),
+          mimeType: getImageMimeType(filePath) || data.type,
+          base64,
         }
       } catch (error) {
-        console.error(`Error al leer imagen local (${filePath}):`, error)
+        console.error(
+          `Error al procesar la imagen de Supabase (${filePath}):`,
+          error
+        )
         return null
       }
     })
@@ -125,15 +167,24 @@ export async function loadLocalImages(
 }
 
 /**
- * Construye el grafo de archivos a partir de puntos de entrada de forma recursiva.
+ * Construye el grafo de archivos a partir de puntos de entrada.
+ *
+ * Entrada esperada:
+ *   ["/texto.txt"]
+ *
+ * Resolución interna:
+ *   "documents/matias/texto.txt"
+ *
+ * Salida:
+ *   path: "/texto.txt"
+ *   dependencies: ["/algo.ts"]
  */
 export const loadProjectGraph = cache(
-  async (
-    entryPoints: string[],
-    includeDeps = true,
-    projectRoot: string = config.TARGET_PROJECT_PATH
-  ): Promise<FileContent[]> => {
-    const root = path.resolve(projectRoot) as AbsolutePath
+  async (entryPoints: string[], includeDeps = true): Promise<FileContent[]> => {
+    const root = normalizeProjectRoot(
+      config.TARGET_PROJECT_PATH || ""
+    ) as AbsolutePath
+
     const resolvedEntryPoints = entryPoints
       .map((p) => validateAndSanitizePath(p, root))
       .filter((p): p is AbsolutePath => p !== null)
@@ -145,35 +196,45 @@ export const loadProjectGraph = cache(
     while (nodesToProcess.length > 0) {
       const toProcess = nodesToProcess.filter((p) => !visited.has(p))
       nodesToProcess = []
+
       if (toProcess.length === 0) break
 
       toProcess.forEach((p) => visited.add(p))
+
       const processedFiles = await getFileContentsWithDependencies(
         toProcess,
         root
       )
 
       for (const file of processedFiles) {
-        const absPath = file.path as AbsolutePath
-        results.set(absPath, file)
+        const storagePath = file.path as AbsolutePath
+        results.set(storagePath, file)
 
         if (includeDeps && file.dependencies) {
           for (const dep of file.dependencies) {
-            if (!visited.has(dep as AbsolutePath)) {
-              nodesToProcess.push(dep as AbsolutePath)
+            const depPath = dep as AbsolutePath
+            if (!visited.has(depPath)) {
+              nodesToProcess.push(depPath)
             }
           }
         }
       }
+
       if (!includeDeps) break
     }
 
-    return Array.from(results.values()).map((file) => ({
-      ...file,
-      path: path.relative(root, file.path).replace(/\\/g, "/"),
-      dependencies: file.dependencies?.map((dep) =>
-        path.relative(root, dep).replace(/\\/g, "/")
-      ),
-    }))
+    return Array.from(results.values()).map((file) => {
+      const publicPath = toProjectRelativePath(file.path, root) ?? file.path
+
+      const publicDeps = file.dependencies?.map(
+        (dep) => toProjectRelativePath(dep, root) ?? dep
+      )
+
+      return {
+        ...file,
+        path: publicPath.replace(/\\/g, "/"),
+        dependencies: publicDeps?.map((d) => d.replace(/\\/g, "/")),
+      }
+    })
   }
 )

@@ -25,9 +25,12 @@ const { values } = parseArgs({
   allowPositionals: true,
 })
 
+if (!process.env.TARGET_PROJECT_PATH) {
+  throw new Error("TARGET_PROJECT_PATH no especificado.")
+}
+
 // 3. Evaluar la ruta objetivo
-const targetPath =
-  values.target || process.env.TARGET_PROJECT_PATH || projectDir
+const targetPath = process.env.TARGET_PROJECT_PATH
 
 if (!values.target && !process.env.TARGET_PROJECT_PATH) {
   console.log(

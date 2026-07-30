@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/*": ["./example/**/*"],
   },
+  cacheComponents: true,
 }
 
 export default nextConfig

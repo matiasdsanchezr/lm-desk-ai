@@ -3,38 +3,46 @@ import { listChats } from "@/features/chat-history/actions/chat-history-actions"
 import { ChatHistorySidebar } from "@/features/chat-history/components/chat-history-sidebar"
 import { ChatWorkspace } from "@/features/chat/components/chat-workspace"
 import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
-import { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
+import { Suspense } from "react"
 
-interface NewChatPageProps {
-  totalFiles?: number
-  treeNodes?: FileTreeNode[]
+interface ExistingChatPageProps {
+  params: Promise<{ chatId: string }>
 }
 
-export const dynamic = "force-dynamic"
+export default function ExistingChatPage({ params }: ExistingChatPageProps) {
+  return (
+    <section className="min-h-0 w-full flex-1">
+      <SidebarProvider className="h-full items-stretch">
+        <div className="flex h-full w-full items-stretch overflow-hidden">
+          <Suspense>
+            <SidebarWrapper />
+          </Suspense>
 
-export default async function NewChatPage({}: NewChatPageProps) {
-  const [treeStructure, responses] = await Promise.all([
-    generateTreeStructure(),
-    listChats(),
-  ])
+          <div className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
+            <Suspense fallback={<div>Cargando chat...</div>}>
+              <WorkspaceWrapper />
+            </Suspense>
+          </div>
+        </div>
+      </SidebarProvider>
+    </section>
+  )
+}
+
+async function SidebarWrapper() {
+  const responses = await listChats()
+  if (responses.error) return null
+
+  return <ChatHistorySidebar savedChats={responses.data ?? []} />
+}
+
+async function WorkspaceWrapper() {
+  const treeStructure = await generateTreeStructure()
 
   return (
-    <>
-      <section className="min-h-0 w-full flex-1">
-        <SidebarProvider className="h-full items-stretch">
-          <div className="flex h-full w-full items-stretch overflow-hidden">
-            <ChatHistorySidebar savedChats={responses.data ?? []} />
-            <div className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
-              <ChatWorkspace
-                key="new-chat"
-                totalFiles={treeStructure.totalFiles}
-                treeNodes={treeStructure.treeNodes}
-                initialChat={null}
-              />
-            </div>
-          </div>
-        </SidebarProvider>
-      </section>
-    </>
+    <ChatWorkspace
+      totalFiles={treeStructure.totalFiles}
+      treeNodes={treeStructure.treeNodes}
+    />
   )
 }
