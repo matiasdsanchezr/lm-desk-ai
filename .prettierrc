@@ -6,5 +6,6 @@
   "trailingComma": "es5",
   "printWidth": 80,
   "tailwindStylesheet": "./src/app/globals.css",
-  "tailwindFunctions": ["cn", "cva"]
+  "tailwindFunctions": ["cn", "cva"],
+  "plugins": ["prettier-plugin-compact-markdown-table"]
 }
