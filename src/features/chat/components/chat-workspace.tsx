@@ -23,25 +23,24 @@ interface ChatWorkspaceProps {
   initialChat?: SavedChat | null
 }
 
-export const ChatWorkspace = ({
+function ChatWorkspaceContent({
   totalFiles,
   treeNodes,
   initialChat,
-}: ChatWorkspaceProps) => {
+}: ChatWorkspaceProps) {
   const router = useRouter()
-  const [activeChatId, setActiveChatId] = useState<string | undefined>(
-    initialChat?.id
-  )
 
-  const { userQuery, userPrompt, finalPrompt, includeReasoning } = useChatStore(
+  const { userTask, contextualPrompt, standalonePrompt } = useChatStore(
     useShallow((s) => ({
-      userQuery: s.userQuery,
-      userPrompt: s.userPrompt,
-      finalPrompt: s.finalPrompt,
-      includeReasoning: s.includeReasoning,
+      userTask: s.userTask,
+      contextualPrompt: s.contextualPrompt,
+      standalonePrompt: s.standalonePrompt,
     }))
   )
   const { setPrompts } = useChatActions()
+
+  // Añadir includeReasoning desde el store
+  const includeReasoning = useChatStore((s) => s.includeReasoning)
 
   const { selectedFiles, fileContents, images, setFileContents, setImages } =
     useFileExplorerStore(
@@ -63,7 +62,7 @@ export const ChatWorkspace = ({
     }))
   )
 
-  const [showFileExplorer, setShowFileExplorer] = useState(true)
+  const [showFileExplorer, setShowFileExplorer] = useState(false)
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
@@ -80,11 +79,11 @@ export const ChatWorkspace = ({
           const promptBuilder = new PromptBuilder()
             .addSystem(settings.systemPrompt)
             .addContext(data.fileContents)
-            .addTask(userQuery)
+            .addTask(userTask)
 
           setPrompts({
-            userPrompt: promptBuilder.buildContextAndTask(),
-            finalPrompt: promptBuilder.build(),
+            contextualPrompt: promptBuilder.buildContextAndTask(),
+            standalonePrompt: promptBuilder.build(),
           })
 
           return { error: null }
@@ -93,14 +92,18 @@ export const ChatWorkspace = ({
       { error: null }
     )
 
-  const { messages, status, error, sendMessage, clearError, stop } = useChat({
+  const {
+    messages,
+    status,
+    error,
+    setMessages,
+    sendMessage,
+    clearError,
+    stop,
+  } = useChat({
     messages: initialChat?.messages,
     onFinish: () => {
-      if (!initialChat && activeChatId) {
-        router.push(`/chat/${activeChatId}`)
-      } else {
-        router.refresh()
-      }
+      router.refresh()
     },
   })
 
@@ -112,16 +115,13 @@ export const ChatWorkspace = ({
     [fileContents]
   )
 
-  const isReadyToReview = !!finalPrompt && (!!userQuery || !!initialChat)
+  const isReadyToReview = !!standalonePrompt && (!!userTask || !!initialChat)
   const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 
   const handleSendToAI = () => {
     clearError()
-    const chatIdToUse = activeChatId ?? `response-${Date.now()}`
-    if (!activeChatId) {
-      setActiveChatId(chatIdToUse)
-    }
+    setMessages([])
 
     const imageFiles: FileUIPart[] = images.map((i) => ({
       type: "file",
@@ -130,44 +130,40 @@ export const ChatWorkspace = ({
     }))
 
     sendMessage(
-      { text: userPrompt, files: imageFiles },
+      { text: contextualPrompt, files: imageFiles },
       {
         body: {
-          chatId: chatIdToUse,
           system: settings.systemPrompt,
           provider: settings.modelConfig.provider,
           model: settings.modelConfig.model,
           temperature: settings.temperature,
           topP: settings.topP,
           selectedFiles,
-          userPrompt,
         },
       }
     )
   }
 
+  // --- Función para preguntas de seguimiento ---
   const handleSendFollowUp = (text: string) => {
-    clearError()
-    const chatIdToUse = activeChatId ?? `response-${Date.now()}`
-    if (!activeChatId) {
-      setActiveChatId(chatIdToUse)
+    if (!text.trim() || isStreaming) return
+
+    let fullText = text
+    if (includeReasoning) {
+      // Busca el último mensaje del asistente con razonamiento
+      const lastAssistant = [...messages]
+        .reverse()
+        .find((m) => m.role === "assistant")
+      const reasoningPart = lastAssistant?.parts?.find(
+        (p) => p.type === "reasoning"
+      )
+      if (reasoningPart) {
+        fullText = `[Razonamiento previo]: ${reasoningPart.text}\n\n[Pregunta de seguimiento]: ${text}`
+      }
     }
 
-    sendMessage(
-      { text },
-      {
-        body: {
-          chatId: chatIdToUse,
-          system: settings.systemPrompt,
-          provider: settings.modelConfig.provider,
-          model: settings.modelConfig.model,
-          temperature: settings.temperature,
-          topP: settings.topP,
-          selectedFiles,
-          includeReasoning,
-        },
-      }
-    )
+    // Envía el mensaje manteniendo el historial de la conversación
+    sendMessage({ text: fullText })
   }
 
   return (
@@ -202,10 +198,16 @@ export const ChatWorkspace = ({
             messages={messages}
             error={error}
             isStreaming={isStreaming}
-            onSendFollowUp={handleSendFollowUp}
+            onSendFollowUp={handleSendFollowUp} // ← Se pasa la función
           />
         </div>
       )}
     </div>
   )
+}
+
+export const ChatWorkspace = (props: ChatWorkspaceProps) => {
+  const sessionId = useChatStore((s) => s.sessionId)
+
+  return <ChatWorkspaceContent key={sessionId} {...props} />
 }

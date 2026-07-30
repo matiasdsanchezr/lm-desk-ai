@@ -2,48 +2,59 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 interface ChatState {
-  userQuery: string
-  userPrompt: string
-  finalPrompt: string
+  sessionId: string
+  userTask: string
+  contextualPrompt: string
+  standalonePrompt: string
   includeReasoning: boolean
 }
 
 interface ChatActions {
   actions: {
-    setUserQuery: (query: string) => void
-    setPrompts: (prompts: { userPrompt: string; finalPrompt: string }) => void
+    setUserTask: (query: string) => void
+    setPrompts: (prompts: {
+      contextualPrompt: string
+      standalonePrompt: string
+    }) => void
     setIncludeReasoning: (include: boolean) => void
     clearPrompts: () => void
     resetAll: () => void
   }
 }
 
-const initialState: ChatState = {
-  userQuery: "",
-  userPrompt: "",
-  finalPrompt: "",
+const createInitialState = () => ({
+  sessionId: crypto.randomUUID(),
+  userTask: "",
+  contextualPrompt: "",
+  standalonePrompt: "",
   includeReasoning: true,
-}
+})
 
 export const useChatStore = create<ChatState & ChatActions>()(
   persist(
     (set) => ({
-      ...initialState,
+      ...createInitialState(),
       actions: {
-        setUserQuery: (userQuery) => set({ userQuery }),
-        setPrompts: ({ userPrompt, finalPrompt }) =>
-          set({ userPrompt, finalPrompt }),
+        setUserTask: (userTask) => set({ userTask }),
+        setPrompts: ({ contextualPrompt, standalonePrompt }) =>
+          set({ contextualPrompt, standalonePrompt }),
         setIncludeReasoning: (includeReasoning) => set({ includeReasoning }),
-        clearPrompts: () => set({ userPrompt: "", finalPrompt: "" }),
-        resetAll: () => set(initialState),
+        clearPrompts: () =>
+          set({
+            sessionId: crypto.randomUUID(),
+            contextualPrompt: "",
+            standalonePrompt: "",
+          }),
+        resetAll: () => set(createInitialState()),
       },
     }),
     {
       name: "chat-state",
       partialize: (state) => ({
-        userQuery: state.userQuery,
-        userPrompt: state.userPrompt,
-        finalPrompt: state.finalPrompt,
+        sessionId: state.sessionId,
+        userTask: state.userTask,
+        contextualPrompt: state.contextualPrompt,
+        standalonePrompt: state.standalonePrompt,
         includeReasoning: state.includeReasoning,
       }),
     }
