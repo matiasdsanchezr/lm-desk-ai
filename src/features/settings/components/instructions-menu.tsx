@@ -43,16 +43,10 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [copied, setCopied] = useState(false)
-
-  // Estado para controlar la pestaña activa en dispositivos móviles
   const [activeTab, setActiveTab] = useState<"editor" | "templates">("editor")
-
-  // Estado local para manejo ágil de plantillas en UI
   const [promptsList, setPromptsList] = useState<string[]>(availablePrompts)
   const [newTemplateName, setNewTemplateName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
-
-  // Estado para controlar qué plantilla se va a eliminar en el AlertDialog
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -69,7 +63,6 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
       const result = await loadPrompt(promptId)
       if (result.data) {
         setDraft(result.data)
-        // Cambiar automáticamente a la pestaña del editor en móvil al seleccionar
         setActiveTab("editor")
       } else if (result.error) {
         console.error(result.error)
