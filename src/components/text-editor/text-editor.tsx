@@ -146,12 +146,12 @@ export const TextEditor = ({
       )}
     >
       <LexicalComposer initialConfig={initialConfig}>
-        <div className="relative min-h-[120px] px-3 py-2">
+        <div className="relative min-h-30 px-3 py-2">
           <RichTextPlugin
             contentEditable={
               <ContentEditable
                 className={cn(
-                  "min-h-[120px] resize-y wrap-break-word whitespace-pre-wrap outline-none",
+                  "min-h-30 resize-y wrap-break-word whitespace-pre-wrap outline-none",
                   disabled && "cursor-not-allowed",
                   className
                 )}
