@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node scripts/run.mjs --dev",
     "build": "next build",
+    "build:netlify": "rm -rf example && git clone --depth 1 https://github.com/matiasdsanchezr/lm-desk-ai.git example && next build",
     "start": "node scripts/run.mjs",
     "lint": "eslint"
   },
