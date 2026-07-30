@@ -30,7 +30,6 @@ import { UIDataTypes, UIMessage, UITools } from "ai"
 import { useState } from "react"
 import { Streamdown } from "streamdown"
 
-// --- Subcomponente para renderizar cada Turno (Pregunta + Respuesta) ---
 interface ChatTurnItemProps {
   turn: {
     id: string
@@ -39,13 +38,24 @@ interface ChatTurnItemProps {
   }
   isStreaming: boolean
   isLast: boolean
+  messages: UIMessage<unknown, UIDataTypes, UITools>[]
+  setMessages?: (messages: UIMessage<unknown, UIDataTypes, UITools>[]) => void
 }
 
-const ChatTurnItem = ({ turn, isStreaming, isLast }: ChatTurnItemProps) => {
+const ChatTurnItem = ({
+  turn,
+  isStreaming,
+  isLast,
+  messages,
+  setMessages,
+}: ChatTurnItemProps) => {
   const [isOpen, setIsOpen] = useState(true)
   const [isCopied, setIsCopied] = useState(false)
+  const [isEditingUser, setIsEditingUser] = useState(false)
+  const [userEditText, setUserEditText] = useState("")
+  const [isEditingAssistant, setIsEditingAssistant] = useState(false)
+  const [assistantEditText, setAssistantEditText] = useState("")
 
-  // Extraer y limpiar el texto del usuario
   const rawUserText =
     turn.userMessage?.parts
       ?.filter((p) => p.type === "text")
@@ -59,7 +69,6 @@ const ChatTurnItem = ({ turn, isStreaming, isLast }: ChatTurnItemProps) => {
       .trim()
   }
 
-  // Procesar el mensaje del asistente
   let reasoningText = ""
   let responseText = ""
 
@@ -82,6 +91,62 @@ const ChatTurnItem = ({ turn, isStreaming, isLast }: ChatTurnItemProps) => {
     } catch (err) {
       console.error("Error al copiar al portapapeles", err)
     }
+  }
+
+  const handleEditUserClick = () => {
+    setIsEditingUser(true)
+    if (rawUserText.includes("[Pregunta de seguimiento]:")) {
+      setUserEditText(displayUserText)
+    } else {
+      setUserEditText(rawUserText)
+    }
+  }
+
+  const handleSaveUser = () => {
+    if (!turn.userMessage || !setMessages) return
+    let finalNewText = userEditText
+    if (rawUserText.includes("[Pregunta de seguimiento]:")) {
+      finalNewText = `[Pregunta de seguimiento]:\n${userEditText}`
+    }
+
+    const updatedMessages = messages.map((msg) => {
+      if (msg.id === turn.userMessage!.id) {
+        const newParts = msg.parts?.map((p) =>
+          p.type === "text" ? { ...p, text: finalNewText } : p
+        ) || [{ type: "text", text: finalNewText }]
+        return { ...msg, parts: newParts, content: finalNewText }
+      }
+      return msg
+    })
+    setMessages(updatedMessages)
+    setIsEditingUser(false)
+  }
+
+  const handleDeleteTurn = () => {
+    if (!setMessages) return
+    const idsToRemove = [
+      turn.userMessage?.id,
+      turn.assistantMessage?.id,
+    ].filter(Boolean)
+    const updatedMessages = messages.filter(
+      (msg) => !idsToRemove.includes(msg.id)
+    )
+    setMessages(updatedMessages)
+  }
+
+  const handleSaveAssistant = () => {
+    if (!turn.assistantMessage || !setMessages) return
+    const updatedMessages = messages.map((msg) => {
+      if (msg.id === turn.assistantMessage!.id) {
+        const newParts = msg.parts?.map((p) =>
+          p.type === "text" ? { ...p, text: assistantEditText } : p
+        ) || [{ type: "text", text: assistantEditText }]
+        return { ...msg, parts: newParts, content: assistantEditText }
+      }
+      return msg
+    })
+    setMessages(updatedMessages)
+    setIsEditingAssistant(false)
   }
 
   return (
@@ -109,62 +174,168 @@ const ChatTurnItem = ({ turn, isStreaming, isLast }: ChatTurnItemProps) => {
       </CollapsibleTrigger>
 
       <CollapsibleContent className="relative overflow-hidden bg-background data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-        <div className="py-4 px-1 md:px-4">
-          <div className="mb-4 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Respuesta Generada
-            </span>
-
-            {turn.assistantMessage && !isStreaming && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
-              >
-                {isCopied ? (
-                  <>
-                    <span className="icon-[fa7-solid--check] text-green-500" />
-                    <span className="text-green-500">Copiado</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="icon-[fa7-solid--copy]" />
-                    Copiar
-                  </>
+        <div className="flex flex-col gap-6 py-4 px-2 md:px-4">
+          {/* SECCIÓN DEL USUARIO */}
+          {turn.userMessage && (
+            <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-muted/20 p-4">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="icon-[lucide--user] h-3 w-3" />
+                  Tu Consulta
+                </span>
+                {!isStreaming && setMessages && (
+                  <div className="flex items-center gap-1">
+                    {!isEditingUser && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={handleEditUserClick}
+                        title="Editar consulta"
+                      >
+                        <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={handleDeleteTurn}
+                      title="Eliminar turno completo"
+                    >
+                      <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
-              </Button>
-            )}
-          </div>
+              </div>
 
-          {turn.assistantMessage ? (
-            <div className="prose prose-sm dark:prose-invert overflow-anchor-none max-w-none pb-2">
-              {reasoningText && (
-                <Reasoning
-                  className="mb-4 w-full"
-                  isStreaming={isStreaming && isLast}
-                >
-                  <ReasoningTrigger />
-                  <ReasoningContent>{reasoningText}</ReasoningContent>
-                </Reasoning>
+              {isEditingUser ? (
+                <div className="flex animate-in flex-col gap-2 fade-in zoom-in-95">
+                  <Textarea
+                    value={userEditText}
+                    onChange={(e) => setUserEditText(e.target.value)}
+                    className="min-h-24 bg-background font-mono text-xs md:text-sm"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingUser(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={handleSaveUser}>
+                      Guardar cambios
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                  {displayUserText}
+                </div>
               )}
-              <Streamdown
-                plugins={{
-                  code: createCodePlugin({
-                    themes: ["github-light", "github-dark"],
-                  }),
-                }}
-              >
-                {responseText}
-              </Streamdown>
             </div>
-          ) : isStreaming && isLast ? (
-            <div className="space-y-4 py-2">
-              <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted" />
-              <div className="h-4 w-full animate-pulse rounded-md bg-muted" />
-              <div className="h-4 w-5/6 animate-pulse rounded-md bg-muted" />
+          )}
+
+          {/* SECCIÓN DEL ASISTENTE */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between px-1">
+              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="icon-[fluent--brain-sparkle-20-regular] h-3.5 w-3.5" />
+                Respuesta Generada
+              </span>
+              <div className="flex items-center gap-1">
+                {!isStreaming &&
+                  turn.assistantMessage &&
+                  setMessages &&
+                  !isEditingAssistant && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditingAssistant(true)
+                        setAssistantEditText(responseText)
+                      }}
+                      className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
+                      Editar
+                    </Button>
+                  )}
+                {turn.assistantMessage &&
+                  !isStreaming &&
+                  !isEditingAssistant && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopy}
+                      className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {isCopied ? (
+                        <>
+                          <span className="icon-[fa7-solid--check] text-green-500" />
+                          <span className="text-green-500">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="icon-[fa7-solid--copy]" />
+                          Copiar
+                        </>
+                      )}
+                    </Button>
+                  )}
+              </div>
             </div>
-          ) : null}
+
+            {isEditingAssistant ? (
+              <div className="flex animate-in flex-col gap-2 fade-in zoom-in-95">
+                <Textarea
+                  value={assistantEditText}
+                  onChange={(e) => setAssistantEditText(e.target.value)}
+                  className="min-h-64 resize-y bg-background font-mono text-sm"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingAssistant(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button size="sm" onClick={handleSaveAssistant}>
+                    Guardar cambios
+                  </Button>
+                </div>
+              </div>
+            ) : turn.assistantMessage ? (
+              <div className="prose prose-sm dark:prose-invert overflow-anchor-none max-w-none px-1 pb-2">
+                {reasoningText && (
+                  <Reasoning
+                    className="mb-4 w-full"
+                    isStreaming={isStreaming && isLast}
+                  >
+                    <ReasoningTrigger />
+                    <ReasoningContent>{reasoningText}</ReasoningContent>
+                  </Reasoning>
+                )}
+                <Streamdown
+                  plugins={{
+                    code: createCodePlugin({
+                      themes: ["github-light", "github-dark"],
+                    }),
+                  }}
+                >
+                  {responseText}
+                </Streamdown>
+              </div>
+            ) : isStreaming && isLast ? (
+              <div className="space-y-4 px-1 py-2">
+                <div className="h-4 w-3/4 animate-pulse rounded-md bg-muted" />
+                <div className="h-4 w-full animate-pulse rounded-md bg-muted" />
+                <div className="h-4 w-5/6 animate-pulse rounded-md bg-muted" />
+              </div>
+            ) : null}
+          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -177,6 +348,7 @@ interface AIResponseSectionProps {
   error: Error | undefined
   isStreaming: boolean
   onSendFollowUp?: (text: string) => void
+  setMessages?: (messages: UIMessage<unknown, UIDataTypes, UITools>[]) => void
 }
 
 export const AIResponseViewer = ({
@@ -184,6 +356,7 @@ export const AIResponseViewer = ({
   error,
   isStreaming,
   onSendFollowUp,
+  setMessages,
 }: AIResponseSectionProps) => {
   const [followUpText, setFollowUpText] = useState("")
   const includeReasoning = useChatStore((s) => s.includeReasoning)
@@ -261,6 +434,8 @@ export const AIResponseViewer = ({
                   turn={turn}
                   isStreaming={isStreaming}
                   isLast={index === turns.length - 1}
+                  messages={messages}
+                  setMessages={setMessages}
                 />
               ))}
               {error && (
@@ -325,7 +500,7 @@ export const AIResponseViewer = ({
                 onChange={(e) => setFollowUpText(e.target.value)}
                 placeholder="Escribe una pregunta de seguimiento (Ej: 'Explícame la función handleCopy')..."
                 disabled={isStreaming}
-                className="min-h-16 flex-1 resize-y bg-background text-xs shadow-sm md:text-sm focus-visible:ring-primary/50"
+                className="min-h-16 flex-1 resize-y bg-background text-xs shadow-sm focus-visible:ring-primary/50 md:text-sm"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
@@ -336,7 +511,7 @@ export const AIResponseViewer = ({
               <Button
                 type="submit"
                 disabled={!followUpText.trim() || isStreaming}
-                className="h-10 gap-2 px-5 sm:self-stretch shadow-sm"
+                className="h-10 gap-2 px-5 shadow-sm sm:self-stretch"
               >
                 {isStreaming ? (
                   <span className="icon-[fa7-solid--spinner] animate-spin" />

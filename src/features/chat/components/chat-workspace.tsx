@@ -196,6 +196,7 @@ function ChatWorkspaceContent({
             error={error}
             isStreaming={isStreaming}
             onSendFollowUp={handleSendFollowUp}
+            setMessages={setMessages}
           />
         </div>
       )}
