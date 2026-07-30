@@ -1,4 +1,4 @@
-// src/components/shared/footer.tsx
+"use client"
 import Link from "next/link"
 
 const GITHUB_REPO_URL = "https://github.com/matiasdsanchezr/lm-desk-ai"

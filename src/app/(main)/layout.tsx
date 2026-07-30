@@ -1,6 +1,7 @@
 // src/app/(main)/layout.tsx
 import { Footer } from "@/components/shared/footer"
 import { Navbar } from "@/components/shared/navbar"
+import { Suspense } from "react"
 
 export default function MainLayout({
   children,
@@ -11,7 +12,9 @@ export default function MainLayout({
     <div className="flex min-h-dvh flex-col">
       <Navbar />
       <div className="flex-1">{children}</div>
-      <Footer />
+      <Suspense>
+        <Footer />
+      </Suspense>
     </div>
   )
 }

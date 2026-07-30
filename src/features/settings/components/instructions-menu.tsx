@@ -66,13 +66,13 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
 
   const handleSelectTemplate = (promptId: string) => {
     startTransition(async () => {
-      try {
-        const content = await loadPrompt(promptId)
-        setDraft(content)
+      const result = await loadPrompt(promptId)
+      if (result.data) {
+        setDraft(result.data)
         // Cambiar automáticamente a la pestaña del editor en móvil al seleccionar
         setActiveTab("editor")
-      } catch (error) {
-        console.error("Error al cargar la plantilla:", error)
+      } else if (result.error) {
+        console.error(result.error)
       }
     })
   }

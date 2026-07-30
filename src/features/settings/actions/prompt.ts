@@ -1,56 +1,53 @@
 "use server"
 
-import { prisma } from "@/lib/prisma"
+import { config } from "@/lib/config"
 import { ActionState } from "@/types/action-state"
+import { mkdir, readdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
+import path from "path"
 
-export const loadPrompt = async (promptId: string): Promise<string> => {
+const PROMPTS_DIR = path.join(config.STORAGE_PATH, "prompts")
+
+export const loadPrompt = async (
+  promptId: string
+): Promise<ActionState<string>> => {
   try {
-    const prompt = await prisma.systemPrompt.findUnique({
-      where: { id: promptId },
-    })
-    return prompt?.content ?? ""
+    const systemPrompt = await readFile(
+      path.join(PROMPTS_DIR, promptId),
+      "utf-8"
+    )
+    return { data: systemPrompt }
   } catch (error) {
-    console.error("Error cargando plantilla:", error)
-    return ""
+    console.error("Error al cargar la plantilla:", error)
+    return { error: "No se pudo cargar la plantilla" }
   }
 }
 
-export const loadPrompts = async (): Promise<
-  { id: string; name: string }[]
-> => {
+export const loadPrompts = async (): Promise<ActionState<string[]>> => {
   try {
-    const prompts = await prisma.systemPrompt.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    })
-    return prompts
+    await mkdir(PROMPTS_DIR, { recursive: true })
+    const systemPrompts = await readdir(PROMPTS_DIR)
+    const prompts = systemPrompts.filter((file) => file.endsWith(".md"))
+    return { data: prompts ?? [] }
   } catch (error) {
-    console.error("Error leyendo plantillas desde la base de datos:", error)
-    return []
+    console.error("Error leyendo directorio de prompts:", error)
+    return { error: "No se pudieron cargar las plantillas", data: [] }
   }
 }
 
 export const savePrompt = async (
   name: string,
   content: string
-): Promise<ActionState<{ id: string; name: string }>> => {
+): Promise<ActionState<{ fileName: string }>> => {
   try {
-    const cleanName = name.trim()
+    const fileName = name.endsWith(".md") ? name : `${name}.md`
+    const filePath = path.join(PROMPTS_DIR, fileName)
 
-    const prompt = await prisma.systemPrompt.upsert({
-      where: { name: cleanName },
-      update: { content },
-      create: { name: cleanName, content },
-    })
+    await mkdir(PROMPTS_DIR, { recursive: true })
+    await writeFile(filePath, content, "utf-8")
 
     revalidatePath("/")
-    return { data: { id: prompt.id, name: prompt.name } }
+    return { data: { fileName } }
   } catch (error) {
     console.error("Error al guardar la plantilla:", error)
     return { error: "No se pudo guardar la plantilla" }
@@ -61,9 +58,8 @@ export const deletePrompt = async (
   promptId: string
 ): Promise<ActionState<void>> => {
   try {
-    await prisma.systemPrompt.delete({
-      where: { id: promptId },
-    })
+    const filePath = path.join(PROMPTS_DIR, promptId)
+    await unlink(filePath)
 
     revalidatePath("/")
     return { data: undefined }
