@@ -1,5 +1,3 @@
-// path: /home/matias/documentos/ts/ai-code-advisor/apps/web/src/features/text-editor/components/text-editor.tsx
-
 "use client"
 
 import { cn } from "@/lib/utils"
@@ -21,7 +19,7 @@ import {
   $insertNodes,
   LexicalEditor,
 } from "lexical"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { createPortal } from "react-dom"
 import { $createMentionNode, MentionNode } from "./nodes/mention-node"
 
@@ -50,6 +48,7 @@ interface TextEditorProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  maxSuggestions?: number
 }
 
 function useMentionTriggerMatch(
@@ -59,20 +58,15 @@ function useMentionTriggerMatch(
   return useCallback(
     (text: string) => {
       const triggerIndex = text.lastIndexOf(trigger)
-      if (triggerIndex === -1) {
-        return null
-      }
+      if (triggerIndex === -1) return null
 
       if (triggerIndex > 0 && !/\s/.test(text[triggerIndex - 1]!)) {
         return null
       }
 
       const matchingString = text.slice(triggerIndex + trigger.length)
-
       const isValid = /^[a-zA-Z0-9_\-./]*$/.test(matchingString)
-      if (!isValid) {
-        return null
-      }
+      if (!isValid) return null
 
       if (
         matchingString.length >= minLength &&
@@ -99,40 +93,52 @@ export const TextEditor = ({
   placeholder,
   className,
   disabled,
+  maxSuggestions = 20,
 }: TextEditorProps) => {
   const [editorInstance, setEditorInstance] = useState<LexicalEditor | null>(
     null
   )
   const [queryString, setQueryString] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
 
-  const initialConfig = {
-    namespace: "MentionEditor",
-    nodes: [MentionNode],
-    onError: (error: Error) => console.error(error),
-    theme: {
-      paragraph: "m-0",
-    },
-    editable: !disabled,
-  }
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "MentionEditor",
+      nodes: [MentionNode],
+      onError: (error: Error) => console.error(error),
+      theme: { paragraph: "m-0" },
+      editable: !disabled,
+    }),
+    [disabled]
+  )
 
+  // Optimización: Limitar a maxSuggestions para evitar renders DOM masivos
   const filteredOptions = useMemo(() => {
-    if (queryString === null) {
-      return mentionOptions.map((opt) => new MentionMenuItem(opt.label, opt.id))
-    }
-    const lowerQuery = queryString.toLowerCase()
-    return mentionOptions
-      .filter(
+    let results = mentionOptions
+
+    if (queryString !== null && queryString.trim() !== "") {
+      const lowerQuery = queryString.toLowerCase()
+      results = mentionOptions.filter(
         (opt) =>
           opt.label.toLowerCase().includes(lowerQuery) ||
           (opt.description &&
             opt.description.toLowerCase().includes(lowerQuery))
       )
-      .map((opt) => new MentionMenuItem(opt.label, opt.id))
-  }, [mentionOptions, queryString])
+    }
 
-  const checkForTriggerMatch = useMentionTriggerMatch("@", {
-    minLength: 0,
-  })
+    return results
+      .slice(0, maxSuggestions)
+      .map((opt) => new MentionMenuItem(opt.label, opt.id))
+  }, [mentionOptions, queryString, maxSuggestions])
+
+  const checkForTriggerMatch = useMentionTriggerMatch("@", { minLength: 0 })
+
+  const handleDragStart = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault()
+    },
+    []
+  )
 
   return (
     <div
@@ -150,6 +156,7 @@ export const TextEditor = ({
           <RichTextPlugin
             contentEditable={
               <ContentEditable
+                onDragStart={handleDragStart}
                 className={cn(
                   "min-h-30 resize-y wrap-break-word whitespace-pre-wrap outline-none",
                   disabled && "cursor-not-allowed",
@@ -174,9 +181,11 @@ export const TextEditor = ({
             onChange={(editorState) => {
               editorState.read(() => {
                 const plainText = $getRoot().getTextContent()
-                // Evita llamadas innecesarias si el texto no ha cambiado realmente
                 if (plainText !== value) {
-                  onChange(plainText)
+                  // Transición no bloqueante para mantener fluida la escritura
+                  startTransition(() => {
+                    onChange(plainText)
+                  })
                 }
               })
             }}
@@ -214,7 +223,6 @@ export const TextEditor = ({
               if (!anchorElementRef.current || options.length === 0) return null
 
               const rect = anchorElementRef.current.getBoundingClientRect()
-
               const viewportPadding = 8
               const menuGap = 6
               const preferredMenuWidth = 320
@@ -227,12 +235,10 @@ export const TextEditor = ({
                 preferredMenuWidth,
                 viewportWidth - viewportPadding * 2
               )
-
               const availableBelow = Math.max(
                 0,
                 viewportHeight - rect.bottom - viewportPadding - menuGap
               )
-
               const availableAbove = Math.max(
                 0,
                 rect.top - viewportPadding - menuGap
@@ -252,7 +258,6 @@ export const TextEditor = ({
                 viewportPadding,
                 Math.min(rect.left, viewportWidth - menuWidth - viewportPadding)
               )
-
               const top = shouldOpenAbove
                 ? rect.top - menuGap
                 : rect.bottom + menuGap
@@ -310,7 +315,7 @@ export const TextEditor = ({
   )
 }
 
-// --- PLUGINS AUXILIARES ---
+// --- PLUGINS AUXILIARES OPTIMIZADOS ---
 
 function EditorCapturePlugin({
   onInit,
@@ -347,45 +352,42 @@ function SyncValuePlugin({
       const currentText = root.getTextContent()
       const isFocused = editor.getRootElement() === document.activeElement
 
-      if (!isFocused && value !== currentText) {
-        root.clear()
-        const paragraph = $createParagraphNode()
+      if (isFocused || value === currentText) return
 
-        if (value === "") {
-          root.append(paragraph)
-          return
-        }
+      root.clear()
+      const paragraph = $createParagraphNode()
 
-        const sortedOptions = [...mentionOptions].sort(
-          (a, b) => b.label.length - a.label.length
-        )
-
-        let remainingText = value
-        while (remainingText.length > 0) {
-          let matchFound = false
-
-          for (const option of sortedOptions) {
-            const trigger = `@${option.label}`
-            if (remainingText.startsWith(trigger)) {
-              const mentionNode = $createMentionNode(option.label, option.id)
-              paragraph.append(mentionNode)
-              remainingText = remainingText.slice(trigger.length)
-              matchFound = true
-              break
-            }
-          }
-
-          if (!matchFound) {
-            const nextAt = remainingText.indexOf("@", 1)
-            const textChunk =
-              nextAt === -1 ? remainingText : remainingText.slice(0, nextAt)
-            paragraph.append($createTextNode(textChunk))
-            remainingText = remainingText.slice(textChunk.length)
-          }
-        }
-
+      if (!value) {
         root.append(paragraph)
+        return
       }
+
+      const optionsMap = new Map<string, MentionOption>()
+      for (const opt of mentionOptions) {
+        optionsMap.set(opt.label, opt)
+      }
+
+      const regex = /(@[a-zA-Z0-9_\-./]+)/g
+      const parts = value.split(regex)
+
+      for (const part of parts) {
+        if (!part) continue
+
+        if (part.startsWith("@")) {
+          const labelCandidate = part.slice(1)
+          const matchedOption = optionsMap.get(labelCandidate)
+
+          if (matchedOption) {
+            paragraph.append(
+              $createMentionNode(matchedOption.label, matchedOption.id)
+            )
+            continue
+          }
+        }
+        paragraph.append($createTextNode(part))
+      }
+
+      root.append(paragraph)
     })
   }, [editor, value, mentionOptions])
 
