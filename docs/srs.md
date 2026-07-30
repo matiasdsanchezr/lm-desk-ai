@@ -8,26 +8,30 @@
 
 ### 1.1 Propósito
 
-Este documento define los requisitos funcionales, no funcionales y de sistema para la aplicación **LM Desk**, una herramienta de escritorio y web diseñada para optimizar la preparación de contexto de código fuente y la interacción con Modelos de Lenguaje Grande (LLMs).
+Este documento define los requisitos funcionales, no funcionales y de sistema para la aplicación **LM Desk**, una herramienta de escritorio y entorno web local diseñada para optimizar la preparación de contexto de código fuente, la adjunción de recursos multimodales y la interacción determinista con Modelos de Lenguaje Grande (LLMs).
 
 ### 1.2 Alcance del Producto
 
 LM Desk permite a desarrolladores de software:
 
-- Explorar de forma interactiva el árbol de archivos de un proyecto local objetivo.
-- Seleccionar selectivamente archivos de código relevantes para conformar el contexto de una consulta.
-- Redactar instrucciones usando un editor de texto enriquecido con autocompletado y vinculación automática mediante menciones (`@nombre_archivo`).
-- Compilar prompts estructurados en formatos limpios (XML/Markdown) optimizados para arquitecturas de razonamiento profundo (ej. Claude 3.5 Sonnet, DeepSeek R1, Gemini 2.5 Pro).
-- Ejecutar inferencias en tiempo real (streaming) con soporte de visualización de razonamiento ("thinking blocks") a través de múltiples proveedores de IA.
-- Gestionar un historial local de análisis y plantillas personalizadas de instrucciones del sistema.
+- Explorar de forma interactiva la estructura jerárquica de archivos de un proyecto local objetivo.
+- Resolver e incluir automáticamente grafos de dependencias directas (`imports`) del código fuente seleccionado.
+- Cargar e integrar recursos visuales (imágenes locales o vía URLs externas en formato Base64) al contexto de consulta.
+- Redactar instrucciones mediante un editor con autocompletado y vinculación dinámica de código usando menciones (`@nombre_archivo`).
+- Compilar prompts estructurados en bloques XML/Markdown legibles por arquitecturas de razonamiento profundo (ej. Claude 3.5 Sonnet, DeepSeek R1, Gemini 2.5 Pro, GPT-4o).
+- Ejecutar inferencias en tiempo real (streaming) con visualización colapsable de cadenas de razonamiento ("thinking blocks") a través de múltiples proveedores.
+- Mantener un espacio de chat interactivo multi-turno que permite la edición de consultas pasadas, modificación de respuestas del asistente, eliminación de turnos y activación/desactivación del razonamiento acumulado en preguntas de seguimiento.
+- Gestionar localmente un historial de análisis y plantillas Markdown personalizadas para instrucciones del sistema.
 
 ### 1.3 Glosario
 
 - **LLM (Large Language Model):** Modelo de inteligencia artificial especializado en procesamiento y generación de lenguaje natural y código.
 - **Prompt:** Instrucción estructurada provista a un LLM para guiar su respuesta.
-- **RSC (React Server Components):** Componentes de React que se ejecutan exclusivamente en el servidor dentro del framework Next.js.
-- **System Prompt (Instrucción del Sistema):** Directrices de comportamiento globales aplicadas al modelo de IA antes de procesar la consulta del usuario.
-- **Token:** Unidad básica de procesamiento de texto en modelos de lenguaje.
+- **RSC (React Server Components):** Componentes de React que se ejecutan exclusivamente en el servidor dentro de Next.js App Router.
+- **System Prompt (Instrucción del Sistema):** Directrices globales de comportamiento aplicadas al modelo de IA antes de procesar las consultas.
+- **Reasoning / Thinking Block:** Cadena de pensamiento intermedia transmitida en streaming por modelos de razonamiento (ej. DeepSeek R1).
+- **FileUIPart / Multimodal Part:** Estructura normalizada de Vercel AI SDK para transmitir archivos e imágenes codificados en Base64.
+- **Token:** Unidad básica de procesamiento textual/visual en modelos de lenguaje.
 
 ---
 
@@ -35,98 +39,104 @@ LM Desk permite a desarrolladores de software:
 
 ### 2.1 Perspectiva del Producto
 
-LM Desk funciona como un entorno intermedio entre el código fuente local del desarrollador y las APIs de inferencia de IA. No requiere base de datos externa; utiliza el sistema de archivos del servidor/máquina local configurado a través de variables de entorno para leer el código del proyecto y almacenar el historial en formato JSON.
+LM Desk actúa como una capa intermedia ligera ("Context-First") entre el repositorio de código local del desarrollador y las APIs de inferencia de IA. No requiere bases de datos externas; opera directamente sobre el sistema de archivos de la máquina local (configurado mediante `TARGET_PROJECT_PATH`) y persiste el historial y las plantillas en formato JSON y Markdown dentro de `STORAGE_PATH`.
 
 ### 2.2 Funciones del Producto
 
-El sistema se divide en cuatro módulos principales:
+El sistema se estructura en seis módulos principales:
 
-1. **Explorador de Archivos Virtualizado:** Renderiza de manera eficiente miles de archivos mediante técnicas de virtualización, permitiendo la selección jerárquica (carpetas y archivos individuales).
-2. **Editor Lexical con Menciones:** Editor WYSIWYG que intercepta el carácter `@` para sugerir archivos del árbol e incluirlos dinámicamente en la selección de contexto.
-3. **Generador y Revisor de Prompts:** Unificador de plantillas que procesa las variables de instrucciones del sistema, el código fuente formateado y la consulta del usuario.
-4. **Motor de Inferencia Multi-Proveedor:** Capa de abstracción compatible con Vertex AI, Google GenAI, NVIDIA NIM, OpenAI, OpenRouter y proxies compatibles con OpenAI (Antigravity).
+1. **Explorador de Archivos Virtualizado y Grafo de Dependencias:** Renderiza miles de nodos a 60fps con `@tanstack/react-virtual` y analiza declaraciones de importación para incorporar dependencias asociadas.
+2. **Editor Lexical Multimodal con Menciones (@):** Editor WYSIWYG que intercepta `@` para vincular archivos dinámicamente y soporta la incorporación de imágenes externas o locales.
+3. **Generador y Revisor de Prompts:** Ensambla las instrucciones del sistema, archivos formateados en XML y la consulta del usuario, estimando caracteres y tokens en tiempo real.
+4. **Motor de Inferencia Multi-Proveedor:** Capa de abstracción compatible con OpenAI, Google Vertex AI, Google GenAI, NVIDIA NIM, OpenRouter y proxies compatibles (Antigravity) usando Vercel AI SDK.
+5. **Espacio de Chat Interactivo Multi-Turno:** Renderiza respuestas mediante Streamdown, soporta preguntas de seguimiento, edición/eliminación de turnos anteriores y control del historial de razonamiento.
+6. **Gestor de Historial y Plantillas de Sistema:** Persistencia y edición inline de títulos de conversaciones, así como CRUD completo de plantillas de instrucciones en archivos `.md`.
 
 ### 2.3 Entorno de Ejecución
 
-- **Servidor/Backend:** Node.js (v18 o superior), Next.js 15/16 App Router.
-- **Cliente/Frontend:** Navegadores modernos con soporte para APIs Web estándar (Chrome, Firefox, Safari, Edge).
-- **Almacenamiento:** Directorio local configurable en el sistema de archivos (`STORAGE_PATH`).
+- **Servidor / Backend:** Node.js (v20.0.0 o superior), Next.js 16 App Router (React 19).
+- **Cliente / Frontend:** Navegadores web modernos (Chrome, Firefox, Safari, Edge) con soporte de React 19 y Tailwind CSS v4.
+- **Almacenamiento Local:** Directorios configurables en el sistema de archivos local (`STORAGE_PATH` y `TARGET_PROJECT_PATH`).
 
 ### 2.4 Restricciones de Diseño e Implementación
 
-- **Seguridad de Archivos:** La lectura de archivos debe limitarse estrictamente al directorio raíz configurado (`TARGET_PROJECT_PATH`) para evitar vulnerabilidades de Path Traversal.
-- **Sin Estado Global Pesado:** El estado de la interfaz se maneja en el cliente mediante Zustand persistido en `localStorage` para evitar la sobrecarga de sesiones de servidor.
-- **Extensiones Permitidas:** Solo se permite procesar archivos de texto plano con extensiones de código predefinidas (ej. `.ts`, `.tsx`, `.js`, `.py`, `.json`, `.css`, `.md`).
+- **Prevención de Path Traversal:** Toda lectura de código o imágenes locales debe validarse estrictamente contra la raíz `TARGET_PROJECT_PATH`.
+- **Límite de Concurrencia de Lectura:** El servidor limita a un máximo de 20 lecturas simultáneas de archivos (`fs/promises`) para evitar agotar descriptores de archivos del SO.
+- **Estado de Interfaz en Cliente:** Uso de Zustand 5 (sin inconsistencias de hidratación en SSR) para el almacenamiento de preferencias en `localStorage`.
+- **Extensiones Permitidas:** Procesamiento restringido a archivos de código/texto plano (`.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.json`, `.css`, `.md`, etc.) e imágenes estándar (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`).
 
 ---
 
 ## 3. Requisitos del Sistema
 
-### 3.1 Interfaces Externas
+### 3.1 Interfaces de Usuario
 
-#### Interfaz de Usuario
+- Interfaz responsiva con soporte nativo de modo oscuro (clase `.dark` gestionada por Tailwind CSS v4).
+- Barra lateral (Sidebar) colapsable para la navegación e interactividad del historial de análisis.
+- Ventana modal interactiva (Dialog) para la exploración virtualizada y selección masiva del árbol de archivos.
+- Panel desplegable lateral (Settings Drawer) para la configuración en caliente de proveedores, parámetros de IA y plantillas del sistema.
 
-- Interfaz responsiva con soporte nativo de modo oscuro (clase `.dark` controlada por Tailwind).
-- Sidebar colapsable para la gestión del historial de chats.
-- Panel dividido (Split Panel) en pantallas de escritorio para visualización simultánea del árbol de archivos y los detalles de selección.
-- Cajón de configuración (Drawer) lateral derecho para ajustes rápidos de parámetros de IA.
+### 3.2 Interfaces de Software
 
-#### Interfaces de Software
-
-- **API del Sistema de Archivos (Node.js `fs/promises`):** Lectura del código fuente y persistencia de chats/prompts en formato JSON.
-- **Vercel AI SDK:** Integración para la normalización de llamadas de texto y flujos de streaming (`streamText`).
+- **Node.js `fs/promises` & `path`:** Operaciones de lectura segura del proyecto objetivo y almacenamiento local JSON/Markdown.
+- **Vercel AI SDK 7+ (`ai`, `@ai-sdk/react`):** Utilización de `streamText`, `createUIMessageStreamResponse`, `convertToModelMessages` y hook `useChat` con payloads `files`.
+- **Zod 4+:** Validación de esquemas en peticiones de API y formateo de errores con `z.prettifyError()`.
+- **Streamdown:** Renderizado de contenido Markdown transmitido en streaming con resaltado sintáctico de código mediante `@streamdown/code`.
 
 ---
 
 ## 4. Requisitos Funcionales
 
-### 4.1 Módulo de Selección de Contexto (File Explorer)
+### 4.1 Módulo de Selección de Contexto (File Explorer & Grafos)
 
-- **RF-1.1:** El sistema debe listar de forma recursiva los archivos del directorio raíz configurado en `TARGET_PROJECT_PATH`.
-- **RF-1.2:** El árbol de archivos debe ignorar carpetas de dependencias y compilación predefinidas (`node_modules`, `.git`, `.next`, `dist`, etc.).
-- **RF-1.3:** El sistema debe permitir la selección de carpetas completas, marcando de forma automática todos sus archivos hijos en estado seleccionado.
-- **RF-1.4:** Si se seleccionan algunos archivos de una carpeta (pero no todos), la carpeta padre debe mostrar un estado visual indeterminado (check parcial).
-- **RF-1.5:** El explorador debe soportar la recarga en caliente de archivos desde el servidor mediante Server Actions sin perder el estado de selección actual.
-- **RF-1.6:** El panel de seleccionados debe permitir remover archivos de la selección de forma individual o vaciar la lista completa mediante un diálogo de confirmación.
+- **RF-1.1:** El sistema debe listar recursivamente los archivos del proyecto raíz configurado en `TARGET_PROJECT_PATH`.
+- **RF-1.2:** El árbol debe ignorar automáticamente directorios de dependencias y compilación (`node_modules`, `.git`, `.next`, `dist`, `build`, etc.).
+- **RF-1.3:** Permitir la selección de carpetas completas, marcando de forma automática sus archivos hijos.
+- **RF-1.4:** Si se selecciona una fracción de archivos de una carpeta, el nodo padre debe reflejar un estado indeterminado (check parcial).
+- **RF-1.5:** Permitir recargar la estructura de archivos en caliente desde el servidor mediante Server Actions sin reiniciar la selección.
+- **RF-1.6:** Permitir remover archivos individuales o limpiar la selección completa previa confirmación en diálogo modal.
+- **RF-1.7 (Resolución de Dependencias):** El sistema debe ofrecer un control opcional ("Incluir dependencias") para analizar expresiones `import` en el código seleccionado y agregar automáticamente los archivos importados al grafo de contexto.
 
-### 4.2 Módulo de Edición de Consulta (Rich Editor)
+### 4.2 Módulo de Edición de Consulta y Adjuntos (Rich Editor & Multimodal)
 
-- **RF-2.1:** El editor de texto debe permitir la redacción libre de la consulta del usuario.
-- **RF-2.2:** Al ingresar el carácter `@`, el sistema debe desplegar un menú flotante con la lista de archivos disponibles en el proyecto.
-- **RF-2.3:** Al seleccionar un archivo del menú de menciones, este se debe insertar en el editor como un nodo especial ("Token Node") no editable de color diferenciado.
-- **RF-2.4:** La inserción de una mención de archivo debe agregar automáticamente dicho archivo a la lista de archivos seleccionados en el explorador.
-- **RF-2.5:** El editor debe soportar la sincronización bidireccional: si un archivo mencionado es deseleccionado del explorador, el editor debe conservar el texto pero desvincular el estado del nodo.
+- **RF-2.1:** Permitir la redacción libre de la consulta principal del usuario mediante el editor Lexical.
+- **RF-2.2:** Al escribir el carácter `@`, el editor debe desplegar una lista emergente con los archivos del proyecto para autocompletar.
+- **RF-2.3:** Al elegir un archivo del menú de menciones, este se inserta como un nodo especial ("Token Node") no editable de color diferenciado.
+- **RF-2.4:** Insertar una mención de archivo debe agregar automáticamente dicha ruta a la lista de archivos seleccionados en el explorador.
+- **RF-2.5 (Adjuntos Multimodales):** El usuario debe poder ingresar URLs de imágenes externas o seleccionar archivos de imagen locales (`.png`, `.jpg`, `.webp`), los cuales se codificarán en Base64 e incluirán en el payload del LLM.
 
-### 4.3 Módulo de Generación y Previsualización de Prompts
+### 4.3 Módulo de Generación y Revisor de Prompts
 
-- **RF-3.1:** El sistema debe compilar un prompt estructurado concatenando:
+- **RF-3.1:** El sistema debe compilar un prompt unificado estructurado en:
   - Instrucciones del sistema (System Prompt).
-  - Archivos seleccionados encapsulados en etiquetas `<file path="...">...</file>`.
-  - La consulta final del usuario.
-- **RF-3.2:** El usuario debe poder previsualizar el prompt final generado en un área de texto de solo lectura con scroll dedicado.
-- **RF-3.3:** El sistema debe proveer una acción de un solo clic para copiar el prompt completo al portapapeles.
-- **RF-3.4:** El sistema debe estimar y mostrar en tiempo real la cantidad de caracteres y una aproximación de tokens del prompt generado.
+  - Archivos de código encapsulados en `<file path="...">...</file>`.
+  - La tarea/consulta definida por el usuario.
+- **RF-3.2:** Mostrar una vista previa completa del prompt compilado en un área de lectura con scroll.
+- **RF-3.3:** Disponer de una acción de un solo clic para copiar el prompt completo al portapapeles.
+- **RF-3.4:** Calcular y mostrar en tiempo real la cantidad total de caracteres y una estimación del conteo de tokens (`~caracteres / 4`).
 
-### 4.4 Módulo de Inferencia y Chat Interactivo
+### 4.4 Módulo de Inferencia y Chat Interactivo Multi-Turno
 
-- **RF-4.1:** El sistema debe permitir enviar el prompt generado directamente a la API de inferencia seleccionada.
-- **RF-4.2:** La respuesta del asistente debe renderizarse en tiempo real (streaming) utilizando el formato Markdown.
-- **RF-4.3:** Si el modelo admite razonamiento (ej. modelos tipo DeepSeek R1 o Gemini con thinking habilitado), el flujo de razonamiento ("thinking") debe mostrarse dentro de un componente colapsable diferenciado del texto de respuesta final.
-- **RF-4.4:** El componente de razonamiento debe cerrarse automáticamente tras finalizar el streaming del texto principal, a menos que el usuario lo abra manualmente.
-- **RF-4.5:** El sistema debe permitir al usuario cancelar/detener la generación de la respuesta en cualquier momento del streaming.
+- **RF-4.1:** Enviar la consulta y el contexto directo al proveedor de IA configurado mediante flujos de streaming HTTP.
+- **RF-4.2:** Transmitir y renderizar en tiempo real la respuesta en formato Markdown enriquecido.
+- **RF-4.3 (Thinking Blocks):** Si el modelo genera bloques de razonamiento (cadena de pensamiento), estos deben renderizarse dentro de un componente `Reasoning` colapsable diferenciado del texto de respuesta.
+- **RF-4.4 (Preguntas de Seguimiento):** El espacio de chat debe permitir enviar preguntas adicionales manteniendo el hilo de la conversación activo.
+- **RF-4.5 (Control de Razonamiento en Seguimiento):** El usuario puede activar o desactivar la casilla de inclusión del razonamiento previo como contexto para las preguntas de seguimiento.
+- **RF-4.6 (Edición y Eliminación de Turnos):** Permitir al usuario editar el texto de consultas pasadas o la respuesta generada por la IA, así como eliminar un turno completo de la conversación.
+- **RF-4.7:** Permitir cancelar/detener la generación de la respuesta en cualquier punto durante el streaming.
 
 ### 4.5 Módulo de Historial y Persistencia
 
-- **RF-5.1:** Al finalizar la generación de una respuesta, el sistema debe guardar automáticamente un archivo JSON en `STORAGE_PATH/chats` que contenga el ID, título autogenerado, fecha de creación, archivos seleccionados, prompt de usuario y respuesta de la IA.
-- **RF-5.2:** El sidebar de historial debe listar los chats guardados ordenados cronológicamente de forma descendente.
-- **RF-5.3:** Al hacer clic en un chat del historial, el sistema debe cargar el estado correspondiente en la interfaz (prompt y respuesta generada).
-- **RF-5.4:** El usuario debe poder eliminar elementos del historial a través de un botón dedicado, previa confirmación mediante un cuadro de diálogo.
+- **RF-5.1:** Al finalizar la generación de una respuesta, guardar de forma automática un archivo JSON en `STORAGE_PATH/chats` con el ID, título generado/asignado, fecha de creación, rutas seleccionadas y la lista de mensajes UI.
+- **RF-5.2:** Listar en el Sidebar los análisis guardados ordenados descendentemente por fecha.
+- **RF-5.3 (Edición de Título Inline):** Permitir renombrar el título de cualquier chat del historial directamente desde la barra lateral.
+- **RF-5.4:** Permitir la eliminación de análisis del historial previa confirmación del usuario.
 
-### 4.6 Módulo de Configuración de Parámetros (Settings)
+### 4.6 Módulo de Configuración de Parámetros y Plantillas
 
-- **RF-6.1:** El sistema debe permitir cambiar el proveedor de IA y el modelo asociado de forma dinámica a través de un menú selector.
-- **RF-6.2:** El usuario debe poder ajustar los parámetros de Temperatura (rango 0.00 a 2.00) y Top P (rango 0.00 a 1.00) mediante controles deslizantes (Sliders).
-- **RF-6.3:** El sistema debe permitir la creación, edición y eliminación de plantillas personalizadas de prompts de sistema en archivos `.md` locales en `STORAGE_PATH/prompts`.
+- **RF-6.1:** Selector dinámico de proveedor de inferencia (OpenAI, Google Vertex AI, Google GenAI, NVIDIA NIM, OpenRouter, Antigravity) y sus modelos compatibles.
+- **RF-6.2:** Controles deslizantes (Sliders) para calibrar la Temperatura (rango 0.00 a 2.00) y Top P (rango 0.00 a 1.00).
+- **RF-6.3 (Gestor de Plantillas Markdown):** Interfaz para crear, cargar, guardar y eliminar plantillas de instrucciones de sistema almacenadas como archivos `.md` en `STORAGE_PATH/prompts`.
 
 ---
 
@@ -134,15 +144,24 @@ El sistema se divide en cuatro módulos principales:
 
 ### 5.1 Rendimiento
 
-- **Rendimiento de Renderizado:** El explorador de archivos debe soportar la visualización de estructuras de más de 5,000 archivos sin degradación del rendimiento de la interfaz de usuario, garantizando un scroll fluido a 60fps mediante virtualización de listas.
-- **Concurrencia en Servidor:** El procesamiento de lectura de archivos locales debe realizarse con un límite de concurrencia controlado (máximo de 20 lecturas simultáneas) para evitar el agotamiento de descriptores de archivos en el sistema operativo.
+- **Scroll Virtualizado a 60fps:** La lista de archivos del explorador y la vista de seleccionados debe mantener un renderizado fluido utilizando `@tanstack/react-virtual`, soportando proyectos de más de 5,000 archivos sin degradación visual.
+- **Control de Concurrencia de Archivos:** Las operaciones del servidor deben ejecutarse en lotes controlados (límite de 20 lecturas simultáneas) para prevenir el agotamiento de recursos del sistema operativo.
 
 ### 5.2 Seguridad
 
-- **Restricción de Directorios:** El backend debe validar que cualquier ruta de archivo solicitada para lectura esté contenida dentro del árbol de `TARGET_PROJECT_PATH`. Cualquier ruta que resuelva fuera de este límite debe ser rechazada con un error de seguridad inmediato.
-- **Sanitización de Nombres de Plantillas:** Los nombres de archivos de plantillas creados por el usuario deben ser sanitizados eliminando caracteres especiales para prevenir ataques de inyección en el sistema de archivos.
+- **Aislamiento de Rutas (Sandbox):** La función `validateAndSanitizePath` debe verificar estrictamente que cualquier archivo (código o imagen local) pertenezca al directorio `TARGET_PROJECT_PATH`. Solicitudes fuera de dicho alcance deben ser denegadas.
+- **Sanitización de Archivos de Plantilla:** Los nombres de plantillas creados por los usuarios se desinfectan eliminando caracteres especiales para impedir ataques de Inyección en el Sistema de Archivos.
 
 ### 5.3 Mantenibilidad y Extensibilidad
 
-- **Arquitectura de Proveedores:** La capa de inferencia debe utilizar un patrón Factory que permita añadir nuevos proveedores de API (ej. Anthropic nativo, Cohere) implementando la interfaz común `InferenceClient`.
-- **Tipado Estricto:** El 100% del código fuente debe estar escrito en TypeScript bajo configuraciones estrictas, garantizando la seguridad de tipos en los payloads de las peticiones.
+- **Arquitectura de Proveedores (Factory Pattern):** El módulo de inferencia debe abstraer la instanciación de clientes de IA mediante la interfaz `InferenceClient`, facilitando la inclusión de nuevos proveedores sin alterar la capa de API.
+- **Tipado Estricto:** Uso del 100% de TypeScript bajo configuración estricta, integrando validación de esquemas Zod en todas las entradas de servidor y payloads de acciones.
+
+---
+
+## 6. Funcionalidades Futuras (Hoja de Ruta)
+
+- **Ingesta de Documentos Multiformato:** Lectura y extracción directa de texto en archivos PDF, DOCX y XLSX para vincular especificaciones funcionales junto al código fuente.
+- **Web Scraper de Documentación:** Extracción de sitios web de APIs públicas para incorporar bloques de documentación técnica externa.
+- **Agentes de Pre-estructuración Acotada:** Integración de agentes especializados de paso único para resumir arquitecturas o mapear archivos relevantes ante consultas complejas.
+- **Búsqueda Fundamentada (Google Search Grounding):** Integración con APIs de búsqueda web para validar o actualizar parches de librerías en tiempo real.

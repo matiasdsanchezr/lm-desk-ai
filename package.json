@@ -53,6 +53,7 @@
     "@types/react-dom": "19.2.3",
     "eslint": "10.8.0",
     "eslint-config-next": "16.2.12",
+    "prettier-plugin-compact-markdown-table": "^0.1.0",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
     "typescript": "^5"

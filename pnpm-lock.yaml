@@ -139,6 +139,9 @@ importers:
       eslint-config-next:
         specifier: 16.2.12
         version: 16.2.12(@typescript-eslint/parser@8.65.0(eslint@10.8.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.8.0(jiti@2.7.0))(typescript@5.9.3)
+      prettier-plugin-compact-markdown-table:
+        specifier: ^0.1.0
+        version: 0.1.0(prettier@3.9.6)
       prettier-plugin-tailwindcss:
         specifier: ^0.8.1
         version: 0.8.1(prettier@3.9.6)
@@ -3928,6 +3931,11 @@ packages:
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
+
+  prettier-plugin-compact-markdown-table@0.1.0:
+    resolution: {integrity: sha512-g7b+55D/VsUoKJkF5XViPeu8kPqo3mUzby5EOFluv4+royfGLrNOA3S3SwwZ4yoP/UL8lUWKydwKSqRyc2vapA==}
+    peerDependencies:
+      prettier: ^3.0.0
 
   prettier-plugin-tailwindcss@0.8.1:
     resolution: {integrity: sha512-iaFMYqDsE4ffdDkn5qup0j5f2aCEBFZrdrZnvu9QKTlWx/iGPeQ4HHu7b7fCPMxeo9nwQBiOAh2nSypdFYWJkw==}
@@ -9047,6 +9055,10 @@ snapshots:
   powershell-utils@0.1.0: {}
 
   prelude-ls@1.2.1: {}
+
+  prettier-plugin-compact-markdown-table@0.1.0(prettier@3.9.6):
+    dependencies:
+      prettier: 3.9.6
 
   prettier-plugin-tailwindcss@0.8.1(prettier@3.9.6):
     dependencies:
