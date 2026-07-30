@@ -14,6 +14,9 @@ export type SerializedMentionNode = Spread<
   SerializedTextNode
 >
 
+const MENTION_CLASS_NAME =
+  "font-mono font-semibold text-blue-500 dark:text-blue-400 bg-primary/10 px-1.5 py-0.5 rounded-md inline-block align-baseline decoration-stretch select-all"
+
 export class MentionNode extends TextNode {
   __filePath: string
   __mentionName: string
@@ -30,13 +33,12 @@ export class MentionNode extends TextNode {
     super(`@${mentionName}`, key)
     this.__filePath = filePath
     this.__mentionName = mentionName
-    this.__mode = 1 // Token mode (se comporta como un único carácter al borrar)
+    this.__mode = 1
   }
 
   override createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config)
-    dom.className =
-      "font-mono font-semibold text-blue-500 dark:text-blue-400 bg-primary/10 px-1.5 py-0.5 rounded-md inline-block align-baseline decoration-stretch select-all"
+    dom.className = MENTION_CLASS_NAME
     return dom
   }
 
@@ -46,9 +48,8 @@ export class MentionNode extends TextNode {
     config: EditorConfig
   ): boolean {
     const isChanged = super.updateDOM(prevNode, dom, config)
-    if (isChanged) {
-      dom.className =
-        "font-mono font-semibold text-blue-500 dark:text-blue-400 bg-primary/10 px-1.5 py-0.5 rounded-md inline-block align-baseline decoration-stretch select-all"
+    if (isChanged && dom.className !== MENTION_CLASS_NAME) {
+      dom.className = MENTION_CLASS_NAME
     }
     return isChanged
   }

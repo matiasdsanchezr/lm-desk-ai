@@ -134,7 +134,6 @@ export const ContextBuilder = ({
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {/* Botones de acción agrupados juntos */}
           <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
@@ -257,9 +256,9 @@ export const ContextBuilder = ({
 
       {/* Modal Dialog para el Explorador de Archivos */}
       <Dialog open={showFileExplorer} onOpenChange={setShowFileExplorer}>
-        <DialogContent className="flex max-h-[90vh] h-[90vh] max-w-[95vw] w-full flex-col gap-0 p-0 sm:max-w-6xl">
-          <DialogHeader className="border-b px-6 py-4">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+        <DialogContent className="flex h-[90vh] max-h-[90vh] w-full max-w-[95vw] flex-col gap-0 p-0 sm:max-w-6xl">
+          <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
+            <DialogTitle className="flex items-center gap-2 text-base font-semibold sm:text-lg">
               <span className="icon-[fa7-solid--folder-open] text-primary" />
               Explorador del Proyecto
             </DialogTitle>
@@ -269,8 +268,8 @@ export const ContextBuilder = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-1 flex-col gap-3 min-h-0 overflow-hidden p-4 sm:p-6">
-            <div className="flex-1 min-h-0">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 sm:p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border/40 p-1">
               <FileExplorerView
                 treeNodes={treeNodes}
                 totalFiles={totalFiles}
@@ -280,25 +279,26 @@ export const ContextBuilder = ({
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex shrink-0 items-start gap-2.5 pt-2 sm:items-center">
               <Checkbox
                 id="include-deps"
                 checked={includeDependencies}
                 onCheckedChange={(val) => setIncludeDependencies(!!val)}
                 disabled={isDisabled}
+                className="mt-0.5 shrink-0 sm:mt-0"
               />
               <Label
                 htmlFor="include-deps"
-                className="cursor-pointer text-xs sm:text-sm"
+                className="cursor-pointer text-xs leading-tight text-foreground sm:text-sm"
               >
                 Incluir dependencias de los archivos seleccionados
               </Label>
             </div>
           </div>
 
-          <DialogFooter className="border-t bg-muted/20 px-6 py-3">
-            <div className="flex w-full items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">
+          <DialogFooter className="border-t bg-muted/20 px-4 py-3 sm:px-6">
+            <div className="flex w-full items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
                 {selectedFiles.length} archivo(s) seleccionado(s)
               </span>
               <Button onClick={() => setShowFileExplorer(false)} size="sm">
@@ -346,7 +346,7 @@ export const ContextBuilder = ({
 
           <DialogFooter className="border-t pt-3">
             <div className="flex w-full items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">
+              <span className="text-xs font-medium text-muted-foreground">
                 {imageUrlCount} URL(s) ingresada(s)
               </span>
               <Button onClick={() => setShowImageDialog(false)} size="sm">
