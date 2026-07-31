@@ -4,15 +4,15 @@ export function ChatHistorySidebarSkeleton() {
   return (
     <Sidebar
       collapsible="icon"
-      className="h-full w-full border-r border-zinc-200/50 bg-zinc-50/50 md:w-80 dark:border-zinc-800/50 dark:bg-zinc-950/20"
+      className="h-full w-full border-r border-border/40 bg-sidebar/50"
     >
-      <SidebarHeader className="border-b border-zinc-200/50 p-3 dark:border-zinc-800/50">
-        <div className="flex items-center justify-between">
-          <div className="h-5 w-24 animate-pulse rounded-md bg-muted" />
-          <div className="h-8 w-16 animate-pulse rounded-lg bg-muted" />
+      <SidebarHeader className="border-b border-border/40 p-2 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:border-b-0 md:p-3">
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
+          <div className="h-5 w-24 animate-pulse rounded-md bg-muted group-data-[collapsible=icon]:hidden" />
+          <div className="h-8 w-16 animate-pulse rounded-lg bg-muted group-data-[collapsible=icon]:w-8" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="space-y-2 p-2">
+      <SidebarContent className="space-y-2 p-2 group-data-[collapsible=icon]:hidden">
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}

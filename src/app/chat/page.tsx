@@ -13,7 +13,7 @@ export default function NewChatPage() {
 
   return (
     <section className="min-h-0 w-full flex-1">
-      <SidebarProvider className="h-full items-stretch">
+      <SidebarProvider defaultOpen={false} className="h-full items-stretch">
         <div className="flex h-full w-full items-stretch overflow-hidden">
           <Suspense fallback={<ChatHistorySidebarSkeleton />}>
             <ChatHistorySidebar chatsPromise={chatsPromise} />

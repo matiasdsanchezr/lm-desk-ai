@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { memo, useCallback, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../actions/chat-history-actions"
 import type { SavedChatMeta } from "../types/saved-chat"
 
@@ -39,7 +39,7 @@ function formatChatDate(dateValue: Date | string) {
   return dateFormatter.format(date)
 }
 
-export function ChatHistoryItem({
+export const ChatHistoryItem = memo(function ChatHistoryItem({
   chat,
   isActive,
   isMobile,
@@ -54,16 +54,16 @@ export function ChatHistoryItem({
 
   const formattedDate = formatChatDate(chat.createdAt || "0")
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     startTransition(async () => {
       const res = await deleteChat(chat.id)
       if (!res.error && currentId === chat.id) {
         router.push("/chat")
       }
     })
-  }
+  }, [chat.id, currentId, router])
 
-  const handleSaveTitle = () => {
+  const handleSaveTitle = useCallback(() => {
     const trimmedTitle = titleInput.trim()
     if (!trimmedTitle || trimmedTitle === chat.title) {
       setIsEditing(false)
@@ -77,12 +77,12 @@ export function ChatHistoryItem({
         setIsEditing(false)
       }
     })
-  }
+  }, [chat.id, chat.title, titleInput])
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setIsEditing(false)
     setTitleInput(chat.title || "")
-  }
+  }, [chat.title])
 
   if (isEditing) {
     return (
@@ -148,13 +148,13 @@ export function ChatHistoryItem({
           "h-auto w-full cursor-pointer rounded-md border text-left transition-colors hover:bg-muted/50",
           isActive
             ? "border-primary/30 bg-muted"
-            : "border-zinc-200/40 bg-background/50 dark:border-zinc-800/40"
+            : "border-border/40 bg-background/50"
         )}
         render={
           <button
             type="button"
             onClick={() => onSelect(chat.id)}
-            className="flex w-full flex-col items-start gap-1 p-3 disabled:opacity-60"
+            className="flex w-full flex-col items-start gap-1 p-2.5 disabled:opacity-60"
           >
             <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
               {chat.title || "Análisis sin título"}
@@ -205,7 +205,7 @@ export function ChatHistoryItem({
             className={cn(
               "cursor-pointer transition-colors",
               isConfirming
-                ? "bg-destructive/10 text-destructive focus:bg-destructive focus:text-destructive-foreground font-medium"
+                ? "bg-destructive/10 font-medium text-destructive focus:bg-destructive focus:text-destructive-foreground"
                 : "text-destructive focus:bg-destructive/10 focus:text-destructive"
             )}
             closeOnClick={false}
@@ -239,4 +239,4 @@ export function ChatHistoryItem({
       </DropdownMenu>
     </SidebarMenuItem>
   )
-}
+})

@@ -5,7 +5,7 @@ import React, { Suspense } from "react"
 
 export const metadata: Metadata = {
   title: "Chat - LM Desk",
-  description: "Generar consultas para LLMs sobre tus archivos locales.",
+  description: "Generar consultas para LLMs sobre tus archivos locales",
 }
 
 export default async function ChatLayout({
