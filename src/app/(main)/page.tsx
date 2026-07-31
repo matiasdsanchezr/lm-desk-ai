@@ -1,6 +1,4 @@
 import { HomeView } from "@/features/home/components/home-view"
-import { SettingsDrawer } from "@/features/settings/components/settings-drawer"
-import { Suspense } from "react"
 
 export default function Home() {
   return (

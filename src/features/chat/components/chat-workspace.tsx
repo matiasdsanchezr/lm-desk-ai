@@ -29,7 +29,6 @@ export function ChatWorkspace({
   initialChatPromise,
 }: ChatWorkspaceProps) {
   const router = useRouter()
-
   const treeStructure = use(treeStructurePromise)
   const initialChatResult = initialChatPromise ? use(initialChatPromise) : null
 

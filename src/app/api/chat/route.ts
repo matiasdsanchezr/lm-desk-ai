@@ -9,7 +9,6 @@ import {
   safeValidateUIMessages,
   toUIMessageStream,
 } from "ai"
-import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -32,7 +31,7 @@ export async function POST(req: Request) {
       body = await req.json()
     } catch {
       return NextResponse.json(
-        { error: "Request body is not valid JSON" },
+        { error: "El cuerpo de la solicitud no es un JSON válido" },
         { status: 400 }
       )
     }
@@ -40,7 +39,10 @@ export async function POST(req: Request) {
     const parsedBody = ChatRequestBodySchema.safeParse(body)
     if (!parsedBody.success) {
       return NextResponse.json(
-        { error: "Invalid request body", details: parsedBody.error.issues },
+        {
+          error: "Cuerpo de solicitud inválido",
+          details: parsedBody.error.issues,
+        },
         { status: 400 }
       )
     }
@@ -63,7 +65,7 @@ export async function POST(req: Request) {
     if (!inferenceModelResult.success) {
       return NextResponse.json(
         {
-          error: "Invalid inference model configuration",
+          error: "Configuración del modelo de inferencia inválida",
           details: inferenceModelResult.error.issues,
         },
         { status: 400 }
@@ -109,7 +111,7 @@ export async function POST(req: Request) {
               originalMessages: validatedMessages.data,
               sendReasoning: true,
               onError: (error: unknown) => {
-                console.error("[/api/chat] Stream error:", error)
+                console.error("[/api/chat] Error en el stream:", error)
                 return "Error al generar la respuesta"
               },
               onFinish: async ({ messages, responseMessage }) => {
@@ -140,11 +142,10 @@ export async function POST(req: Request) {
                         messages,
                       })
                     }
-                    revalidatePath("/chat")
                   }
                 } catch (err) {
                   console.error(
-                    "[/api/chat] Error saving response automatically:",
+                    "[/api/chat] Error al guardar el chat automáticamente:",
                     err
                   )
                 }
@@ -155,9 +156,9 @@ export async function POST(req: Request) {
       }),
     })
   } catch (error) {
-    console.error("[/api/chat] Unhandled error:", error)
+    console.error("[/api/chat] Error no controlado:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Error interno del servidor" },
       { status: 500 }
     )
   }

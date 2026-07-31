@@ -2,6 +2,10 @@
 
 import { useSyncExternalStore } from "react"
 
+const emptySubscribe = () => () => {}
+const getSnapshot = () => true
+const getServerSnapshot = () => false
+
 /**
  * Hook que devuelve `true` solo cuando se ejecuta en el cliente.
  * Útil para evitar errores de hidratación en componentes que
@@ -11,11 +15,6 @@ import { useSyncExternalStore } from "react"
  * Usa `useSyncExternalStore` para garantizar consistencia con
  * el modelo de concurrencia de React 19.
  */
-const emptySubscribe = () => () => {}
-
-const getSnapshot = () => true
-const getServerSnapshot = () => false
-
 export function useIsClient(): boolean {
   return useSyncExternalStore(emptySubscribe, getSnapshot, getServerSnapshot)
 }

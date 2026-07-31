@@ -8,14 +8,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { loadPrompts } from "@/features/settings/actions/prompt"
+import { ActionState } from "@/types/action-state"
+import { use } from "react"
 import { InstructionsMenu } from "../components/instructions-menu"
 import { ModelParameters } from "../components/model-parameters"
 import { ProviderMenu } from "../components/provider-menu"
 
-export async function SettingsDrawer() {
-  const promptsResult = await loadPrompts()
-  const initialPrompts = promptsResult.data ?? []
+export function SettingsDrawer({
+  initialPromptsPromise,
+}: {
+  initialPromptsPromise: Promise<ActionState<string[]>>
+}) {
+  const initialPromptsResult = use(initialPromptsPromise)
+  const initialPrompts = initialPromptsResult.data || []
 
   return (
     <Sheet>
