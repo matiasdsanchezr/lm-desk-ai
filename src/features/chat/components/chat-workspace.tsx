@@ -39,9 +39,13 @@ export function ChatWorkspace({
     notFound()
   }
 
+  if (!treeStructure.data) {
+    notFound()
+  }
+
   const initialChat = initialChatResult?.data ?? null
-  const totalFiles = treeStructure.totalFiles
-  const treeNodes = treeStructure.treeNodes
+  const totalFiles = treeStructure.data.totalFiles
+  const treeNodes = treeStructure.data.treeNodes
 
   const sessionId = useChatStore((s) => s.sessionId)
   const includeReasoning = useChatStore((s) => s.includeReasoning)

@@ -13,7 +13,7 @@ import { useChatActions } from "@/features/chat/store/chat-store"
 import { cn } from "@/lib/utils"
 import { ActionState } from "@/types/action-state"
 import { useParams, useRouter } from "next/navigation"
-import { use, useCallback } from "react"
+import { startTransition, use, useCallback } from "react"
 import type { SavedChatMeta } from "../types/saved-chat"
 import { ChatHistoryItem } from "./chat-history-item"
 
@@ -22,8 +22,8 @@ interface ChatHistorySidebarProps {
 }
 
 export function ChatHistorySidebar({ chatsPromise }: ChatHistorySidebarProps) {
-  const responses = use(chatsPromise)
-  const savedChats = responses.data ?? []
+  const chats = use(chatsPromise)
+  const savedChats = chats.data ?? []
 
   const { clearPrompts } = useChatActions()
   const router = useRouter()
@@ -38,7 +38,9 @@ export function ChatHistorySidebar({ chatsPromise }: ChatHistorySidebarProps) {
       if (isMobile) {
         setOpenMobile(false)
       }
-      router.push(`/chat/${id}`)
+      startTransition(() => {
+        router.push(`/chat/${id}`)
+      })
     },
     [router, isMobile, setOpenMobile]
   )
