@@ -1,3 +1,4 @@
+import { generateId } from "ai"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
@@ -23,7 +24,7 @@ interface ChatActions {
 }
 
 const createInitialState = () => ({
-  sessionId: crypto.randomUUID(),
+  sessionId: generateId(),
   userTask: "",
   contextualPrompt: "",
   standalonePrompt: "",
@@ -41,7 +42,7 @@ export const useChatStore = create<ChatState & ChatActions>()(
         setIncludeReasoning: (includeReasoning) => set({ includeReasoning }),
         clearPrompts: () =>
           set({
-            sessionId: crypto.randomUUID(),
+            sessionId: generateId(),
             contextualPrompt: "",
             standalonePrompt: "",
           }),

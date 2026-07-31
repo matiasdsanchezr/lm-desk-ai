@@ -1,16 +1,18 @@
+// src/features/chat/components/chat-workspace.tsx
 "use client"
 
 import { SavedChat } from "@/features/chat-history/types/saved-chat"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
+import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { type FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
+import { ActionState } from "@/types/action-state"
 import { PromptBuilder } from "@/utils/prompt-builder"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
-import { useRouter } from "next/navigation"
-import { useActionState, useMemo, useState } from "react"
+import { notFound, useRouter } from "next/navigation"
+import { use, useActionState, useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
 import { ChatThread } from "./chat-thread"
 import { ContextBuilder } from "./context-builder"
@@ -18,18 +20,32 @@ import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
-  totalFiles: number
-  treeNodes: FileTreeNode[]
-  initialChat?: SavedChat | null
+  treeStructurePromise: ReturnType<typeof generateTreeStructure>
+  initialChatPromise?: Promise<ActionState<SavedChat>>
 }
 
-function ChatWorkspaceContent({
-  totalFiles,
-  treeNodes,
-  initialChat,
+export function ChatWorkspace({
+  treeStructurePromise,
+  initialChatPromise,
 }: ChatWorkspaceProps) {
   const router = useRouter()
 
+  const treeStructure = use(treeStructurePromise)
+  const initialChatResult = initialChatPromise ? use(initialChatPromise) : null
+
+  if (
+    initialChatResult &&
+    (initialChatResult.error || !initialChatResult.data)
+  ) {
+    notFound()
+  }
+
+  const initialChat = initialChatResult?.data ?? null
+  const totalFiles = treeStructure.totalFiles
+  const treeNodes = treeStructure.treeNodes
+
+  const sessionId = useChatStore((s) => s.sessionId)
+  const includeReasoning = useChatStore((s) => s.includeReasoning)
   const { userTask, contextualPrompt, standalonePrompt } = useChatStore(
     useShallow((s) => ({
       userTask: s.userTask,
@@ -38,8 +54,6 @@ function ChatWorkspaceContent({
     }))
   )
   const { setPrompts } = useChatActions()
-
-  const includeReasoning = useChatStore((s) => s.includeReasoning)
 
   const { selectedFiles, fileContents, images, setFileContents, setImages } =
     useFileExplorerStore(
@@ -100,6 +114,7 @@ function ChatWorkspaceContent({
     clearError,
     stop,
   } = useChat({
+    id: sessionId,
     messages: initialChat?.messages,
     onFinish: () => {
       router.refresh()
@@ -201,10 +216,4 @@ function ChatWorkspaceContent({
       )}
     </div>
   )
-}
-
-export const ChatWorkspace = (props: ChatWorkspaceProps) => {
-  const sessionId = useChatStore((s) => s.sessionId)
-
-  return <ChatWorkspaceContent key={sessionId} {...props} />
 }
