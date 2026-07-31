@@ -14,7 +14,8 @@ import { ModelParameters } from "../components/model-parameters"
 import { ProviderMenu } from "../components/provider-menu"
 
 export async function SettingsDrawer() {
-  const initialPrompts = await loadPrompts()
+  const promptsResult = await loadPrompts()
+  const initialPrompts = promptsResult.data ?? []
 
   return (
     <Sheet>
