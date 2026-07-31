@@ -182,12 +182,11 @@ export function ChatWorkspace({
 
   return (
     <div className="mx-auto flex w-full max-w-350 flex-col gap-4 md:gap-6">
-      {/* Topbar flotante para Dispositivos Móviles */}
       <div className="flex items-center justify-between rounded-xl border border-border/40 bg-card/60 px-3 py-2 shadow-xs backdrop-blur-xs md:hidden">
         <div className="flex items-center gap-2">
           <SidebarTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           <span className="text-xs font-semibold tracking-tight text-foreground truncate">
-            {initialChat?.title || "Nuevo Análisis"}
+            {initialChat?.title || "Nueva Sesión"}
           </span>
         </div>
       </div>

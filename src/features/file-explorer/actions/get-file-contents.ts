@@ -4,7 +4,7 @@ import { loadLocalImages, loadProjectGraph } from "@/services/file/file-service"
 import { ActionState } from "@/types/action-state"
 import { FileContent } from "@/services/file/types"
 import { ImageFile } from "@/types/image-file"
-import { fetchImage, isImagePath } from "@/utils/images"
+import { fetchImage, isImagePath } from "@/features/file-explorer/utils/images"
 import { z } from "zod"
 
 const GeneratePromptSchema = z.object({

@@ -20,7 +20,6 @@ import type { SavedChatMeta } from "../types/saved-chat"
 interface ChatHistoryItemProps {
   chat: SavedChatMeta
   isActive: boolean
-  isMobile: boolean
   currentId?: string
   onSelect: (id: string) => void
 }
@@ -42,11 +41,11 @@ function formatChatDate(dateValue: Date | string) {
 export const ChatHistoryItem = memo(function ChatHistoryItem({
   chat,
   isActive,
-  isMobile,
   currentId,
   onSelect,
 }: ChatHistoryItemProps) {
   const router = useRouter()
+  
   const [isPending, startTransition] = useTransition()
   const [isConfirming, setIsConfirming] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -187,11 +186,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
             </SidebarMenuAction>
           }
         />
-        <DropdownMenuContent
-          className="w-52"
-          side={isMobile ? "bottom" : "right"}
-          align={isMobile ? "end" : "start"}
-        >
+        <DropdownMenuContent className="w-52">
           <DropdownMenuItem
             onClick={() => setIsEditing(true)}
             className="cursor-pointer"

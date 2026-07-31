@@ -8,14 +8,22 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { loadPrompts } from "../actions/prompt"
+import { notFound } from "next/navigation"
+import { use } from "react"
+import type { loadPrompts } from "../actions/prompt"
 import { InstructionsMenu } from "../components/instructions-menu"
 import { ModelParameters } from "../components/model-parameters"
 import { ProviderMenu } from "../components/provider-menu"
 
-// Async Server Component: realiza el fetch de prompts de forma asíncrona sin bloquear el layout principal
-export async function SettingsDrawer() {
-  const initialPromptsResult = await loadPrompts()
+export function SettingsDrawer({
+  initialPromptsPromise,
+}: {
+  initialPromptsPromise: ReturnType<typeof loadPrompts>
+}) {
+  const initialPromptsResult = use(initialPromptsPromise)
+  if (initialPromptsResult.error || !initialPromptsResult.data) {
+    notFound()
+  }
   const initialPrompts = initialPromptsResult.data || []
 
   return (

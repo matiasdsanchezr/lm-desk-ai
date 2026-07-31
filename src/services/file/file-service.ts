@@ -6,7 +6,7 @@ import { cache } from "react"
 import { config } from "@/lib/config"
 import { FileContent } from "./types"
 import { ImageFile } from "@/types/image-file"
-import { getImageMimeType } from "@/utils/images"
+import { getImageMimeType } from "@/features/file-explorer/utils/images"
 import { AbsolutePath, Extension } from "./types"
 import { validateAndSanitizePath } from "./utils"
 import {

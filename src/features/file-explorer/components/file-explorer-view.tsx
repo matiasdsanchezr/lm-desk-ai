@@ -42,7 +42,6 @@ export function FileExplorerView({
   selectedFiles,
   onSelectionChange,
 }: FileExplorerProps) {
-  "use no memo"
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 

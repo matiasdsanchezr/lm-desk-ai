@@ -54,8 +54,6 @@ export const useChatStore = create<ChatState & ChatActions>()(
       partialize: (state) => ({
         sessionId: state.sessionId,
         userTask: state.userTask,
-        contextualPrompt: state.contextualPrompt,
-        standalonePrompt: state.standalonePrompt,
         includeReasoning: state.includeReasoning,
       }),
     }

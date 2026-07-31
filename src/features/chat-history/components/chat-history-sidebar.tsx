@@ -7,53 +7,51 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
-  useSidebar,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useChatActions } from "@/features/chat/store/chat-store"
-import { cn } from "@/lib/utils"
+import { ActionState } from "@/types/action-state"
 import { useParams, useRouter } from "next/navigation"
-import { startTransition, useCallback } from "react"
+import { startTransition, use, useCallback } from "react"
 import type { SavedChatMeta } from "../types/saved-chat"
 import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
-  savedChats: SavedChatMeta[]
+  savedChatsPromise: Promise<ActionState<SavedChatMeta[]>>
 }
 
-export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
+export function ChatHistorySidebar({
+  savedChatsPromise,
+}: ChatHistorySidebarProps) {
+  const savedChatsResult = use(savedChatsPromise)
+  if (savedChatsResult.error || !savedChatsResult.data) {
+    return <div>Error: {savedChatsResult.error}</div>
+  }
+
+  const savedChats = savedChatsResult.data || [] 
   const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()
   const currentId = params?.chatId as string | undefined
 
-  const { state, isMobile, setOpenMobile, toggleSidebar } = useSidebar()
-  const isCollapsed = state === "collapsed" && !isMobile
-
   const handleSelect = useCallback(
     (id: string) => {
-      if (isMobile) {
-        setOpenMobile(false)
-      }
       startTransition(() => {
         router.push(`/chat/${id}`)
       })
     },
-    [router, isMobile, setOpenMobile]
+    [router]
   )
 
   const handleNewChat = useCallback(() => {
     clearPrompts()
-    if (isMobile) {
-      setOpenMobile(false)
-    }
-
     if (!currentId) {
       router.refresh()
       return
     }
 
     router.push("/chat")
-  }, [router, currentId, clearPrompts, isMobile, setOpenMobile])
+  }, [router, currentId, clearPrompts])
 
   return (
     <Sidebar
@@ -71,7 +69,7 @@ export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
             <button
               type="button"
               onClick={handleNewChat}
-              title="Nuevo análisis"
+              title="Nueva Sesión"
               className="inline-flex size-8 items-center justify-center gap-1.5 rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 active:scale-95 group-data-[collapsible=icon]:size-8 md:h-8 md:w-auto md:px-2.5 md:text-xs md:font-medium"
             >
               <span className="icon-[lucide--plus] size-4 shrink-0" />
@@ -80,25 +78,7 @@ export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
               </span>
             </button>
 
-            {!isMobile && (
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                title={
-                  isCollapsed ? "Expandir historial" : "Colapsar historial"
-                }
-                className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <span
-                  className={cn(
-                    isCollapsed
-                      ? "icon-[lucide--panel-left-open]"
-                      : "icon-[lucide--panel-left-close]",
-                    "size-4"
-                  )}
-                />
-              </button>
-            )}
+            <SidebarTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground" />
           </div>
         </div>
       </SidebarHeader>
@@ -109,7 +89,7 @@ export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
             {savedChats.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground">
                 <span className="mb-2 icon-[lucide--archive-x] size-8 opacity-40" />
-                <span>No hay análisis guardados</span>
+                <span>No hay sesiones guardadas</span>
               </div>
             ) : (
               <SidebarMenu className="gap-1.5">
@@ -118,7 +98,6 @@ export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
                     key={chat.id}
                     chat={chat}
                     isActive={currentId === chat.id}
-                    isMobile={isMobile}
                     currentId={currentId}
                     onSelect={handleSelect}
                   />
