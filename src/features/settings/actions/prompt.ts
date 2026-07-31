@@ -5,6 +5,7 @@ import { ActionState } from "@/types/action-state"
 import { mkdir, readdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
+import { cache } from "react"
 
 const PROMPTS_DIR = path.join(config.STORAGE_PATH, "prompts")
 
@@ -23,7 +24,7 @@ export const loadPrompt = async (
   }
 }
 
-export const loadPrompts = async (): Promise<ActionState<string[]>> => {
+export const loadPrompts = cache(async (): Promise<ActionState<string[]>> => {
   try {
     await mkdir(PROMPTS_DIR, { recursive: true })
     const systemPrompts = await readdir(PROMPTS_DIR)
@@ -33,7 +34,8 @@ export const loadPrompts = async (): Promise<ActionState<string[]>> => {
     console.error("Error leyendo directorio de prompts:", error)
     return { error: "No se pudieron obtener las plantillas" }
   }
-}
+})
+
 
 export const savePrompt = async (
   name: string,

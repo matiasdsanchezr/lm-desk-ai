@@ -20,6 +20,10 @@ const { values } = parseArgs({
       type: "boolean",
       default: false,
     },
+    host: {
+      type: "string",
+      default: "0.0.0.0",
+    },
   },
   strict: false,
   allowPositionals: true,
@@ -41,6 +45,7 @@ const nextCommand = values.dev ? "dev" : "start"
 const env = {
   ...process.env,
   TARGET_PROJECT_PATH: targetPath,
+  HOST: values.host
 }
 
 // Determinar el comando correcto según el S.O. para evitar 'shell: true' (DEP0190)

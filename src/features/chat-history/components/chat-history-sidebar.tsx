@@ -11,20 +11,16 @@ import {
 } from "@/components/ui/sidebar"
 import { useChatActions } from "@/features/chat/store/chat-store"
 import { cn } from "@/lib/utils"
-import { ActionState } from "@/types/action-state"
 import { useParams, useRouter } from "next/navigation"
-import { startTransition, use, useCallback } from "react"
+import { startTransition, useCallback } from "react"
 import type { SavedChatMeta } from "../types/saved-chat"
 import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
-  chatsPromise: Promise<ActionState<SavedChatMeta[]>>
+  savedChats: SavedChatMeta[]
 }
 
-export function ChatHistorySidebar({ chatsPromise }: ChatHistorySidebarProps) {
-  const chats = use(chatsPromise)
-  const savedChats = chats.data ?? []
-
+export function ChatHistorySidebar({ savedChats }: ChatHistorySidebarProps) {
   const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()
