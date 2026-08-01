@@ -13,7 +13,7 @@ import { useChatActions } from "@/features/chat/store/chat-store"
 import { ActionState } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
 import { startTransition, use, useCallback } from "react"
-import type { SavedChatMeta } from "../types/saved-chat"
+import type { SavedChatMeta } from "../../../entities/chat/model/types"
 import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {

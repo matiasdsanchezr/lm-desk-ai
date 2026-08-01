@@ -7,7 +7,7 @@ import type {
   SavedChat,
   SavedChatMeta,
   UpdateChatInput,
-} from "../types/saved-chat"
+} from "../model/types"
 
 const GENERATED_DIR = path.join(config.STORAGE_PATH, "chats")
 

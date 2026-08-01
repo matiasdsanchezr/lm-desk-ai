@@ -2,13 +2,13 @@
 
 import { ActionState } from "@/shared/types/action-state"
 import { revalidatePath } from "next/cache"
-import { chatHistoryService } from "../services/chat-history-service"
+import { chatHistoryService } from "../../../entities/chat/api/chat-history-service"
 import type {
   SaveChatInput,
   SavedChat,
   SavedChatMeta,
   UpdateChatInput,
-} from "../types/saved-chat"
+} from "../../../entities/chat/model/types"
 import { cache } from "react"
 
 export const saveChat = async (
