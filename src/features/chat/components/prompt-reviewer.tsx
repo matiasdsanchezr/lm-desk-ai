@@ -14,6 +14,7 @@ import { useFileExplorerStore } from "@/features/file-explorer/store/file-explor
 import React from "react"
 
 interface PromptReviewerProps {
+  disabled: boolean
   isStreaming: boolean
   onGenerateContent: () => void
   stop: () => void
@@ -21,6 +22,7 @@ interface PromptReviewerProps {
 }
 
 export const PromptReviewer = ({
+  disabled,
   isStreaming,
   onGenerateContent,
   stop,
@@ -63,7 +65,7 @@ export const PromptReviewer = ({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              disabled={isStreaming}
+              disabled={isStreaming || disabled}
               className="inline-flex items-center gap-2 px-5"
               onClick={onGenerateContent}
             >

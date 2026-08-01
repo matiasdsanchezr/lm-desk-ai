@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
-import { groupMessagesIntoTurns } from "@/features/chat/utils/group-messages-into-turns"
+import { groupMessagesIntoTurns } from "@/features/chat/utils/messages"
 import type { UIDataTypes, UIMessage, UITools } from "ai"
 import { useCallback, useMemo, useState } from "react"
 import { ChatTurnItem, ChatTurnSkeleton } from "./chat-turn-item"
@@ -48,7 +48,7 @@ export function ChatThread({
     [followUpText, isStreaming, onSendFollowUp]
   )
 
-  const visibleMessages = useMemo(() => messages.slice(1), [messages])
+  const visibleMessages = messages
   const turns = useMemo(
     () => groupMessagesIntoTurns(visibleMessages),
     [visibleMessages]
@@ -91,6 +91,7 @@ export function ChatThread({
               {turns.map((turn, index) => (
                 <ChatTurnItem
                   key={turn.id}
+                  title={`Consulta ${index + 1}`}
                   turn={turn}
                   isStreaming={isStreaming}
                   isLast={index === turns.length - 1}

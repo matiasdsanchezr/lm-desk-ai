@@ -188,6 +188,7 @@ export function ChatWorkspace({
 
       {isReadyToReview && (
         <PromptReviewer
+          disabled={messages.length > 0}
           isStreaming={isStreaming}
           onGenerateContent={generateContentHandler}
           stop={stop}
