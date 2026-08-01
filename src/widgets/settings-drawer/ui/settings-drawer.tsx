@@ -9,9 +9,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { loadPrompts } from "@/entities/prompt/api/prompt"
-import { InstructionsMenu } from "@/features/settings/components/instructions-menu"
-import { ModelParameters } from "@/features/settings/components/model-parameters"
-import { ProviderMenu } from "@/features/settings/components/provider-menu"
+import { InstructionsMenu } from "@/widgets/settings-drawer/ui/instructions-menu"
+import { ModelParameters } from "@/widgets/settings-drawer/ui/model-parameters"
+import { ProviderMenu } from "@/widgets/settings-drawer/ui/provider-menu"
 import { notFound } from "next/navigation"
 import { use } from "react"
 

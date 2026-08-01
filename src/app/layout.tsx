@@ -33,10 +33,12 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} dark antialiased`}
-      >
+    <html
+      lang="en"
+      className={cn("font-sans", inter.variable)}
+      suppressHydrationWarning
+    >
+      <body className={`${geistSans.variable} dark antialiased`}>
         {children}
       </body>
     </html>

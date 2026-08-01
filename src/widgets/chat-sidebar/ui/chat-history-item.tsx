@@ -11,11 +11,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import type { SavedChatMeta } from "@/entities/chat/model/types"
+import {
+  deleteChat,
+  updateChat,
+} from "@/features/chat/api/chat-history-actions"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
-import { deleteChat, updateChat } from "../actions/chat-history-actions"
-import type { SavedChatMeta } from "../../../entities/chat/model/types"
 
 interface ChatHistoryItemProps {
   chat: SavedChatMeta
@@ -45,7 +48,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   onSelect,
 }: ChatHistoryItemProps) {
   const router = useRouter()
-  
+
   const [isPending, startTransition] = useTransition()
   const [isConfirming, setIsConfirming] = useState(false)
   const [isEditing, setIsEditing] = useState(false)

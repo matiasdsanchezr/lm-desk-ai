@@ -10,7 +10,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import type { SavedChatMeta } from "@/entities/chat/model/types"
-import { ChatHistoryItem } from "@/features/chat-history/components/chat-history-item"
+import { ChatHistoryItem } from "@/widgets/chat-sidebar/ui/chat-history-item"
 import { useChatActions } from "@/features/chat/store/chat-store"
 import { ActionState } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
