@@ -27,10 +27,10 @@ import {
   deletePrompt,
   loadPrompt,
   savePrompt,
-} from "@/features/settings/actions/prompt"
+} from "@/entities/prompt/api/prompt"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
-import { useSettingsStore } from "../store/settings-store"
+import { useSettingsStore } from "../../../shared/store/settings-store"
 
 interface Props {
   availablePrompts: string[]

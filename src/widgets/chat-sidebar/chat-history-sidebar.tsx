@@ -9,12 +9,12 @@ import {
   SidebarMenu,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import type { SavedChatMeta } from "@/entities/chat/model/types"
+import { ChatHistoryItem } from "@/features/chat-history/components/chat-history-item"
 import { useChatActions } from "@/features/chat/store/chat-store"
 import { ActionState } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
 import { startTransition, use, useCallback } from "react"
-import type { SavedChatMeta } from "../../../entities/chat/model/types"
-import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
   savedChatsPromise: Promise<ActionState<SavedChatMeta[]>>
@@ -28,7 +28,7 @@ export function ChatHistorySidebar({
     return <div>Error: {savedChatsResult.error}</div>
   }
 
-  const savedChats = savedChatsResult.data || [] 
+  const savedChats = savedChatsResult.data || []
   const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()

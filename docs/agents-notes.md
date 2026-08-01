@@ -16,8 +16,8 @@
 ## Zod 4+
 
 - `z.toJSONSchema()` es un método para convertir un esquema `Zod` a un `JSON schema`
-- `z.treeifyError()` es un método para convertir un error de `Zod` en una representación en cadena de caracteres legible para humanos, similar a `z.prettifyError()`
-- `z.prettifyError()` es un método para convertir un error de Zod en una representación en cadena de caracteres legible para humanos
+- `z.treeifyError()` es un método para convertir un error de `Zod` en un arbol de errores con los mensajes de errores
+- `z.prettifyError()` es un método para convertir un error de Zod en una representación en cadena de caracteres legible e imprimibles
 - `z.error.flatten().fieldErrors` esta deprecated. Es reemplazada por `z.treeifyError()`
 
 ## ShadCN 4+

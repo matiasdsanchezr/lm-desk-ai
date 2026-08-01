@@ -36,7 +36,6 @@ export const loadPrompts = cache(async (): Promise<ActionState<string[]>> => {
   }
 })
 
-
 export const savePrompt = async (
   name: string,
   content: string
