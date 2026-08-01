@@ -3,15 +3,16 @@
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { getFileContents } from "@/entities/file/api/get-file-contents"
 import { generateTreeStructure } from "@/entities/file/api/get-file-tree"
+import { formatFilesContent } from "@/entities/file/lib/file-utils"
 import { SavedChat } from "@/features/chat-history/types/saved-chat"
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { ChatThread } from "@/features/chat/ui/chat-thread"
 import { GeneratedPrompt } from "@/features/chat/ui/generated-prompt"
 import { PromptReviewer } from "@/features/chat/ui/prompt-reviewer"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
+import { useFileExplorerStore } from "@/entities/file/model/file-store"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { ActionState } from "@/shared/types/action-state"
-import { PromptBuilder } from "@/utils/prompt-builder"
+import { PromptBuilder } from "@/shared/utils/prompt-utils"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
 import { notFound, useRouter } from "next/navigation"
@@ -85,7 +86,7 @@ export function ChatWorkspace({
 
           const promptBuilder = new PromptBuilder()
             .addSystem(settings.systemPrompt)
-            .addContext(data.fileContents)
+            .addContext(formatFilesContent(data.fileContents))
             .addTask(userTask)
 
           setFileContents(data.fileContents)

@@ -13,7 +13,7 @@ import {
 import type { FileTreeNode } from "@/entities/file/model/types"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { ImageUploadDialog } from "@/features/chat/ui/image-upload-dialog"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
+import { useFileExplorerStore } from "@/entities/file/model/file-store"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { cn } from "@/shared/lib/utils"
 import { FileExplorerDialog } from "@/widgets/file-explorer/ui/file-explorer-dialog"

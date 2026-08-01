@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
+import { useFileExplorerStore } from "@/entities/file/model/file-store"
 import { useShallow } from "zustand/shallow"
 
 interface ImageUploadDialogProps {

@@ -1,5 +1,5 @@
 import { FileContent } from "@/entities/file/model/types"
-import { renderTemplate } from "./templates"
+import { renderTemplate } from "@/shared/utils/template-utils"
 
 const DEFAULT_INSTRUCTIONS = `\
 <system_instructions>
@@ -15,39 +15,7 @@ const DEFAULT_TASK = `## TAREA DEL USUARIO
 
 {{userInput}}`
 
-const DEFAULT_FILE = `\
-<file path="{{path}}" language="{{lang}}">
-{{content}}
-</file>`
-
 const SECTIONS_SEPARATOR = "\n\n---\n\n"
-
-const SYSTEM_TAGS_REGEX =
-  /<(\/?(?:system_instructions|context|file|userInput)\b[^>]*)>/gi
-
-export const sanitizeXmlContent = (content: string): string => {
-  if (!content) return ""
-  return content.replace(SYSTEM_TAGS_REGEX, "&lt;$1&gt;")
-}
-
-const formatFilesContent = (files: FileContent[]): string => {
-  const validFiles = files.filter((f) => !f.error && f.content)
-
-  if (validFiles.length === 0) {
-    return ""
-  }
-
-  const template = DEFAULT_FILE
-  return validFiles
-    .map((file) =>
-      renderTemplate(template, {
-        path: file.path,
-        lang: file.language ?? "",
-        content: sanitizeXmlContent(file.content ?? ""),
-      })
-    )
-    .join("\n")
-}
 
 export class PromptBuilder {
   private system?: string
@@ -67,15 +35,9 @@ export class PromptBuilder {
     return this
   }
 
-  addContext(files: FileContent[]): this {
-    const formattedFilesContent = formatFilesContent(files)
-    if (!formattedFilesContent) {
-      this.context = undefined
-      return this
-    }
-
+  addContext(context: string): this {
     this.context = renderTemplate(DEFAULT_CONTEXT, {
-      filesContent: formattedFilesContent,
+      filesContent: context,
     })
     return this
   }

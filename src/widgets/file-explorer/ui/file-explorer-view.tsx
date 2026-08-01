@@ -19,8 +19,8 @@ import { cn } from "@/shared/lib/utils"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { useRouter } from "next/navigation"
 import { useCallback, useMemo, useRef, useState, useTransition } from "react"
-import { useFileSelection } from "../../../features/file-explorer/model/use-file-selection"
-import { useTreeExpansion } from "../../../features/file-explorer/model/use-tree-expansion"
+import { useFileSelection } from "@/features/file-explorer/model/use-file-selection"
+import { useTreeExpansion } from "@/features/file-explorer/model/use-tree-expansion"
 
 interface FileExplorerProps {
   treeNodes: FileTreeNode[]

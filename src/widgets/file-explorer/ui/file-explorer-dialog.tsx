@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { FileExplorerView } from "@/widgets/file-explorer/ui/file-explorer-view"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
+import { useFileExplorerStore } from "@/entities/file/model/file-store"
 import type { FileTreeNode } from "@/entities/file/model/types"
 import { useShallow } from "zustand/shallow"
 

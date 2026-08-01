@@ -1,51 +1,6 @@
-import { config } from "@/shared/lib/config"
-import fs from "node:fs/promises"
+import { renderTemplate } from "@/shared/utils/template-utils"
 import path from "node:path"
-import { cache } from "react"
-import { DEFAULT_IGNORE } from "./constants"
-import { AbsolutePath, Extension } from "../model/types"
-import { ALLOWED_EXTENSIONS } from "../strategies/strategy-registry"
-
-async function recursiveFileSearch(
-  dir: string,
-  extensions: ReadonlySet<Extension> = ALLOWED_EXTENSIONS,
-  ignore: Set<string> = DEFAULT_IGNORE
-): Promise<string[]> {
-  const entries = await fs.readdir(dir, { withFileTypes: true })
-  const promises = entries.map(async (entry) => {
-    if (ignore.has(entry.name)) return []
-    const fullPath = path.join(dir, entry.name)
-    if (entry.isDirectory())
-      return recursiveFileSearch(fullPath, extensions, ignore)
-    return entry.isFile() &&
-      extensions.has(path.extname(entry.name).toLowerCase() as Extension)
-      ? [fullPath.replace(/\\/g, "/")]
-      : []
-  })
-  return (await Promise.all(promises)).flat()
-}
-
-export const getFilePaths = cache(
-  async (
-    folder: string = config.TARGET_PROJECT_PATH,
-    extensions: ReadonlySet<Extension> = ALLOWED_EXTENSIONS,
-    ignore: string[] = Array.from(DEFAULT_IGNORE)
-  ) => {
-    const stat = await fs.stat(folder).catch(() => null)
-    if (!stat?.isDirectory()) throw new Error(`Path invalido: ${folder}`)
-
-    const absolutePaths = await recursiveFileSearch(
-      folder,
-      extensions,
-      new Set(ignore)
-    )
-    const resolvedRoot = path.resolve(folder)
-
-    return absolutePaths.map((p) =>
-      path.relative(resolvedRoot, p).replace(/\\/g, "/")
-    )
-  }
-)
+import { AbsolutePath, FileContent } from "../model/types"
 
 /**
  * Normaliza y verifica que una ruta absoluta resida estrictamente dentro de la raíz del proyecto.
@@ -63,4 +18,36 @@ export function validateAndSanitizePath(
   }
 
   return resolvedTarget as AbsolutePath
+}
+
+const DEFAULT_FILE = `\
+<file path="{{path}}" language="{{lang}}">
+{{content}}
+</file>`
+
+const SYSTEM_TAGS_REGEX =
+  /<(\/?(?:system_instructions|context|file|userInput)\b[^>]*)>/gi
+
+const sanitizeXmlContent = (content: string): string => {
+  if (!content) return ""
+  return content.replace(SYSTEM_TAGS_REGEX, "&lt;$1&gt;")
+}
+
+export const formatFilesContent = (files: FileContent[]): string => {
+  const validFiles = files.filter((f) => !f.error && f.content)
+
+  if (validFiles.length === 0) {
+    return ""
+  }
+
+  const template = DEFAULT_FILE
+  return validFiles
+    .map((file) =>
+      renderTemplate(template, {
+        path: file.path,
+        lang: file.language ?? "",
+        content: sanitizeXmlContent(file.content ?? ""),
+      })
+    )
+    .join("\n")
 }

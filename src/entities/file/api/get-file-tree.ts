@@ -1,11 +1,11 @@
 "use server"
 
-import { getFilePaths } from "@/entities/file/lib/file-utils"
 import { buildFileTree } from "@/entities/file/lib/tree-builder"
 import type { ActionState } from "@/shared/types/action-state"
 import { cacheLife } from "next/cache"
 import { cache } from "react"
 import type { TreeStructureResponse } from "../model/types"
+import { getFilePaths } from "./file-service"
 
 /**
  * Genera la estructura en árbol memorizada por request.
