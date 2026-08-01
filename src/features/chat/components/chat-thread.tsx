@@ -133,32 +133,43 @@ export function ChatThread({
         </div>
 
         {messages.length > 0 && onSendFollowUp && (
-          <div className="flex flex-col gap-3 border-t border-border/60 bg-muted/10 p-4 sm:p-5">
-            <div className="flex items-center gap-2 px-1">
-              <Checkbox
-                id="include-reasoning"
-                checked={includeReasoning}
-                onCheckedChange={(val) => setIncludeReasoning(Boolean(val))}
-                disabled={isStreaming}
-              />
-              <Label
-                htmlFor="include-reasoning"
-                className="cursor-pointer select-none text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Incluir el razonamiento de respuestas anteriores como contexto
-              </Label>
-            </div>
-
+          <div className="border-t border-border/60 bg-muted/20 p-4 sm:p-5">
             <form
               onSubmit={handleFollowUpSubmit}
-              className="flex flex-col gap-3 sm:flex-row sm:items-end"
+              className="group relative flex flex-col rounded-xl border border-border/80 bg-background/95 p-3 shadow-xs transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 hover:border-border"
             >
+              {/* Barra superior de opciones y contexto */}
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground/80">
+                  <span className="icon-[lucide--messages-square] h-4 w-4 text-primary" />
+                  <span>Consulta</span>
+                </div>
+
+                <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-2.5 py-1 transition-colors hover:bg-muted/80">
+                  <Checkbox
+                    id="include-reasoning"
+                    checked={includeReasoning}
+                    onCheckedChange={(val) => setIncludeReasoning(Boolean(val))}
+                    disabled={isStreaming}
+                    className="h-3.5 w-3.5"
+                  />
+                  <Label
+                    htmlFor="include-reasoning"
+                    className="cursor-pointer select-none text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Incluir razonamiento previo como contexto
+                  </Label>
+                </div>
+              </div>
+
+              {/* Área del editor de texto */}
               <Textarea
                 value={followUpText}
                 onChange={(e) => setFollowUpText(e.target.value)}
-                placeholder="Escribe una pregunta de seguimiento (Ej: 'Explícame la función handleCopy')..."
+                placeholder="Escribe tu consulta adicional... (Ej: 'Explícame la función handleCopy' o 'Optimiza este fragmento')"
                 disabled={isStreaming}
-                className="min-h-16 flex-1 resize-y bg-background text-xs shadow-sm focus-visible:ring-primary/50 md:text-sm"
+                rows={2}
+                className="min-h-18 w-full resize-none border-0 bg-transparent p-0 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
@@ -166,18 +177,42 @@ export function ChatThread({
                   }
                 }}
               />
-              <Button
-                type="submit"
-                disabled={!followUpText.trim() || isStreaming}
-                className="h-10 gap-2 px-5 shadow-sm sm:self-stretch"
-              >
-                {isStreaming ? (
-                  <span className="icon-[fa7-solid--spinner] animate-spin" />
-                ) : (
-                  <span className="icon-[fa7-solid--paper-plane]" />
-                )}
-                <span>Enviar</span>
-              </Button>
+
+              {/* Barra inferior con atajos y botón de acción */}
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/30 pt-2">
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <span className="icon-[lucide--corner-down-left] h-3 w-3 text-muted-foreground/70" />
+                  <span>
+                    <kbd className="rounded border bg-muted/80 px-1 font-mono text-[10px]">
+                      Enter
+                    </kbd>{" "}
+                    para enviar ·{" "}
+                    <kbd className="rounded border bg-muted/80 px-1 font-mono text-[10px]">
+                      Shift + Enter
+                    </kbd>{" "}
+                    salto de línea
+                  </span>
+                </div>
+
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!followUpText.trim() || isStreaming}
+                  className="h-8.5 gap-2 px-4 shadow-sm transition-all active:scale-95"
+                >
+                  {isStreaming ? (
+                    <>
+                      <span className="icon-[fa7-solid--spinner] h-3.5 w-3.5 animate-spin" />
+                      <span>Generando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Enviar</span>
+                      <span className="icon-[lucide--send] h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         )}
