@@ -1,7 +1,7 @@
 "use server"
 
-import { config } from "@/lib/config"
-import { ActionState } from "@/types/action-state"
+import { config } from "@/shared/lib/config"
+import { ActionState } from "@/shared/types/action-state"
 import { mkdir, readdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"

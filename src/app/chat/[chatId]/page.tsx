@@ -1,7 +1,7 @@
 import { loadChat } from "@/features/chat-history/actions/chat-history-actions"
-import { ChatWorkspace } from "@/features/chat/components/chat-workspace"
-import { ChatWorkspaceSkeleton } from "@/features/chat/components/chat-workspace-skeleton"
-import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
+import { ChatWorkspace } from "@/widgets/chat-workspace/ui/chat-workspace"
+import { ChatWorkspaceSkeleton } from "@/features/chat/ui/chat-workspace-skeleton"
+import { generateTreeStructure } from "@/entities/file/api/get-file-tree"
 import { Suspense } from "react"
 
 interface ExistingChatPageProps {

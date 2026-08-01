@@ -1,5 +1,5 @@
-import { FileContent } from "@/services/file/types"
-import { ImageFile } from "@/types/image-file"
+import { FileContent } from "@/entities/file/model/types"
+import { ImageFile } from "@/shared/types/image-file"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
@@ -23,7 +23,7 @@ interface FileExplorerActions {
 const initialState: FileExplorerState = {
   selectedFiles: [],
   fileContents: [],
-  includeDependencies: true,
+  includeDependencies: false,
   imageUrls: "",
   images: [],
 }

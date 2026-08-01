@@ -1,6 +1,6 @@
 "use server"
 
-import { ActionState } from "@/types/action-state"
+import { ActionState } from "@/shared/types/action-state"
 import { revalidatePath } from "next/cache"
 import { chatHistoryService } from "../services/chat-history-service"
 import type {

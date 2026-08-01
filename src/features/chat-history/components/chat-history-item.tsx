@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../actions/chat-history-actions"

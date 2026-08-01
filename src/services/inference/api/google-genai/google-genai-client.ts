@@ -1,6 +1,6 @@
 import "server-only"
 
-import { config } from "@/lib/config"
+import { config } from "@/shared/lib/config"
 import {
   GoogleGenerativeAIProvider,
   type GoogleLanguageModelOptions,

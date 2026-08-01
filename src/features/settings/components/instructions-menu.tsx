@@ -28,7 +28,7 @@ import {
   loadPrompt,
   savePrompt,
 } from "@/features/settings/actions/prompt"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
 import { useSettingsStore } from "../store/settings-store"
 

@@ -1,6 +1,6 @@
 import "server-only"
 
-import { config } from "@/lib/config"
+import { config } from "@/shared/lib/config"
 import { AntigravityClient } from "./api/antigravity/antigravity-client"
 import { GoogleGenAIClient } from "./api/google-genai/google-genai-client"
 import { GoogleVertexClient } from "./api/google-vertex/google-vertex-client"

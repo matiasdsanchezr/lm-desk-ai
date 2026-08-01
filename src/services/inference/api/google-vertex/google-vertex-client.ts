@@ -1,6 +1,6 @@
 import "server-only"
 
-import { config } from "@/lib/config"
+import { config } from "@/shared/lib/config"
 import { type GoogleLanguageModelOptions } from "@ai-sdk/google"
 import { createVertex, GoogleVertexProvider } from "@ai-sdk/google-vertex"
 import {
