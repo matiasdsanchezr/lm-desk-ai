@@ -2,7 +2,7 @@
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { SavedChat } from "@/features/chat-history/types/saved-chat"
-import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
+import { useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
 import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
@@ -12,7 +12,7 @@ import { PromptBuilder } from "@/utils/prompt-builder"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
 import { notFound, useRouter } from "next/navigation"
-import { use, useActionState, useMemo, useState } from "react"
+import { use, useActionState } from "react"
 import { useShallow } from "zustand/shallow"
 import { ChatThread } from "./chat-thread"
 import { ContextBuilder } from "./context-builder"
@@ -28,46 +28,37 @@ export function ChatWorkspace({
   treeStructurePromise,
   initialChatPromise,
 }: ChatWorkspaceProps) {
-  const router = useRouter()
   const treeStructure = use(treeStructurePromise)
   const initialChatResult = initialChatPromise ? use(initialChatPromise) : null
-
-  if (
-    initialChatResult &&
-    (initialChatResult.error || !initialChatResult.data)
-  ) {
-    notFound()
-  }
 
   if (!treeStructure.data) {
     notFound()
   }
 
+  if (initialChatResult && !initialChatResult.data) {
+    notFound()
+  }
+
+  const router = useRouter()
+  const { totalFiles, treeNodes } = treeStructure.data
   const initialChat = initialChatResult?.data ?? null
-  const totalFiles = treeStructure.data.totalFiles
-  const treeNodes = treeStructure.data.treeNodes
 
-  const sessionId = useChatStore((s) => s.sessionId)
-  const includeReasoning = useChatStore((s) => s.includeReasoning)
-  const { userTask, contextualPrompt, standalonePrompt } = useChatStore(
-    useShallow((s) => ({
-      userTask: s.userTask,
-      contextualPrompt: s.contextualPrompt,
-      standalonePrompt: s.standalonePrompt,
-    }))
-  )
-  const { setPrompts } = useChatActions()
-
-  const { selectedFiles, fileContents, images, setFileContents, setImages } =
-    useFileExplorerStore(
+  const { sessionId, includeReasoning, contextualPrompt, standalonePrompt } =
+    useChatStore(
       useShallow((s) => ({
-        selectedFiles: s.selectedFiles,
-        fileContents: s.fileContents,
-        images: s.images,
-        setFileContents: s.setFileContents,
-        setImages: s.setImages,
+        sessionId: s.sessionId,
+        includeReasoning: s.includeReasoning,
+        contextualPrompt: s.contextualPrompt,
+        standalonePrompt: s.standalonePrompt,
       }))
     )
+
+  const { selectedFiles, images } = useFileExplorerStore(
+    useShallow((s) => ({
+      selectedFiles: s.selectedFiles,
+      images: s.images,
+    }))
+  )
 
   const settings = useSettingsStore(
     useShallow((s) => ({
@@ -78,7 +69,6 @@ export function ChatWorkspace({
     }))
   )
 
-  const [showFileExplorer, setShowFileExplorer] = useState(false)
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
@@ -89,14 +79,17 @@ export function ChatWorkspace({
           }
         }
         if (data.fileContents) {
-          setFileContents(data.fileContents)
-          setImages(data.imageFiles)
+          const userTask = useChatStore.getState().userTask
+          const setPrompts = useChatStore.getState().actions.setPrompts
+          const { setFileContents, setImages } = useFileExplorerStore.getState()
 
           const promptBuilder = new PromptBuilder()
             .addSystem(settings.systemPrompt)
             .addContext(data.fileContents)
             .addTask(userTask)
 
+          setFileContents(data.fileContents)
+          setImages(data.imageFiles)
           setPrompts({
             contextualPrompt: promptBuilder.buildContextAndTask(),
             standalonePrompt: promptBuilder.build(),
@@ -124,19 +117,11 @@ export function ChatWorkspace({
     },
   })
 
-  const fileErrors = useMemo(
-    () =>
-      fileContents
-        .filter((file) => file.error)
-        .map((file) => `${file.path}: ${file.error}`),
-    [fileContents]
-  )
-
-  const isReadyToReview = !!standalonePrompt && (!!userTask || !!initialChat)
+  const isReadyToReview = Boolean(standalonePrompt)
   const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 
-  const handleSendToAI = () => {
+  const generateContentHandler = () => {
     clearError()
     setMessages([])
 
@@ -183,9 +168,9 @@ export function ChatWorkspace({
   return (
     <div className="mx-auto flex w-full max-w-350 flex-col gap-4 md:gap-6">
       <div className="flex items-center justify-between rounded-xl border border-border/40 bg-card/60 px-3 py-2 shadow-xs backdrop-blur-xs md:hidden">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground" />
-          <span className="text-xs font-semibold tracking-tight text-foreground truncate">
+        <div className="flex items-center gap-2 min-w-0">
+          <SidebarTrigger className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground" />
+          <span className="truncate text-xs font-semibold tracking-tight text-foreground">
             {initialChat?.title || "Nueva Sesión"}
           </span>
         </div>
@@ -194,21 +179,17 @@ export function ChatWorkspace({
       <ContextBuilder
         treeNodes={treeNodes}
         totalFiles={totalFiles}
-        systemPrompt={settings.systemPrompt}
         isDisabled={isDisabled}
         isFetchingFiles={isFetchingFiles}
-        showFileExplorer={showFileExplorer}
-        setShowFileExplorer={setShowFileExplorer}
-        fileErrors={fileErrors}
+        isReadyToReview={isReadyToReview}
         fetchFileState={fetchFileState}
         handleFetchFileContents={handleFetchFileContents}
-        isReadyToReview={isReadyToReview}
       />
 
       {isReadyToReview && (
         <PromptReviewer
           isStreaming={isStreaming}
-          handleSendToAI={handleSendToAI}
+          onGenerateContent={generateContentHandler}
           stop={stop}
         >
           <GeneratedPrompt />

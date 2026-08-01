@@ -15,14 +15,14 @@ import React from "react"
 
 interface PromptReviewerProps {
   isStreaming: boolean
-  handleSendToAI: () => void
+  onGenerateContent: () => void
   stop: () => void
   children?: React.ReactNode
 }
 
 export const PromptReviewer = ({
   isStreaming,
-  handleSendToAI,
+  onGenerateContent,
   stop,
   children,
 }: PromptReviewerProps) => {
@@ -65,7 +65,7 @@ export const PromptReviewer = ({
               type="button"
               disabled={isStreaming}
               className="inline-flex items-center gap-2 px-5"
-              onClick={handleSendToAI}
+              onClick={onGenerateContent}
             >
               {isStreaming ? (
                 <>

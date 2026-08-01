@@ -9,6 +9,7 @@ import type {
   SavedChatMeta,
   UpdateChatInput,
 } from "../types/saved-chat"
+import { cache } from "react"
 
 export const saveChat = async (
   data: SaveChatInput
@@ -32,15 +33,17 @@ export const loadChat = async (id: string): Promise<ActionState<SavedChat>> => {
   }
 }
 
-export const listChats = async (): Promise<ActionState<SavedChatMeta[]>> => {
-  try {
-    const result = await chatHistoryService.listChats()
-    return { data: result }
-  } catch (error) {
-    console.error("Error al listar los chats:", error)
-    return { error: "No se pudieron listar los chats" }
+export const listChats = cache(
+  async (): Promise<ActionState<SavedChatMeta[]>> => {
+    try {
+      const result = await chatHistoryService.listChats()
+      return { data: result }
+    } catch (error) {
+      console.error("Error al listar los chats:", error)
+      return { error: "No se pudieron listar los chats" }
+    }
   }
-}
+)
 
 export const deleteChat = async (id: string): Promise<ActionState<void>> => {
   try {

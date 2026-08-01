@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     "/*": ["./example/**/*"],
   },
   allowedDevOrigins: ["192.168.1.10"],
+  cacheComponents: true,
 }
 
 export default nextConfig

@@ -77,25 +77,29 @@ export const chatHistoryService = {
     await ensureDirectoryExists()
     const files = await readdir(GENERATED_DIR)
     const jsonFiles = files.filter((file) => file.endsWith(".json"))
+    const chatsData = await Promise.all(
+      jsonFiles.map(async (file) => {
+        try {
+          const filePath = path.join(GENERATED_DIR, file)
+          const content = await readFile(filePath, "utf-8")
+          const savedChat = JSON.parse(content) as SavedChat
+          return {
+            id: savedChat.id,
+            title: savedChat.title,
+            createdAt: savedChat.createdAt,
+          } satisfies SavedChatMeta
+        } catch (err) {
+          console.error(`Error leyendo el archivo de respuesta ${file}:`, err)
+          return null
+        }
+      })
+    )
 
-    const chats: SavedChatMeta[] = []
-    for (const file of jsonFiles) {
-      try {
-        const filePath = path.join(GENERATED_DIR, file)
-        const content = await readFile(filePath, "utf-8")
-        const savedChat = JSON.parse(content) as SavedChat
+    const validChats = chatsData.filter(
+      (chat): chat is SavedChatMeta => chat !== null
+    )
 
-        chats.push({
-          id: savedChat.id,
-          title: savedChat.title,
-          createdAt: savedChat.createdAt,
-        })
-      } catch (err) {
-        console.error(`Error leyendo el archivo de respuesta ${file}:`, err)
-      }
-    }
-
-    return chats.sort(
+    return validChats.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )

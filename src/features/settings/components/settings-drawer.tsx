@@ -21,10 +21,10 @@ export function SettingsDrawer({
   initialPromptsPromise: ReturnType<typeof loadPrompts>
 }) {
   const initialPromptsResult = use(initialPromptsPromise)
-  if (initialPromptsResult.error || !initialPromptsResult.data) {
+  if (!initialPromptsResult.data) {
     notFound()
   }
-  const initialPrompts = initialPromptsResult.data || []
+  const initialPrompts = initialPromptsResult.data
 
   return (
     <Sheet>

@@ -10,71 +10,55 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
-import { FileExplorerView } from "@/features/file-explorer/components/file-explorer-view"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
+import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { cn } from "@/lib/utils"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
+import { FileExplorerDialog } from "./file-explorer-dialog"
+import { ImageUploadDialog } from "./image-upload-dialog"
 
 interface ContextBuilderProps {
-  fetchFileState?: { error: string | null }
-  fileErrors: string[]
-  isReadyToReview: boolean
-  isDisabled: boolean
-  isFetchingFiles: boolean
-  showFileExplorer: boolean
   treeNodes: FileTreeNode[]
   totalFiles: number
-  systemPrompt: string
+  isDisabled: boolean
+  isFetchingFiles: boolean
+  isReadyToReview: boolean
+  fetchFileState?: { error: string | null }
   handleFetchFileContents: (formData: FormData) => void
-  setShowFileExplorer: (show: boolean) => void
 }
 
 export const ContextBuilder = ({
   treeNodes,
   totalFiles,
-  systemPrompt,
   isDisabled,
   isFetchingFiles,
-  showFileExplorer,
-  setShowFileExplorer,
-  fileErrors,
+  isReadyToReview,
   fetchFileState,
   handleFetchFileContents,
-  isReadyToReview,
 }: ContextBuilderProps) => {
+  const [showFileExplorer, setShowFileExplorer] = useState(false)
   const [showImageDialog, setShowImageDialog] = useState(false)
+
   const userTask = useChatStore((s) => s.userTask)
   const { setUserTask } = useChatActions()
+  const systemPrompt = useSettingsStore((s) => s.systemPrompt)
 
   const {
     selectedFiles,
     imageUrls,
     includeDependencies,
-    setImageUrls,
+    fileContents,
     setSelectedFiles,
-    setIncludeDependencies,
   } = useFileExplorerStore(
     useShallow((s) => ({
       selectedFiles: s.selectedFiles,
       imageUrls: s.imageUrls,
       includeDependencies: s.includeDependencies,
-      setImageUrls: s.setImageUrls,
+      fileContents: s.fileContents,
       setSelectedFiles: s.setSelectedFiles,
-      setIncludeDependencies: s.setIncludeDependencies,
     }))
   )
 
@@ -84,6 +68,14 @@ export const ContextBuilder = ({
       .map((url) => url.trim())
       .filter(Boolean).length
   }, [imageUrls])
+
+  const fileErrors = useMemo(
+    () =>
+      fileContents
+        .filter((file) => file.error)
+        .map((file) => `${file.path}: ${file.error}`),
+    [fileContents]
+  )
 
   const mentionOptions = useMemo(() => {
     const options: MentionOption[] = []
@@ -254,108 +246,19 @@ export const ContextBuilder = ({
         </CardContent>
       </Card>
 
-      {/* Modal Dialog para el Explorador de Archivos */}
-      <Dialog open={showFileExplorer} onOpenChange={setShowFileExplorer}>
-        <DialogContent className="flex h-[90vh] max-h-[90vh] w-full max-w-[95vw] flex-col gap-0 p-0 sm:max-w-6xl">
-          <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
-            <DialogTitle className="flex items-center gap-2 text-base font-semibold sm:text-lg">
-              <span className="icon-[fa7-solid--folder-open] text-primary" />
-              Explorador del Proyecto
-            </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">
-              Selecciona los archivos del proyecto que se incluirán como
-              contexto en la consulta.
-            </DialogDescription>
-          </DialogHeader>
+      <FileExplorerDialog
+        open={showFileExplorer}
+        onOpenChange={setShowFileExplorer}
+        treeNodes={treeNodes}
+        totalFiles={totalFiles}
+        disabled={isDisabled}
+      />
 
-          <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 sm:p-6">
-            <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border/40 p-1">
-              <FileExplorerView
-                treeNodes={treeNodes}
-                totalFiles={totalFiles}
-                disabled={isDisabled}
-                selectedFiles={selectedFiles}
-                onSelectionChange={setSelectedFiles}
-              />
-            </div>
-
-            <div className="flex shrink-0 items-start gap-2.5 pt-2 sm:items-center">
-              <Checkbox
-                id="include-deps"
-                checked={includeDependencies}
-                onCheckedChange={(val) => setIncludeDependencies(!!val)}
-                disabled={isDisabled}
-                className="mt-0.5 shrink-0 sm:mt-0"
-              />
-              <Label
-                htmlFor="include-deps"
-                className="cursor-pointer text-xs leading-tight text-foreground sm:text-sm"
-              >
-                Incluir dependencias de los archivos seleccionados
-              </Label>
-            </div>
-          </div>
-
-          <DialogFooter className="border-t bg-muted/20 px-4 py-3 sm:px-6">
-            <div className="flex w-full items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground">
-                {selectedFiles.length} archivo(s) seleccionado(s)
-              </span>
-              <Button onClick={() => setShowFileExplorer(false)} size="sm">
-                Confirmar selección
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal Dialog para Carga de Imágenes por URL */}
-      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader className="border-b pb-4">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-              <span className="icon-[fa7-solid--images] text-primary" />
-              Cargar Imágenes (URLs)
-            </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm">
-              Pega las URLs de las imágenes que deseas adjuntar como contexto
-              visual para el modelo (una por línea).
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3 py-2">
-            <Label
-              htmlFor="imageUrls-dialog"
-              className="text-xs font-medium text-muted-foreground"
-            >
-              URLs de las imágenes
-            </Label>
-            <Textarea
-              id="imageUrls-dialog"
-              value={imageUrls}
-              onChange={(e) => setImageUrls(e.target.value)}
-              placeholder={`https://ejemplo.com/captura1.png\nhttps://ejemplo.com/captura2.png`}
-              className="min-h-36 font-mono text-xs"
-              disabled={isDisabled}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Estas imágenes se descargarán y enviarán como adjuntos visuales al
-              modelo.
-            </p>
-          </div>
-
-          <DialogFooter className="border-t pt-3">
-            <div className="flex w-full items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">
-                {imageUrlCount} URL(s) ingresada(s)
-              </span>
-              <Button onClick={() => setShowImageDialog(false)} size="sm">
-                Guardar y cerrar
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ImageUploadDialog
+        open={showImageDialog}
+        onOpenChange={setShowImageDialog}
+        disabled={isDisabled}
+      />
     </>
   )
 }

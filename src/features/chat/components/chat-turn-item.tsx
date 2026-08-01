@@ -311,11 +311,39 @@ export const ChatTurnItem = memo(
     )
   },
   (prevProps, nextProps) => {
-    // Comparación estricta de propiedades para evitar re-renders innecesarios en turnos pasados
+    if (prevProps.isLast !== nextProps.isLast) return false
     if (prevProps.isStreaming !== nextProps.isStreaming && nextProps.isLast)
       return false
-    if (prevProps.turn !== nextProps.turn) return false
-    if (prevProps.isLast !== nextProps.isLast) return false
-    return true
+
+    const prevUserText = extractTextByPartType(
+      prevProps.turn.userMessage,
+      "text"
+    )
+    const nextUserText = extractTextByPartType(
+      nextProps.turn.userMessage,
+      "text"
+    )
+    const prevAsstText = extractTextByPartType(
+      prevProps.turn.assistantMessage,
+      "text"
+    )
+    const nextAsstText = extractTextByPartType(
+      nextProps.turn.assistantMessage,
+      "text"
+    )
+    const prevReasoning = extractTextByPartType(
+      prevProps.turn.assistantMessage,
+      "reasoning"
+    )
+    const nextReasoning = extractTextByPartType(
+      nextProps.turn.assistantMessage,
+      "reasoning"
+    )
+
+    return (
+      prevUserText === nextUserText &&
+      prevAsstText === nextAsstText &&
+      prevReasoning === nextReasoning
+    )
   }
 )
