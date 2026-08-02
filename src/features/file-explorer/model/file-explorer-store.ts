@@ -1,5 +1,4 @@
-import { FileContent } from "@/entities/file/model/types"
-import { ImageFile } from "./types"
+import type { FileContent, ImageFile } from "@/entities/file/model/file-types"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 

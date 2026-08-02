@@ -1,6 +1,6 @@
 import fs from "node:fs/promises"
 import path from "node:path"
-import { AbsolutePath, LanguageStrategy } from "../model/types"
+import { AbsolutePath, LanguageStrategy } from "../model/file-types"
 
 const JS_TS_IMPORT_REGEX =
   /(?:import|export)\s+(?:[\w*\s{},]*\s+from\s+)?["']([^"']+)["']|import\s*\(\s*["']([^"']+)["']\s*/g

@@ -3,12 +3,16 @@
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useChatStore } from "@/entities/chat/model/chat-store"
 import { SavedChat } from "@/entities/chat/model/types"
-import { getFileContents } from "@/entities/file/api/get-file-contents"
-import { generateTreeStructure } from "@/entities/file/api/get-file-tree"
-import { formatFilesContent } from "@/entities/file/lib/file-utils"
-import { useFileExplorerStore } from "@/entities/file/model/file-store"
-import { PromptBuilder } from "@/features/chat/lib/prompt-utils"
-import { useSettingsStore } from "@/features/chat/store/settings-store"
+import {
+  formatFilesContent,
+  PromptBuilder,
+} from "@/features/chat/lib/prompt-utils"
+import {
+  getFileContents,
+  getTreeStructure,
+  useFileExplorerStore,
+} from "@/features/file-explorer"
+import { useSettingsStore } from "@/features/inference-settings"
 import { ActionState } from "@/shared/types/action-state"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
@@ -21,7 +25,7 @@ import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
-  treeStructurePromise: ReturnType<typeof generateTreeStructure>
+  treeStructurePromise: ReturnType<typeof getTreeStructure>
   initialChatPromise?: Promise<ActionState<SavedChat>>
 }
 

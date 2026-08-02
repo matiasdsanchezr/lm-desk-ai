@@ -12,10 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import type { SavedChatMeta } from "@/entities/chat/model/types"
-import {
-  deleteChat,
-  updateChat,
-} from "@/features/chat/api/chat-actions"
+import { deleteChat, updateChat } from "@/features/chat"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"

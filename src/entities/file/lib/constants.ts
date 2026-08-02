@@ -1,4 +1,4 @@
-import { Extension } from "../model/types"
+import { Extension } from "../model/file-types"
 
 export const DEFAULT_IGNORE = new Set([
   "node_modules",

@@ -9,7 +9,7 @@ import {
 import { formatProviderName } from "@/services/inference/utils/model-formatter"
 import { useShallow } from "zustand/shallow"
 import { NavSelector } from "../../../components/shared/nav-selector"
-import { useSettingsStore } from "../../../features/chat/store/settings-store"
+import { useSettingsStore } from "../../../features/inference-settings/model/settings-store"
 
 export const ProviderMenu = () => {
   const { config, setConfig } = useSettingsStore(

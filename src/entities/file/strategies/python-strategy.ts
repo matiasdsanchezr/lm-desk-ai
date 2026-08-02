@@ -1,5 +1,5 @@
 import path from "node:path"
-import { AbsolutePath, LanguageStrategy } from "../model/types"
+import { AbsolutePath, LanguageStrategy } from "../model/file-types"
 import fs from "node:fs/promises"
 
 const PYTHON_IMPORT_REGEX =

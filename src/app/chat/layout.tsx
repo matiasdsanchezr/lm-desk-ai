@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { loadPrompts } from "@/entities/prompt/api/prompt"
-import { listChats } from "@/features/chat/api/chat-actions"
+import { listChats } from "@/features/chat"
 import {
   ChatHistorySidebar,
   ChatHistorySidebarSkeleton,

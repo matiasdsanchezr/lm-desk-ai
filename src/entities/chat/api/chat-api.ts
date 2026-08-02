@@ -10,10 +10,7 @@ import type {
   UpdateChatInput,
 } from "../model/types"
 
-/**
- * Lista todas las respuestas ordenadas por fecha de creación descendente.
- */
-export async function listChats(): Promise<SavedChatMeta[]> {
+export async function getChatsList(): Promise<SavedChatMeta[]> {
   await ensureDirectoryExists()
   const files = await readdir(GENERATED_DIR)
   const jsonFiles = files.filter((file) => file.endsWith(".json"))
@@ -44,18 +41,12 @@ export async function listChats(): Promise<SavedChatMeta[]> {
   )
 }
 
-/**
- * Obtiene una respuesta por su ID.
- */
-
-export async function loadChat(id: string): Promise<SavedChat> {
+export async function getChatById(id: string): Promise<SavedChat> {
   const fileName = id.endsWith(".json") ? id : `${id}.json`
   const filePath = path.join(GENERATED_DIR, fileName)
   const savedChat = await readFile(filePath, "utf-8")
   return JSON.parse(savedChat) as SavedChat
-} /**
- * Guarda una respuesta en el sistema de archivos local.
- */
+}
 
 export async function saveChat(data: SaveChatInput): Promise<SavedChat> {
   await ensureDirectoryExists()
@@ -79,14 +70,11 @@ export async function saveChat(data: SaveChatInput): Promise<SavedChat> {
   return newChat
 }
 
-/**
- * Actualiza campos específicos de una respuesta existente por su ID.
- */
 export async function updateChat(
   id: string,
   updates: UpdateChatInput
 ): Promise<SavedChat> {
-  const savedChat = await loadChat(id)
+  const savedChat = await getChatById(id)
 
   const updatedChat: SavedChat = {
     ...savedChat,
@@ -101,9 +89,6 @@ export async function updateChat(
   return updatedChat
 }
 
-/**
- * Elimina un archivo de respuesta por su ID.
- */
 export async function deleteChat(id: string): Promise<void> {
   const fileName = id.endsWith(".json") ? id : `${id}.json`
   const filePath = path.join(GENERATED_DIR, fileName)

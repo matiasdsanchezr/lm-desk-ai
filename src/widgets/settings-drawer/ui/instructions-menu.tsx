@@ -28,9 +28,9 @@ import {
   loadPrompt,
   savePrompt,
 } from "@/entities/prompt/api/prompt"
+import { useSettingsStore } from "@/features/inference-settings"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
-import { useSettingsStore } from "../../../features/chat/store/settings-store"
 
 interface Props {
   availablePrompts: string[]

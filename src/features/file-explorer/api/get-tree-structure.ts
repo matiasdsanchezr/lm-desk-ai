@@ -1,16 +1,13 @@
 "use server"
 
-import { buildFileTree } from "@/entities/file/lib/tree-builder"
+import { getFilePaths } from "@/entities/file/api/file-api"
 import type { ActionState } from "@/shared/types/action-state"
 import { cacheLife } from "next/cache"
 import { cache } from "react"
-import type { TreeStructureResponse } from "../model/types"
-import { getFilePaths } from "./file-service"
+import { buildFileTree } from "../lib/file-explorer-utils"
+import type { TreeStructureResponse } from "../model/file-explorer-types"
 
-/**
- * Genera la estructura en árbol memorizada por request.
- */
-export const generateTreeStructure = cache(
+export const getTreeStructure = cache(
   async (): Promise<ActionState<TreeStructureResponse>> => {
     "use cache"
     cacheLife("hours")

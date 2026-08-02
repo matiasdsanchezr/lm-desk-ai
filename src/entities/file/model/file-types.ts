@@ -20,24 +20,12 @@ export type FileContent = {
   language?: string
 }
 
-export interface FileTreeNode {
-  id: string
-  name: string
-  isFile: boolean
-  filePath?: string
-  children: FileTreeNode[]
-}
-
-export interface NodeState {
-  checked: boolean
-  indeterminate: boolean
-}
-
-export interface TreeStructureResponse {
-  totalFiles: number
-  treeNodes: FileTreeNode[]
-}
 export type ImageFile = {
   mimeType: string
   base64: string
+}
+
+export type FileContents = {
+  fileContents: FileContent[]
+  imageFiles: ImageFile[]
 }

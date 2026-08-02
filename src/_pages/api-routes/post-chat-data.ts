@@ -1,6 +1,6 @@
 "server only"
 
-import * as chatApi from "@/entities/chat/api/chat-api"
+import { saveChat, updateChat } from "@/features/chat"
 import { streamText } from "@/services/inference/inference-service"
 import { InferenceProviderEnum } from "@/services/inference/schemas/provider-schema"
 import { InferenceModelSchema } from "@/services/inference/types/inference-model"
@@ -128,18 +128,18 @@ export async function POST(req: Request) {
                   if (textContent) {
                     if (chatId) {
                       try {
-                        await chatApi.updateChat(chatId, {
+                        await updateChat(chatId, {
                           messages,
                         })
                       } catch {
-                        await chatApi.saveChat({
+                        await saveChat({
                           id: chatId,
                           selectedFiles: selectedFiles || [],
                           messages,
                         })
                       }
                     } else {
-                      await chatApi.saveChat({
+                      await saveChat({
                         selectedFiles: selectedFiles || [],
                         messages,
                       })

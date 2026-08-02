@@ -1,5 +1,5 @@
 import { ALLOWED_NON_CODE_EXTENSIONS, IMAGE_EXTENSIONS } from "../lib/constants"
-import { Extension, LanguageStrategy } from "../model/types"
+import { Extension, LanguageStrategy } from "../model/file-types"
 import { jsTsStrategy } from "./js-ts-strategy"
 import { pythonStrategy } from "./python-strategy"
 

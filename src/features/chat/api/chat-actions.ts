@@ -26,7 +26,7 @@ export const saveChat = async (
 
 export const loadChat = async (id: string): Promise<ActionState<SavedChat>> => {
   try {
-    const result = await chatApi.loadChat(id)
+    const result = await chatApi.getChatById(id)
     return { data: result }
   } catch {
     return { error: "No se pudo cargar el chat especificado" }
@@ -36,7 +36,7 @@ export const loadChat = async (id: string): Promise<ActionState<SavedChat>> => {
 export const listChats = cache(
   async (): Promise<ActionState<SavedChatMeta[]>> => {
     try {
-      const result = await chatApi.listChats()
+      const result = await chatApi.getChatsList()
       return { data: result }
     } catch (error) {
       console.error("Error al listar los chats:", error)

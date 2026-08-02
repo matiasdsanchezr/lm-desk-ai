@@ -1,5 +1,11 @@
-import path from "node:path"
-import { AbsolutePath, FileContent } from "../model/types"
+import fs from "fs/promises"
+import path from "path"
+import { cache } from "react"
+import type { AbsolutePath, Extension, FileContent } from "../model/file-types"
+import {
+  ALLOWED_EXTENSIONS,
+  getStrategyForExtension,
+} from "../strategies/strategy-registry"
 
 /**
  * Normaliza y verifica que una ruta absoluta resida estrictamente dentro de la raíz del proyecto.
@@ -19,60 +25,56 @@ export function validateAndSanitizePath(
   return resolvedTarget as AbsolutePath
 }
 
-const DEFAULT_FILE = `\
-<file path="{{path}}" language="{{lang}}">
-{{content}}
-</file>`
-
-const SYSTEM_TAGS_REGEX =
-  /<(\/?(?:system_instructions|context|file|userInput)\b[^>]*)>/gi
-
-const sanitizeXmlContent = (content: string): string => {
-  if (!content) return ""
-  return content.replace(SYSTEM_TAGS_REGEX, "&lt;$1&gt;")
-}
-
-export const formatFilesContent = (files: FileContent[]): string => {
-  const validFiles = files.filter((f) => !f.error && f.content)
-
-  if (validFiles.length === 0) {
-    return ""
-  }
-
-  const template = DEFAULT_FILE
-  return validFiles
-    .map((file) =>
-      renderTemplate(template, {
-        path: file.path,
-        lang: file.language ?? "",
-        content: sanitizeXmlContent(file.content ?? ""),
-      })
-    )
-    .join("\n")
-}
-
-const TEMPLATE_REGEX = /\{\{([^{}]+)\}\}/g
-type TemplateVars = Record<string, string | number | boolean>
-
 /**
- * Reemplaza los placeholders {{key}}
- * con los valores proporcionados en un objeto.
- * @param template - Template string con placeholders tipo {{key}}
- * @param variables - Objeto con los valores a inyectar
- * @returns El contenido del template procesado
+ * Lee un archivo de manera segura procesando sus dependencias mediante la estrategia adecuada.
  */
-export const renderTemplate = (
-  template: string,
-  variables: TemplateVars
-): string => {
-  return template.replace(TEMPLATE_REGEX, (match, key: string) => {
-    const trimmedKey = key.trim()
+export const readFileContent = cache(
+  async (
+    currentPath: AbsolutePath,
+    projectRoot: AbsolutePath
+  ): Promise<FileContent> => {
+    const ext = path.extname(currentPath).toLowerCase() as Extension
 
-    if (variables[trimmedKey] !== undefined) {
-      return String(variables[trimmedKey])
-    } else {
-      console.warn(`Variable no encontrada en el template: "${trimmedKey}"`)
-      return ""
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return {
+        path: currentPath,
+        error: `Extensión no permitida: ${ext}`,
+      }
     }
-  })
-}
+
+    try {
+      const content = await fs.readFile(currentPath, "utf-8")
+      const dependencies = new Set<string>()
+      const strategy = getStrategyForExtension(ext)
+
+      if (strategy) {
+        const specifiers = strategy.extractImports(content)
+
+        for (const specifier of specifiers) {
+          const resolved = await strategy.resolveImport(
+            specifier,
+            currentPath,
+            projectRoot
+          )
+          if (resolved) {
+            dependencies.add(resolved)
+          }
+        }
+      }
+
+      return {
+        path: currentPath,
+        content,
+        dependencies: Array.from(dependencies),
+        language: ext.slice(1),
+      }
+    } catch (err) {
+      return {
+        path: currentPath,
+        content: "",
+        error: err instanceof Error ? err.message : String(err),
+        dependencies: [],
+      }
+    }
+  }
+)

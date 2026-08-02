@@ -1,4 +1,4 @@
-import { ImageFile } from "../model/types"
+import { ImageFile } from "../model/file-types"
 
 const IMAGE_MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

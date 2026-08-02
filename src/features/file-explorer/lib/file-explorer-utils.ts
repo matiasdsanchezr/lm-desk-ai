@@ -1,4 +1,4 @@
-import type { FileTreeNode } from "../model/types"
+import type { FileTreeNode } from "../model/file-explorer-types"
 
 function getCommonRootDirectory(paths: string[]): string {
   if (!paths.length) return ""

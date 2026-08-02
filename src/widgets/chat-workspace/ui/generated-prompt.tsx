@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/collapsible"
 import { Textarea } from "@/components/ui/textarea"
 import { useChatStore } from "@/entities/chat/model/chat-store"
-import { useFileExplorerStore } from "@/entities/file/model/file-store"
+import { useFileExplorerStore } from "@/features/file-explorer"
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 

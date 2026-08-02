@@ -1,31 +1,17 @@
 "use server"
 
-import {
-  loadLocalImages,
-  loadProjectGraph,
-} from "@/entities/file/api/file-service"
+import { loadLocalImages, loadProjectGraph } from "@/entities/file/api/file-api"
 import { fetchImage, isImagePath } from "@/entities/file/lib/image-utils"
-import { FileContent } from "@/entities/file/model/types"
-import { ActionState } from "@/shared/types/action-state"
-import { ImageFile } from "../model/types"
+import type { FileContents, ImageFile } from "@/entities/file/model/file-types"
+import type { ActionState } from "@/shared/types/action-state"
 import { z } from "zod"
+import { GetFileContentsSchema } from "../model/file-explorer-schemas"
 
-const GeneratePromptSchema = z.object({
-  filePaths: z.array(z.string().trim().min(1)).min(0).max(200),
-  includeDependencies: z.preprocess((val) => val === "true", z.boolean()),
-  imageUrls: z.string().optional(),
-})
-
-type GetFileContentsState = {
-  fileContents: FileContent[]
-  imageFiles: ImageFile[]
-}
-
-export async function getFileContents(
-  _prev: ActionState<GetFileContentsState>,
+export const getFileContents = async (
+  _prev: ActionState<FileContents>,
   formData: FormData
-): Promise<ActionState<GetFileContentsState>> {
-  const parsed = GeneratePromptSchema.safeParse({
+): Promise<ActionState<FileContents>> => {
+  const parsed = GetFileContentsSchema.safeParse({
     filePaths: formData.getAll("filePath"),
     includeDependencies: formData.get("includeDependencies"),
     imageUrls: formData.get("imageUrls"),
@@ -34,29 +20,24 @@ export async function getFileContents(
   if (!parsed.success || !parsed.data) {
     return { error: z.prettifyError(parsed.error) }
   }
-
   const { filePaths, includeDependencies, imageUrls } = parsed.data
 
   const localImagePaths = filePaths.filter(isImagePath)
   const textFilePaths = filePaths.filter((path) => !isImagePath(path))
 
-  // 1. Cargar imágenes por URL
-  let base64UrlImages: ImageFile[] = []
-  const urls = imageUrls
+  const imagesToFetch = imageUrls
     ?.split("\n")
     .map((src) => src.trim())
     .filter((src) => src.length > 0)
 
-  if (urls && urls.length > 0) {
+  let base64UrlImages: ImageFile[] = []
+  if (imagesToFetch && imagesToFetch.length > 0) {
     base64UrlImages = await Promise.all(
-      urls.map((src) => fetchImage(src).catch(() => null))
+      imagesToFetch.map((src) => fetchImage(src).catch(() => null))
     ).then((res) => res.filter((img): img is ImageFile => img !== null))
   }
 
-  // 2. Cargar imágenes del sistema de archivos local a través del servicio
   const localImages = await loadLocalImages(localImagePaths)
-
-  // 3. Analizar código y dependencias
   const fileContents = await loadProjectGraph(
     textFilePaths,
     includeDependencies

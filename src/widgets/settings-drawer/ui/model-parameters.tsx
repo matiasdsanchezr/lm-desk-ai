@@ -2,7 +2,7 @@
 
 import { Slider } from "@/components/ui/slider"
 import { useShallow } from "zustand/shallow"
-import { useSettingsStore } from "../../../features/chat/store/settings-store"
+import { useSettingsStore } from "../../../features/inference-settings/model/settings-store"
 
 export const ModelParameters = () => {
   const { temperature, topP, setTemperature, setTopP } = useSettingsStore(

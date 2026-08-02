@@ -1,74 +1,26 @@
 import "server-only"
 
-import { getImageMimeType } from "@/entities/file/lib/image-utils"
+import {
+  fetchImage,
+  getImageMimeType,
+  isImagePath,
+} from "@/entities/file/lib/image-utils"
 import { config } from "@/shared/lib/config"
-import { ImageFile } from "../model/types"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { cache } from "react"
 import { DEFAULT_IGNORE } from "../lib/constants"
-import { validateAndSanitizePath } from "../lib/file-utils"
-import { AbsolutePath, Extension, FileContent } from "../model/types"
-import {
-  ALLOWED_EXTENSIONS,
-  getStrategyForExtension,
-} from "../strategies/strategy-registry"
+import { readFileContent, validateAndSanitizePath } from "../lib/file-utils"
+import type {
+  AbsolutePath,
+  Extension,
+  FileContent,
+  FileContents,
+  ImageFile,
+} from "../model/file-types"
+import { ALLOWED_EXTENSIONS } from "../strategies/strategy-registry"
 
 const CONCURRENCY_LIMIT = 20
-
-/**
- * Lee un archivo de manera segura procesando sus dependencias mediante la estrategia adecuada.
- */
-const processFile = cache(
-  async (
-    currentPath: AbsolutePath,
-    projectRoot: AbsolutePath
-  ): Promise<FileContent> => {
-    const ext = path.extname(currentPath).toLowerCase() as Extension
-
-    if (!ALLOWED_EXTENSIONS.has(ext)) {
-      return {
-        path: currentPath,
-        error: `Extensión no permitida: ${ext}`,
-      }
-    }
-
-    try {
-      const content = await fs.readFile(currentPath, "utf-8")
-      const dependencies = new Set<string>()
-      const strategy = getStrategyForExtension(ext)
-
-      if (strategy) {
-        const specifiers = strategy.extractImports(content)
-
-        for (const specifier of specifiers) {
-          const resolved = await strategy.resolveImport(
-            specifier,
-            currentPath,
-            projectRoot
-          )
-          if (resolved) {
-            dependencies.add(resolved)
-          }
-        }
-      }
-
-      return {
-        path: currentPath,
-        content,
-        dependencies: Array.from(dependencies),
-        language: ext.slice(1),
-      }
-    } catch (err) {
-      return {
-        path: currentPath,
-        content: "",
-        error: err instanceof Error ? err.message : String(err),
-        dependencies: [],
-      }
-    }
-  }
-)
 
 /**
  * Carga contenidos en lotes concurrentes para evitar agotar FDs (File Descriptors).
@@ -83,7 +35,7 @@ async function getFileContentsWithDependencies(
   for (let i = 0; i < uniquePaths.length; i += CONCURRENCY_LIMIT) {
     const batch = uniquePaths.slice(i, i + CONCURRENCY_LIMIT)
     const batchResults = await Promise.all(
-      batch.map((p) => processFile(p, projectRoot))
+      batch.map((p) => readFileContent(p, projectRoot))
     )
     results.push(...batchResults)
   }
@@ -218,3 +170,30 @@ export const getFilePaths = cache(
     )
   }
 )
+
+export async function getFileContents(
+  filePaths: string[],
+  includeDependencies: boolean,
+  imagesToFetch: string[]
+): Promise<FileContents> {
+  const localImagePaths = filePaths.filter(isImagePath)
+  const textFilePaths = filePaths.filter((path) => !isImagePath(path))
+
+  let base64UrlImages: ImageFile[] = []
+  if (imagesToFetch && imagesToFetch.length > 0) {
+    base64UrlImages = await Promise.all(
+      imagesToFetch.map((src) => fetchImage(src).catch(() => null))
+    ).then((res) => res.filter((img): img is ImageFile => img !== null))
+  }
+
+  const localImages = await loadLocalImages(localImagePaths)
+  const fileContents = await loadProjectGraph(
+    textFilePaths,
+    includeDependencies
+  )
+
+  return {
+    fileContents,
+    imageFiles: [...base64UrlImages, ...localImages],
+  }
+}
