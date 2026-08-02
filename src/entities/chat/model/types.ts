@@ -18,3 +18,9 @@ export interface SaveChatInput {
 }
 
 export type UpdateChatInput = Partial<Omit<SavedChat, "id" | "createdAt">>
+
+export interface ChatTurn {
+  id: string
+  userMessage?: UIMessage
+  assistantMessage?: UIMessage
+}

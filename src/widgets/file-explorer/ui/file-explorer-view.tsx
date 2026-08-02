@@ -14,13 +14,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { FileTreeNode } from "@/entities/file/model/types"
-import { TreeNodeRow } from "@/entities/file/ui/tree-node-row"
+import { useFileSelection } from "@/features/file-explorer/model/use-file-selection"
+import { useTreeExpansion } from "@/features/file-explorer/model/use-tree-expansion"
 import { cn } from "@/shared/lib/utils"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { useRouter } from "next/navigation"
 import { useCallback, useMemo, useRef, useState, useTransition } from "react"
-import { useFileSelection } from "@/features/file-explorer/model/use-file-selection"
-import { useTreeExpansion } from "@/features/file-explorer/model/use-tree-expansion"
+import { TreeNodeRow } from ".//tree-node-row"
 
 interface FileExplorerProps {
   treeNodes: FileTreeNode[]

@@ -1,10 +1,14 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { loadPrompts } from "@/entities/prompt/api/prompt"
-import { listChats } from "@/features/chat/api/chat-history-actions"
-import { ChatHistorySidebarSkeleton } from "@/widgets/chat-sidebar"
-import { ChatHistorySidebar } from "@/widgets/chat-sidebar/ui/chat-history-sidebar"
-import { SettingsDrawer } from "@/widgets/settings-drawer"
-import { SettingsDrawerSkeleton } from "@/widgets/settings-drawer/"
+import { listChats } from "@/features/chat/api/chat-actions"
+import {
+  ChatHistorySidebar,
+  ChatHistorySidebarSkeleton,
+} from "@/widgets/chat-sidebar"
+import {
+  SettingsDrawer,
+  SettingsDrawerSkeleton,
+} from "@/widgets/settings-drawer"
 import { Metadata } from "next"
 import React, { Suspense } from "react"
 

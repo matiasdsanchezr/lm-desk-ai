@@ -1,4 +1,4 @@
-import { ImageFile } from "@/shared/types/image-file"
+import { ImageFile } from "../model/types"
 
 const IMAGE_MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

@@ -1,7 +1,6 @@
 import { generateTreeStructure } from "@/entities/file/api/get-file-tree"
-import { loadChat } from "@/features/chat/api/chat-history-actions"
-import { ChatWorkspaceSkeleton } from "@/features/chat/ui/chat-workspace-skeleton"
-import { ChatWorkspace } from "@/widgets/chat-workspace/ui/chat-workspace"
+import { loadChat } from "@/features/chat/api/chat-actions"
+import { ChatWorkspace, ChatWorkspaceSkeleton } from "@/widgets/chat-workspace"
 import { Suspense } from "react"
 
 interface ChatProps {

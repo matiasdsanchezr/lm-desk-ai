@@ -4,10 +4,10 @@ import {
   loadLocalImages,
   loadProjectGraph,
 } from "@/entities/file/api/file-service"
-import { fetchImage, isImagePath } from "@/shared/utils/image-utils"
+import { fetchImage, isImagePath } from "@/entities/file/lib/image-utils"
 import { FileContent } from "@/entities/file/model/types"
 import { ActionState } from "@/shared/types/action-state"
-import { ImageFile } from "@/shared/types/image-file"
+import { ImageFile } from "../model/types"
 import { z } from "zod"
 
 const GeneratePromptSchema = z.object({

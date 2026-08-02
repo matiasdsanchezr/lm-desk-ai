@@ -1,4 +1,4 @@
-export { About as default } from "@/_pages/about/ui/about"
+export { About as default } from "@/_pages/about"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {

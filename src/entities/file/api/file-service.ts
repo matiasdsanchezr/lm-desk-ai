@@ -1,8 +1,8 @@
 import "server-only"
 
-import { getImageMimeType } from "@/shared/utils/image-utils"
+import { getImageMimeType } from "@/entities/file/lib/image-utils"
 import { config } from "@/shared/lib/config"
-import { ImageFile } from "@/shared/types/image-file"
+import { ImageFile } from "../model/types"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { cache } from "react"

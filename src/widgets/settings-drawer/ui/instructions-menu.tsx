@@ -30,7 +30,7 @@ import {
 } from "@/entities/prompt/api/prompt"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
-import { useSettingsStore } from "../../../shared/store/settings-store"
+import { useSettingsStore } from "../../../features/chat/store/settings-store"
 
 interface Props {
   availablePrompts: string[]

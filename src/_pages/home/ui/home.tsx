@@ -1,5 +1,5 @@
-import { Hero } from "@/_pages/home/ui/hero"
 import Link from "next/link"
+import { Hero } from "./hero"
 
 export const Home = () => {
   return (

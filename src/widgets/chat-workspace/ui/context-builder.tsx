@@ -10,15 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import type { FileTreeNode } from "@/entities/file/model/types"
-import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
-import { ImageUploadDialog } from "@/features/chat/ui/image-upload-dialog"
+import { useChatActions, useChatStore } from "@/entities/chat/model/chat-store"
 import { useFileExplorerStore } from "@/entities/file/model/file-store"
-import { useSettingsStore } from "@/shared/store/settings-store"
+import type { FileTreeNode } from "@/entities/file/model/types"
 import { cn } from "@/shared/lib/utils"
+import { useSettingsStore } from "@/features/chat/store/settings-store"
 import { FileExplorerDialog } from "@/widgets/file-explorer/ui/file-explorer-dialog"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
+import { ImageUploadDialog } from "./image-upload-dialog"
 
 interface ContextBuilderProps {
   treeNodes: FileTreeNode[]

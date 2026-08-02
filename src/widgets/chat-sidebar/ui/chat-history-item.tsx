@@ -15,7 +15,7 @@ import type { SavedChatMeta } from "@/entities/chat/model/types"
 import {
   deleteChat,
   updateChat,
-} from "@/features/chat/api/chat-history-actions"
+} from "@/features/chat/api/chat-actions"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"

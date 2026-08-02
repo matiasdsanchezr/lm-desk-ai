@@ -1,5 +1,4 @@
-import { FileContent } from "@/entities/file/model/types"
-import { renderTemplate } from "@/shared/utils/template-utils"
+import { renderTemplate } from "@/entities/file/lib/file-utils"
 
 const DEFAULT_INSTRUCTIONS = `\
 <system_instructions>

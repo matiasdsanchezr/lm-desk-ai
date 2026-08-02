@@ -37,3 +37,7 @@ export interface TreeStructureResponse {
   totalFiles: number
   treeNodes: FileTreeNode[]
 }
+export type ImageFile = {
+  mimeType: string
+  base64: string
+}

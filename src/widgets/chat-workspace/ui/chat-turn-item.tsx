@@ -12,11 +12,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Separator } from "@/components/ui/separator"
-import { useCopyToClipboard } from "@/features/chat/model/use-copy-to-clipboard"
-import { getMessagePart, type ChatTurn } from "@/features/chat/utils/messages"
+import { getMessagePart } from "@/entities/chat/lib/chat-utils"
+import { type ChatTurn } from "@/entities/chat/model/types"
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"
+import { UIMessage } from "@ai-sdk/react"
 import { createCodePlugin } from "@streamdown/code"
-import type { UIDataTypes, UIMessage, UITools } from "ai"
 import { memo, useState } from "react"
 import { Streamdown } from "streamdown"
 import { InlineMessageEditor } from "./inline-message-editor"
@@ -36,8 +37,8 @@ interface ChatTurnItemProps {
   turn: ChatTurn
   isStreaming: boolean
   isLast: boolean
-  messages: UIMessage<unknown, UIDataTypes, UITools>[]
-  setMessages?: (messages: UIMessage<unknown, UIDataTypes, UITools>[]) => void
+  messages: UIMessage[]
+  setMessages?: (messages: UIMessage[]) => void
 }
 
 const codePlugin = createCodePlugin({

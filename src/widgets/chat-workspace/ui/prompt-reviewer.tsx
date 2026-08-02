@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { useChatActions } from "@/features/chat/store/chat-store"
+import { useChatActions } from "@/entities/chat/model/chat-store"
 import { useFileExplorerStore } from "@/entities/file/model/file-store"
 import React from "react"
 

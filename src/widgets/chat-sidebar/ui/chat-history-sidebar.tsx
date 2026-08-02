@@ -9,12 +9,12 @@ import {
   SidebarMenu,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
+import { useChatActions } from "@/entities/chat/model/chat-store"
 import type { SavedChatMeta } from "@/entities/chat/model/types"
-import { ChatHistoryItem } from "@/widgets/chat-sidebar/ui/chat-history-item"
-import { useChatActions } from "@/features/chat/store/chat-store"
 import { ActionState } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
 import { startTransition, use, useCallback } from "react"
+import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
   savedChatsPromise: Promise<ActionState<SavedChatMeta[]>>

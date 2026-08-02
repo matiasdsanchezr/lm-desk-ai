@@ -1,1 +1,1 @@
-export { Chat as default } from "@/_pages/chat/ui/chat"
+export { Chat as default } from "@/_pages/chat"

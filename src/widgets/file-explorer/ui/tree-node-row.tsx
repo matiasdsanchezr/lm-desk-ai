@@ -1,9 +1,9 @@
 "use client"
 
 import { Checkbox } from "@/components/ui/checkbox"
+import type { FileTreeNode, NodeState } from "@/entities/file/model/types"
 import { cn } from "@/shared/lib/utils"
 import { memo, useCallback } from "react"
-import type { FileTreeNode, NodeState } from "../model/types"
 
 interface TreeNodeRowProps {
   node: FileTreeNode

@@ -9,11 +9,11 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { loadPrompts } from "@/entities/prompt/api/prompt"
-import { InstructionsMenu } from "@/widgets/settings-drawer/ui/instructions-menu"
-import { ModelParameters } from "@/widgets/settings-drawer/ui/model-parameters"
-import { ProviderMenu } from "@/widgets/settings-drawer/ui/provider-menu"
 import { notFound } from "next/navigation"
 import { use } from "react"
+import { InstructionsMenu } from "./instructions-menu"
+import { ModelParameters } from "./model-parameters"
+import { ProviderMenu } from "./provider-menu"
 
 export function SettingsDrawer({
   initialPromptsPromise,
