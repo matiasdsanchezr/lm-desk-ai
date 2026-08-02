@@ -1,3 +1,5 @@
+import "server-only"
+
 import { readdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"

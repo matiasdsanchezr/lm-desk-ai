@@ -1,6 +1,7 @@
 "server only"
 
-import { saveChat, updateChat } from "@/features/chat"
+import { chatCreateAction } from "@/features/chat-create"
+import { chatUpdateAction } from "@/features/chat-update"
 import { streamText } from "@/services/inference/inference-service"
 import { InferenceProviderEnum } from "@/services/inference/schemas/provider-schema"
 import { InferenceModelSchema } from "@/services/inference/types/inference-model"
@@ -128,18 +129,18 @@ export async function POST(req: Request) {
                   if (textContent) {
                     if (chatId) {
                       try {
-                        await updateChat(chatId, {
+                        await chatUpdateAction(chatId, {
                           messages,
                         })
                       } catch {
-                        await saveChat({
+                        await chatCreateAction({
                           id: chatId,
                           selectedFiles: selectedFiles || [],
                           messages,
                         })
                       }
                     } else {
-                      await saveChat({
+                      await chatCreateAction({
                         selectedFiles: selectedFiles || [],
                         messages,
                       })

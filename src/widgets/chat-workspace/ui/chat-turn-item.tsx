@@ -12,7 +12,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { Separator } from "@/components/ui/separator"
-import { getMessagePart } from "@/features/chat/lib/chat-utils"
+import { getMessagePart } from "@/widgets/chat-workspace/lib/chat-utils"
 import { type ChatTurn } from "@/entities/chat/model/types"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"

@@ -8,8 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { loadPrompts } from "@/entities/prompt/api/prompt"
-import { notFound } from "next/navigation"
+import { getPromptsList } from "@/entities/prompt/index.server"
 import { use } from "react"
 import { InstructionsMenu } from "./instructions-menu"
 import { ModelParameters } from "./model-parameters"
@@ -18,13 +17,9 @@ import { ProviderMenu } from "./provider-menu"
 export function SettingsDrawer({
   initialPromptsPromise,
 }: {
-  initialPromptsPromise: ReturnType<typeof loadPrompts>
+  initialPromptsPromise: ReturnType<typeof getPromptsList>
 }) {
-  const initialPromptsResult = use(initialPromptsPromise)
-  if (!initialPromptsResult.data) {
-    notFound()
-  }
-  const initialPrompts = initialPromptsResult.data
+  const initialPrompts = use(initialPromptsPromise) ?? []
 
   return (
     <Sheet>
@@ -100,7 +95,7 @@ export function SettingsDrawer({
                 Define el rol y contexto del sistema.
               </p>
             </div>
-            <InstructionsMenu availablePrompts={initialPrompts} />
+            <InstructionsMenu availablePrompts={initialPrompts.promptsIds} />
           </section>
         </div>
       </SheetContent>

@@ -12,7 +12,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import type { SavedChatMeta } from "@/entities/chat/model/types"
-import { deleteChat, updateChat } from "@/features/chat"
+import { chatDeleteAction } from "@/features/chat-delete"
+import { chatUpdateAction } from "@/features/chat-update"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
@@ -55,7 +56,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
   const handleDelete = useCallback(() => {
     startTransition(async () => {
-      const res = await deleteChat(chat.id)
+      const res = await chatDeleteAction(chat.id)
       if (!res.error && currentId === chat.id) {
         router.push("/chat")
       }
@@ -71,7 +72,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
     }
 
     startTransition(async () => {
-      const res = await updateChat(chat.id, { title: trimmedTitle })
+      const res = await chatUpdateAction(chat.id, { title: trimmedTitle })
       if (!res.error) {
         setIsEditing(false)
       }

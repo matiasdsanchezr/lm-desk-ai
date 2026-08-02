@@ -11,24 +11,18 @@ import {
 } from "@/components/ui/sidebar"
 import { useChatActions } from "@/entities/chat/model/chat-store"
 import type { SavedChatMeta } from "@/entities/chat/model/types"
-import { ActionState } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
 import { startTransition, use, useCallback } from "react"
 import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
-  savedChatsPromise: Promise<ActionState<SavedChatMeta[]>>
+  savedChatsPromise: Promise<SavedChatMeta[]>
 }
 
 export function ChatHistorySidebar({
   savedChatsPromise,
 }: ChatHistorySidebarProps) {
-  const savedChatsResult = use(savedChatsPromise)
-  if (savedChatsResult.error || !savedChatsResult.data) {
-    return <div>Error: {savedChatsResult.error}</div>
-  }
-
-  const savedChats = savedChatsResult.data || []
+  const savedChats = use(savedChatsPromise)
   const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()

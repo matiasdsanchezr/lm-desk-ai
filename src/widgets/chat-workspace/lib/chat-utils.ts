@@ -1,9 +1,9 @@
 import { ChatTurn } from "@/entities/chat/model/types"
+import { FileContent } from "@/entities/file/model/file-types"
+import { renderMdTemplate } from "@/shared/lib/render-md-template"
 import { UIMessage } from "@ai-sdk/react"
+import { DEFAULT_FILE_TEMPLATE } from "./chat-constants"
 
-/**
- * Agrupa mensajes user/assistant en turnos de conversación
- */
 export function groupMessagesIntoTurns(messages: UIMessage[]): ChatTurn[] {
   const turns: ChatTurn[] = []
   let currentTurn: ChatTurn | null = null
@@ -37,4 +37,23 @@ export function getMessagePart(
     .filter((p) => p.type === type)
     .map((p) => (p as { text: string }).text)
     .join(type === "text" ? " " : "\n")
+}
+
+export const formatFilesContent = (files: FileContent[]): string => {
+  const validFiles = files.filter((f) => !f.error && f.content)
+
+  if (validFiles.length === 0) {
+    return ""
+  }
+
+  const template = DEFAULT_FILE_TEMPLATE
+  return validFiles
+    .map((file) =>
+      renderMdTemplate(template, {
+        path: file.path,
+        lang: file.language ?? "",
+        content: sanitizeXmlContent(file.content ?? ""),
+      })
+    )
+    .join("\n")
 }

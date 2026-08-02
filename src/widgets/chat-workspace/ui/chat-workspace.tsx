@@ -3,22 +3,19 @@
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useChatStore } from "@/entities/chat/model/chat-store"
 import { SavedChat } from "@/entities/chat/model/types"
-import {
-  formatFilesContent,
-  PromptBuilder,
-} from "@/features/chat/lib/prompt-utils"
+import { PromptBuilder } from "@/entities/prompt"
 import {
   getFileContents,
   getTreeStructure,
   useFileExplorerStore,
 } from "@/features/file-explorer"
 import { useSettingsStore } from "@/features/inference-settings"
-import { ActionState } from "@/shared/types/action-state"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
 import { notFound, useRouter } from "next/navigation"
 import { use, useActionState } from "react"
 import { useShallow } from "zustand/shallow"
+import { formatFilesContent } from "../lib/chat-utils"
 import { ChatThread } from "./chat-thread"
 import { ContextBuilder } from "./context-builder"
 import { GeneratedPrompt } from "./generated-prompt"
@@ -26,7 +23,7 @@ import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
   treeStructurePromise: ReturnType<typeof getTreeStructure>
-  initialChatPromise?: Promise<ActionState<SavedChat>>
+  initialChatPromise?: Promise<SavedChat>
 }
 
 export function ChatWorkspace({
@@ -40,13 +37,13 @@ export function ChatWorkspace({
     notFound()
   }
 
-  if (initialChatResult && !initialChatResult.data) {
+  if (initialChatResult && !initialChatResult) {
     notFound()
   }
 
   const router = useRouter()
   const { totalFiles, treeNodes } = treeStructure.data
-  const initialChat = initialChatResult?.data ?? null
+  const initialChat = initialChatResult ?? null
 
   const { sessionId, includeReasoning, contextualPrompt, standalonePrompt } =
     useChatStore(

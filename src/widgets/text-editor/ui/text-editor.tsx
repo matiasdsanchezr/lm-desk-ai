@@ -21,13 +21,8 @@ import {
 } from "lexical"
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { createPortal } from "react-dom"
+import type { MentionOption } from "../model/text-editor-types"
 import { $createMentionNode, MentionNode } from "../nodes/mention-node"
-
-export interface MentionOption {
-  id: string
-  label: string
-  description?: string
-}
 
 class MentionMenuItem extends MenuOption {
   name: string

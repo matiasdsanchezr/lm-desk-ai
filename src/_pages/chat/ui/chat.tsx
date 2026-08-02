@@ -1,4 +1,4 @@
-import { loadChat } from "@/features/chat"
+import { getChatById } from "@/entities/chat"
 import { getTreeStructure } from "@/features/file-explorer"
 import { ChatWorkspace, ChatWorkspaceSkeleton } from "@/widgets/chat-workspace"
 import { Suspense } from "react"
@@ -10,7 +10,7 @@ interface ChatProps {
 export async function Chat({ params }: ChatProps) {
   const { chatId } = await params
 
-  const initialChatPromise = chatId ? loadChat(chatId) : undefined
+  const initialChatPromise = chatId ? getChatById(chatId) : undefined
   const treeStructurePromise = getTreeStructure()
 
   return (

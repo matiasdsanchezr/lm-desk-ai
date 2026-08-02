@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { loadPrompts } from "@/entities/prompt/api/prompt"
-import { listChats } from "@/features/chat"
+import { getChatsList } from "@/entities/chat"
+import { getPromptsList } from "@/entities/prompt/index.server"
 import {
   ChatHistorySidebar,
   ChatHistorySidebarSkeleton,
@@ -22,8 +22,8 @@ export default function ChatLayout({
 }: {
   children: React.ReactNode
 }) {
-  const savedChatsPromise = listChats()
-  const initialPromptsPromise = loadPrompts()
+  const savedChatsPromise = getChatsList()
+  const initialPromptsPromise = getPromptsList()
 
   return (
     <main className="relative flex h-dvh w-full flex-col overflow-hidden bg-background font-sans selection:bg-primary/10">

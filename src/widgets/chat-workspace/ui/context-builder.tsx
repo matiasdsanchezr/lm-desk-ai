@@ -17,7 +17,7 @@ import {
 import { useSettingsStore } from "@/features/inference-settings"
 import { cn } from "@/shared/lib/utils"
 import { FileExplorerDialog } from "@/widgets/file-explorer/ui/file-explorer-dialog"
-import { TextEditor } from "@/widgets/text-editor"
+import { MentionOption, TextEditor } from "@/widgets/text-editor"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
 import { ImageUploadDialog } from "./image-upload-dialog"
@@ -80,7 +80,7 @@ export const ContextBuilder = ({
   )
 
   const mentionOptions = useMemo(() => {
-    const options: Parameters<typeof TextEditor>[0]["mentionOptions"] = []
+    const options: MentionOption[] = []
     const traverse = (node: FileTreeNode) => {
       if (node.isFile && node.filePath) {
         options.push({

@@ -23,12 +23,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  deletePrompt,
-  loadPrompt,
-  savePrompt,
-} from "@/entities/prompt/api/prompt"
 import { useSettingsStore } from "@/features/inference-settings"
+import { promptCreateAction } from "@/features/prompt-create"
+import { promptDeleteAction } from "@/features/prompt-delete"
+import { promptSelectAction } from "@/features/prompt-select/api/prompt-select-action"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
 
@@ -60,9 +58,14 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
   const handleSelectTemplate = (promptId: string) => {
     startTransition(async () => {
       try {
-        const result = await loadPrompt(promptId)
+        const result = await promptSelectAction(promptId)
+        if (result.error) {
+          console.error("Se produjo un error al cargar la plantilla")
+          return
+        }
+
         if (result.data) {
-          setDraft(result.data)
+          setDraft(result.data.content)
           setActiveTab("editor")
         }
       } catch (error) {
@@ -76,14 +79,14 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
     setIsSaving(true)
     try {
       const cleanName = newTemplateName.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
-      const result = await savePrompt(cleanName, draft)
+      const result = await promptCreateAction(cleanName, draft)
 
       if (result.error) {
         return
       }
 
-      if (result.data && !promptsList.includes(result.data.fileName)) {
-        setPromptsList((prev) => [...prev, result.data!.fileName])
+      if (result.data && !promptsList.includes(result.data.id)) {
+        setPromptsList((prev) => [...prev, result.data!.id])
       }
 
       setNewTemplateName("")
@@ -103,7 +106,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
     if (!templateToDelete) return
     setIsDeleting(true)
     try {
-      const result = await deletePrompt(templateToDelete)
+      const result = await promptDeleteAction(templateToDelete)
       if (result.error) {
         alert(result.error)
         return
