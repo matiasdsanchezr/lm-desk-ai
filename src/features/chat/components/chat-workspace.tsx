@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarTrigger } from "@/shared/components/ui/sidebar"
-import { SavedChat } from "@/features/chat-history/types/saved-chat"
+import { SavedChat } from "@/features/chat/types"
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
 import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"

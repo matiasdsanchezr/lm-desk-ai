@@ -9,7 +9,7 @@ import {
 import { ActionState } from "@/shared/types/action-state"
 import { ImageFile } from "@/shared/types/image-file"
 import { z } from "zod"
-import { fetchImage } from "../utils/images"
+import { fetchImage } from "../utils"
 
 const GeneratePromptSchema = z.object({
   filePaths: z.array(z.string().trim().min(1)).min(0).max(200),

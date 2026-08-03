@@ -1,4 +1,4 @@
-import { chatHistoryService } from "@/features/chat-history/services/chat-history-service"
+import { saveChat, updateChat } from "@/features/chat"
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
@@ -126,18 +126,18 @@ export async function POST(req: Request) {
                   if (textContent) {
                     if (chatId) {
                       try {
-                        await chatHistoryService.updateChat(chatId, {
+                        await updateChat(chatId, {
                           messages,
                         })
                       } catch {
-                        await chatHistoryService.saveChat({
+                        await saveChat({
                           id: chatId,
                           selectedFiles: selectedFiles || [],
                           messages,
                         })
                       }
                     } else {
-                      await chatHistoryService.saveChat({
+                      await saveChat({
                         selectedFiles: selectedFiles || [],
                         messages,
                       })

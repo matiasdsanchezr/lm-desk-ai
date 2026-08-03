@@ -1,4 +1,4 @@
-import { loadChat } from "@/features/chat-history/actions/chat-history-actions"
+import { loadChat } from "@/features/chat/actions/chat-history-actions"
 import { ChatWorkspace } from "@/features/chat/components/chat-workspace"
 import { ChatWorkspaceSkeleton } from "@/features/chat/components/chat-workspace-skeleton"
 import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"

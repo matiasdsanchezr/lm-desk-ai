@@ -35,7 +35,7 @@ interface FlattenedNode {
   depth: number
 }
 
-export function FileExplorerView({
+export function FileExplorer({
   treeNodes,
   totalFiles,
   disabled = false,

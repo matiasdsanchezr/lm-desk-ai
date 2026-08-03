@@ -1,6 +1,15 @@
 "use client"
 
-import { MentionOption, TextEditor } from "@/shared/components/text-editor/text-editor"
+import {
+  FileExplorerModal,
+  useFileExplorerStore,
+  type FileTreeNode,
+} from "@/features/file-explorer"
+import { useSettingsStore } from "@/features/settings/store/settings-store"
+import {
+  MentionOption,
+  TextEditor,
+} from "@/shared/components/text-editor/text-editor"
 import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
 import {
@@ -10,14 +19,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card"
-import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import type { FileTreeNode } from "@/features/file-explorer/types"
-import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
-import { FileExplorerDialog } from "./file-explorer-dialog"
+import { useChatActions, useChatStore } from "../store/chat-store"
 import { ImageUploadDialog } from "./image-upload-dialog"
 
 interface ContextBuilderProps {
@@ -39,7 +44,6 @@ export const ContextBuilder = ({
   fetchFileState,
   handleFetchFileContents,
 }: ContextBuilderProps) => {
-  const [showFileExplorer, setShowFileExplorer] = useState(false)
   const [showImageDialog, setShowImageDialog] = useState(false)
 
   const userTask = useChatStore((s) => s.userTask)
@@ -127,20 +131,11 @@ export const ContextBuilder = ({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              onClick={() => setShowFileExplorer(true)}
-              variant="outline"
-              size="sm"
+            <FileExplorerModal
+              treeNodes={treeNodes}
+              totalFiles={totalFiles}
               disabled={isDisabled}
-              className="inline-flex items-center gap-2"
-            >
-              <span className="icon-[fa7-solid--folder-open]" />
-              <span>Explorador de archivos</span>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                {selectedFiles.length}
-              </span>
-            </Button>
+            />
 
             <Button
               type="button"
@@ -245,14 +240,6 @@ export const ContextBuilder = ({
           </form>
         </CardContent>
       </Card>
-
-      <FileExplorerDialog
-        open={showFileExplorer}
-        onOpenChange={setShowFileExplorer}
-        treeNodes={treeNodes}
-        totalFiles={totalFiles}
-        disabled={isDisabled}
-      />
 
       <ImageUploadDialog
         open={showImageDialog}
