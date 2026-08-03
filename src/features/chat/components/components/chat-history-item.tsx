@@ -14,7 +14,10 @@ import {
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
-import { deleteChat, updateChat } from "../../actions"
+import {
+  deleteChat,
+  updateChat,
+} from "../../actions"
 import type { SavedChatMeta } from "../../types"
 
 interface ChatHistoryItemProps {

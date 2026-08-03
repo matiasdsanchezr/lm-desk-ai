@@ -1,7 +1,6 @@
 "use client"
 
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import type { FileTreeNode } from "@/features/file-explorer/types"
 import { Button } from "@/shared/components/ui/button"
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import {
@@ -19,16 +18,12 @@ import { FileExplorer } from "./file-explorer"
 interface FileExplorerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  treeNodes: FileTreeNode[]
-  totalFiles: number
   disabled?: boolean
 }
 
 export function FileExplorerDialog({
   open,
   onOpenChange,
-  treeNodes,
-  totalFiles,
   disabled,
 }: FileExplorerDialogProps) {
   const {
@@ -62,8 +57,6 @@ export function FileExplorerDialog({
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 sm:p-6">
           <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border/40 p-1">
             <FileExplorer
-              treeNodes={treeNodes}
-              totalFiles={totalFiles}
               disabled={disabled}
               selectedFiles={selectedFiles}
               onSelectionChange={setSelectedFiles}

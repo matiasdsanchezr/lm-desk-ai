@@ -1,5 +1,5 @@
-import { Hero } from "@/features/home/components/hero"
 import Link from "next/link"
+import { Hero } from "./hero"
 
 export const HomeView = () => {
   return (

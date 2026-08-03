@@ -23,7 +23,7 @@ async function ensureDirectoryExists(): Promise<void> {
 /**
  * Guarda una nueva conversación o sobrescribe una existente.
  */
-export async function saveChat(data: SaveChatInput): Promise<SavedChat> {
+export async function createChat(data: SaveChatInput): Promise<SavedChat> {
   await ensureDirectoryExists()
 
   const id = data.id ?? `session-${Date.now()}`
@@ -48,11 +48,20 @@ export async function saveChat(data: SaveChatInput): Promise<SavedChat> {
 /**
  * Carga una conversación por su ID.
  */
-export async function loadChat(id: string): Promise<SavedChat> {
-  const fileName = id.endsWith(".json") ? id : `${id}.json`
-  const filePath = path.join(GENERATED_DIR, fileName)
-  const savedChat = await readFile(filePath, "utf-8")
-  return JSON.parse(savedChat) as SavedChat
+export async function getChatById(id: string): Promise<SavedChat | null> {
+  try {
+    const fileName = id.endsWith(".json") ? id : `${id}.json`
+    const filePath = path.join(GENERATED_DIR, fileName)
+    const savedChat = await readFile(filePath, "utf-8")
+    return JSON.parse(savedChat) as SavedChat
+  } catch (error: unknown) {
+    if (typeof error === "object" && error !== null && "code" in error) {
+      if ((error as { code: string }).code === "ENOENT") {
+        return null
+      }
+    }
+    throw error
+  }
 }
 
 /**
@@ -60,21 +69,28 @@ export async function loadChat(id: string): Promise<SavedChat> {
  */
 export async function updateChat(
   id: string,
-  updates: UpdateChatInput
+  data: UpdateChatInput
 ): Promise<SavedChat> {
-  const savedChat = await loadChat(id)
+  try {
+    const savedChat = await getChatById(id)
+    if (!savedChat) {
+      throw new Error("Chat no encontrado")
+    }
 
-  const updatedChat: SavedChat = {
-    ...savedChat,
-    ...updates,
+    const updatedChat: SavedChat = {
+      ...savedChat,
+      ...data,
+    }
+
+    const fileName = id.endsWith(".json") ? id : `${id}.json`
+    const filePath = path.join(GENERATED_DIR, fileName)
+    await writeFile(filePath, JSON.stringify(updatedChat, null, 2), "utf-8")
+
+    revalidatePath(`/chat/${id}`)
+    return updatedChat
+  } catch (error) {
+    throw error
   }
-
-  const fileName = id.endsWith(".json") ? id : `${id}.json`
-  const filePath = path.join(GENERATED_DIR, fileName)
-  await writeFile(filePath, JSON.stringify(updatedChat, null, 2), "utf-8")
-
-  revalidatePath(`/chat/${id}`)
-  return updatedChat
 }
 
 /**
@@ -97,8 +113,8 @@ export async function listChats(): Promise<SavedChatMeta[]> {
           createdAt: savedChat.createdAt,
         } satisfies SavedChatMeta
       } catch (err) {
-        console.error(`Error leyendo el archivo de respuesta ${file}:`, err)
-        return null
+        console.error("Error al listar sesiones previas", err)
+        return []
       }
     })
   )

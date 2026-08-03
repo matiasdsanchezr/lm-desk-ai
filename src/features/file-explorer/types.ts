@@ -10,3 +10,8 @@ export interface NodeState {
   checked: boolean
   indeterminate: boolean
 }
+
+export interface TreeStructureResponse {
+  totalFiles: number
+  treeNodes: FileTreeNode[]
+}

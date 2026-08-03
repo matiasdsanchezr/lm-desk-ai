@@ -1,4 +1,4 @@
-import { HomeView } from "@/features/home/components/home-view"
+import { HomeView } from "@/features/marketing/components/home-view"
 
 export default function Home() {
   return (

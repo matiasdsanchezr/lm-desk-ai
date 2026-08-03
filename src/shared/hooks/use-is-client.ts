@@ -1,10 +1,10 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { cache, useSyncExternalStore } from "react"
 
 const emptySubscribe = () => () => {}
 const getSnapshot = () => true
-const getServerSnapshot = () => false
+const getServerSnapshot = cache(() => false)
 
 /**
  * Hook que devuelve `true` solo cuando se ejecuta en el cliente.

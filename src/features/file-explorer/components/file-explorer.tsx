@@ -17,14 +17,13 @@ import { cn } from "@/shared/lib/utils"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { useRouter } from "next/navigation"
 import { useCallback, useMemo, useRef, useState, useTransition } from "react"
+import { useFileExplorerContext } from "../context/file-explorer-context"
 import { useFileSelection } from "../hooks/use-file-selection"
 import { useTreeExpansion } from "../hooks/use-tree-expansion"
 import type { FileTreeNode } from "../types"
 import { TreeNodeRow } from "./tree-node-row"
 
 interface FileExplorerProps {
-  treeNodes: FileTreeNode[]
-  totalFiles: number
   disabled?: boolean
   selectedFiles: string[]
   onSelectionChange: (files: string[]) => void
@@ -36,18 +35,16 @@ interface FlattenedNode {
 }
 
 export function FileExplorer({
-  treeNodes,
-  totalFiles,
   disabled = false,
   selectedFiles,
   onSelectionChange,
 }: FileExplorerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const { treeNodes, totalFiles } = useFileExplorerContext()
 
   const { getNodeState, toggleFile, clearSelection, totalSelected } =
     useFileSelection({
-      treeNodes,
       selectedFiles,
       onSelectionChange,
     })
@@ -91,7 +88,6 @@ export function FileExplorer({
     []
   )
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const treeVirtualizer = useVirtualizer({
     count: visibleTreeNodes.length,
     getScrollElement: getTreeScrollElement,
@@ -279,7 +275,7 @@ export function FileExplorer({
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={clearSelection}
-                        className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Confirmar
                       </AlertDialogAction>

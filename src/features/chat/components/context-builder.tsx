@@ -5,6 +5,7 @@ import {
   useFileExplorerStore,
   type FileTreeNode,
 } from "@/features/file-explorer"
+import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
 import {
   MentionOption,
@@ -22,12 +23,10 @@ import {
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
-import { useChatActions, useChatStore } from "../store/chat-store"
-import { ImageUploadDialog } from "./image-upload-dialog"
+import { ImageUploadDialog } from "../../chat/components/image-upload-dialog"
+import { useChatActions, useChatStore } from "../../chat/store/chat-store"
 
 interface ContextBuilderProps {
-  treeNodes: FileTreeNode[]
-  totalFiles: number
   isDisabled: boolean
   isFetchingFiles: boolean
   isReadyToReview: boolean
@@ -36,8 +35,6 @@ interface ContextBuilderProps {
 }
 
 export const ContextBuilder = ({
-  treeNodes,
-  totalFiles,
   isDisabled,
   isFetchingFiles,
   isReadyToReview,
@@ -45,6 +42,7 @@ export const ContextBuilder = ({
   handleFetchFileContents,
 }: ContextBuilderProps) => {
   const [showImageDialog, setShowImageDialog] = useState(false)
+  const { treeNodes } = useFileExplorerContext()
 
   const userTask = useChatStore((s) => s.userTask)
   const { setUserTask } = useChatActions()
@@ -131,11 +129,7 @@ export const ContextBuilder = ({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <FileExplorerModal
-              treeNodes={treeNodes}
-              totalFiles={totalFiles}
-              disabled={isDisabled}
-            />
+            <FileExplorerModal disabled={isDisabled} />
 
             <Button
               type="button"

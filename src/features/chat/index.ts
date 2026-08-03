@@ -1,1 +1,1 @@
-export * from "./actions/chat-history-actions"
+export * from "./actions"

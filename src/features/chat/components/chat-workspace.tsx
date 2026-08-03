@@ -1,184 +1,48 @@
 "use client"
 
-import { SidebarTrigger } from "@/shared/components/ui/sidebar"
-import { SavedChat } from "@/features/chat/types"
 import { useChatStore } from "@/features/chat/store/chat-store"
-import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
-import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { useSettingsStore } from "@/features/settings/store/settings-store"
-import { ActionState } from "@/shared/types/action-state"
-import { PromptBuilder } from "@/shared/utils/prompt-builder"
-import { useChat } from "@ai-sdk/react"
-import { type FileUIPart } from "ai"
-import { notFound, useRouter } from "next/navigation"
-import { use, useActionState } from "react"
-import { useShallow } from "zustand/shallow"
+import { SavedChat } from "@/features/chat/types"
+import { notFound } from "next/navigation"
+import { useChatCompletion } from "../hooks/use-chat-completion"
+import { useContextProcessor } from "../hooks/use-context-processor"
+import ChatMobileHeader from "./chat-mobile-header"
 import { ChatThread } from "./chat-thread"
 import { ContextBuilder } from "./context-builder"
 import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
-  treeStructurePromise: ReturnType<typeof generateTreeStructure>
-  initialChatPromise?: Promise<ActionState<SavedChat>>
+  initialChatPromise?: Promise<SavedChat | null>
 }
 
-export function ChatWorkspace({
-  treeStructurePromise,
-  initialChatPromise,
-}: ChatWorkspaceProps) {
-  const treeStructure = use(treeStructurePromise)
-  const initialChatResult = initialChatPromise ? use(initialChatPromise) : null
+export function ChatWorkspace({ initialChatPromise }: ChatWorkspaceProps) {
+  const standalonePrompt = useChatStore((s) => s.standalonePrompt)
 
-  if (!treeStructure.data) {
-    notFound()
-  }
-
-  if (initialChatResult && !initialChatResult.data) {
-    notFound()
-  }
-
-  const router = useRouter()
-  const { totalFiles, treeNodes } = treeStructure.data
-  const initialChat = initialChatResult?.data ?? null
-
-  const { sessionId, includeReasoning, contextualPrompt, standalonePrompt } =
-    useChatStore(
-      useShallow((s) => ({
-        sessionId: s.sessionId,
-        includeReasoning: s.includeReasoning,
-        contextualPrompt: s.contextualPrompt,
-        standalonePrompt: s.standalonePrompt,
-      }))
-    )
-
-  const { selectedFiles, images } = useFileExplorerStore(
-    useShallow((s) => ({
-      selectedFiles: s.selectedFiles,
-      images: s.images,
-    }))
-  )
-
-  const settings = useSettingsStore(
-    useShallow((s) => ({
-      modelConfig: s.modelConfig,
-      systemPrompt: s.systemPrompt,
-      temperature: s.temperature,
-      topP: s.topP,
-    }))
-  )
-
-  const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
-    useActionState(
-      async (_: unknown, formData: FormData) => {
-        const { data, error } = await getFileContents({}, formData)
-        if (error || !data) {
-          return {
-            error: error ?? "Se produjo un error al analizar los archivos",
-          }
-        }
-        if (data.fileContents) {
-          const userTask = useChatStore.getState().userTask
-          const setPrompts = useChatStore.getState().actions.setPrompts
-          const { setFileContents, setImages } = useFileExplorerStore.getState()
-
-          const promptBuilder = new PromptBuilder()
-            .addSystem(settings.systemPrompt)
-            .addContext(data.fileContents)
-            .addTask(userTask)
-
-          setFileContents(data.fileContents)
-          setImages(data.imageFiles)
-          setPrompts({
-            contextualPrompt: promptBuilder.buildContextAndTask(),
-            standalonePrompt: promptBuilder.build(),
-          })
-
-          return { error: null }
-        }
-      },
-      { error: null }
-    )
+  const { fetchFileState, handleFetchFileContents, isFetchingFiles } =
+    useContextProcessor()
 
   const {
+    initialChat,
     messages,
-    status,
     error,
+    isStreaming,
     setMessages,
-    sendMessage,
-    clearError,
+    generateContent,
+    sendFollowUp,
     stop,
-  } = useChat({
-    id: sessionId,
-    messages: initialChat?.messages,
-    onFinish: () => {
-      router.refresh()
-    },
-  })
+  } = useChatCompletion(initialChatPromise)
+  if (initialChatPromise && !initialChat) {
+    notFound()
+  }
 
   const isReadyToReview = Boolean(standalonePrompt)
-  const isStreaming = status === "streaming" || status === "submitted"
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
-
-  const generateContentHandler = () => {
-    clearError()
-    setMessages([])
-
-    const imageFiles: FileUIPart[] = images.map((i) => ({
-      type: "file",
-      mediaType: i.mimeType,
-      url: `data:${i.mimeType};base64,${i.base64}`,
-    }))
-
-    sendMessage(
-      { text: contextualPrompt, files: imageFiles },
-      {
-        body: {
-          system: settings.systemPrompt,
-          provider: settings.modelConfig.provider,
-          model: settings.modelConfig.model,
-          temperature: settings.temperature,
-          topP: settings.topP,
-          selectedFiles,
-        },
-      }
-    )
-  }
-
-  const handleSendFollowUp = (text: string) => {
-    if (!text.trim() || isStreaming) return
-
-    sendMessage(
-      { text },
-      {
-        body: {
-          system: settings.systemPrompt,
-          provider: settings.modelConfig.provider,
-          model: settings.modelConfig.model,
-          temperature: settings.temperature,
-          topP: settings.topP,
-          selectedFiles,
-          includeReasoning,
-        },
-      }
-    )
-  }
 
   return (
     <div className="mx-auto flex w-full max-w-350 flex-col gap-4 md:gap-6">
-      <div className="flex items-center justify-between rounded-xl border border-border/40 bg-card/60 px-3 py-2 shadow-xs backdrop-blur-xs md:hidden">
-        <div className="flex items-center gap-2 min-w-0">
-          <SidebarTrigger className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground" />
-          <span className="truncate text-xs font-semibold tracking-tight text-foreground">
-            {initialChat?.title || "Nueva Sesión"}
-          </span>
-        </div>
-      </div>
+      <ChatMobileHeader title={initialChat?.title || "Nueva Sesión"} />
 
       <ContextBuilder
-        treeNodes={treeNodes}
-        totalFiles={totalFiles}
         isDisabled={isDisabled}
         isFetchingFiles={isFetchingFiles}
         isReadyToReview={isReadyToReview}
@@ -190,7 +54,7 @@ export function ChatWorkspace({
         <PromptReviewer
           disabled={messages.length > 0}
           isStreaming={isStreaming}
-          onGenerateContent={generateContentHandler}
+          onGenerateContent={generateContent}
           stop={stop}
         >
           <GeneratedPrompt />
@@ -203,7 +67,7 @@ export function ChatWorkspace({
             messages={messages}
             error={error}
             isStreaming={isStreaming}
-            onSendFollowUp={handleSendFollowUp}
+            onSendFollowUp={sendFollowUp}
             setMessages={setMessages}
           />
         </div>

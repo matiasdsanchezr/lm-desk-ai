@@ -1,20 +1,20 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import type { FileTreeNode } from "../types"
-import type { NodeState } from "../types"
+import { useFileExplorerContext } from "../context/file-explorer-context"
+import type { FileTreeNode, NodeState } from "../types"
 
 interface UseFileSelectionOptions {
-  treeNodes: FileTreeNode[]
   selectedFiles: string[]
   onSelectionChange: (files: string[]) => void
 }
 
 export function useFileSelection({
-  treeNodes,
   selectedFiles,
   onSelectionChange,
 }: UseFileSelectionOptions) {
+  const { treeNodes } = useFileExplorerContext()
+
   const folderToFiles = useMemo(() => {
     const map = new Map<string, string[]>()
 

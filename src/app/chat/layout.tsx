@@ -1,6 +1,6 @@
-import { listChats } from "@/features/chat/actions/chat-history-actions"
 import { ChatHistorySidebar } from "@/features/chat/components/history/chat-history-sidebar"
 import { ChatHistorySidebarSkeleton } from "@/features/chat/components/history/chat-history-sidebar-skeleton"
+import { listChats } from "@/features/chat/services/history-service"
 import { loadPrompts } from "@/features/settings/actions/prompt"
 import { SettingsDrawer } from "@/features/settings/components/settings-drawer"
 import { SettingsDrawerSkeleton } from "@/features/settings/components/settings-drawer-skeleton"

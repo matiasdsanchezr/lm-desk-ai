@@ -3,18 +3,13 @@
 import { Button } from "@/shared/components/ui/button"
 import { useState } from "react"
 import { useFileExplorerStore } from "../store/file-explorer-store"
-import type { FileTreeNode } from "../types"
 import { FileExplorerDialog } from "./file-explorer-dialog"
 
 interface FileExplorerModalProps {
-  treeNodes: FileTreeNode[]
-  totalFiles: number
   disabled?: boolean
 }
 
 export function FileExplorerModal({
-  treeNodes,
-  totalFiles,
   disabled = false,
 }: FileExplorerModalProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -42,8 +37,6 @@ export function FileExplorerModal({
       <FileExplorerDialog
         open={isOpen}
         onOpenChange={setIsOpen}
-        treeNodes={treeNodes}
-        totalFiles={totalFiles}
         disabled={disabled}
       />
     </>

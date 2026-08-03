@@ -6,12 +6,7 @@ import { ActionState } from "@/shared/types/action-state"
 import { cacheLife } from "next/cache"
 import { cache } from "react"
 import { buildFileTree } from "../services/file-explorer-service"
-import type { FileTreeNode } from "../types"
-
-interface TreeStructureResponse {
-  totalFiles: number
-  treeNodes: FileTreeNode[]
-}
+import type { TreeStructureResponse } from "../types"
 
 /**
  * Genera la estructura en árbol memorizada por request.
