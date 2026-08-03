@@ -1,4 +1,4 @@
-import { FileContent } from "@/shared/services/file-service/types"
+import { FileContent } from "@/shared/services/file-service"
 import { renderTemplate } from "./templates"
 
 const DEFAULT_INSTRUCTIONS = `\

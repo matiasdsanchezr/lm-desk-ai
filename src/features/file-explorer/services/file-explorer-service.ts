@@ -1,4 +1,4 @@
-import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
+import type { FileTreeNode } from "@/features/file-explorer/types"
 
 function getCommonRootDirectory(paths: string[]): string {
   if (!paths.length) return ""
@@ -17,9 +17,6 @@ function getCommonRootDirectory(paths: string[]): string {
   return common.join("/")
 }
 
-/**
- * Ordena nodos jerárquicos de forma pura: primero directorios, luego archivos (alfabéticamente).
- */
 function sortTreeNodes(nodes: FileTreeNode[]): FileTreeNode[] {
   return [...nodes]
     .sort((a, b) => {
@@ -37,9 +34,6 @@ function sortTreeNodes(nodes: FileTreeNode[]): FileTreeNode[] {
     }))
 }
 
-/**
- * Convierte una lista plana de rutas en un árbol jerárquico inmutable de FileTreeNode.
- */
 export function buildFileTree(filePaths: string[]): FileTreeNode[] {
   if (!filePaths || filePaths.length === 0) return []
 

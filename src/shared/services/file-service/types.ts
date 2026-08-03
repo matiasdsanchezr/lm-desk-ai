@@ -1,4 +1,5 @@
 export type AbsolutePath = string & { readonly __brand: unique symbol }
+
 export type Extension = `.${string}`
 
 export interface LanguageStrategy {
@@ -10,6 +11,7 @@ export interface LanguageStrategy {
     projectRoot: AbsolutePath
   ): Promise<AbsolutePath | null>
 }
+
 export type FileContent = {
   path: string
   content?: string

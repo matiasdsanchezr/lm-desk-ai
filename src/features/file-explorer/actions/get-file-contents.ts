@@ -1,11 +1,15 @@
 "use server"
 
-import { loadLocalImages, loadProjectGraph } from "@/shared/services/file-service/file-service"
+import {
+  buildProjectDependencyGraph,
+  FileContent,
+  isImageFile,
+  readLocalImagesAsBase64,
+} from "@/shared/services/file-service"
 import { ActionState } from "@/shared/types/action-state"
-import { FileContent } from "@/shared/services/file-service/types"
 import { ImageFile } from "@/shared/types/image-file"
-import { fetchImage, isImagePath } from "@/features/file-explorer/utils/images"
 import { z } from "zod"
+import { fetchImage } from "../utils/images"
 
 const GeneratePromptSchema = z.object({
   filePaths: z.array(z.string().trim().min(1)).min(0).max(200),
@@ -34,10 +38,8 @@ export async function getFileContents(
 
   const { filePaths, includeDependencies, imageUrls } = parsed.data
 
-  const localImagePaths = filePaths.filter(isImagePath)
-  const textFilePaths = filePaths.filter((path) => !isImagePath(path))
-
-  // 1. Cargar imágenes por URL
+  const localImagePaths = filePaths.filter(isImageFile)
+  const textFilePaths = filePaths.filter((path) => !isImageFile(path))
   let base64UrlImages: ImageFile[] = []
   const urls = imageUrls
     ?.split("\n")
@@ -50,11 +52,8 @@ export async function getFileContents(
     ).then((res) => res.filter((img): img is ImageFile => img !== null))
   }
 
-  // 2. Cargar imágenes del sistema de archivos local a través del servicio
-  const localImages = await loadLocalImages(localImagePaths)
-
-  // 3. Analizar código y dependencias
-  const fileContents = await loadProjectGraph(
+  const localImages = await readLocalImagesAsBase64(localImagePaths)
+  const fileContents = await buildProjectDependencyGraph(
     textFilePaths,
     includeDependencies
   )

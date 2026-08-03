@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useMemo } from "react"
-import type { FileTreeNode } from "../types/file-tree-node"
-import type { NodeState } from "../types/node-state"
+import type { FileTreeNode } from "../types"
+import type { NodeState } from "../types"
 
 interface UseFileSelectionOptions {
   treeNodes: FileTreeNode[]

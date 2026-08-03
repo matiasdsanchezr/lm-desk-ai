@@ -1,11 +1,12 @@
 "use server"
 
-import { getFilePaths } from "@/shared/services/file-service/utils"
+import { config } from "@/shared/lib/config"
+import { listDirectoryFiles } from "@/shared/services/file-service"
 import { ActionState } from "@/shared/types/action-state"
 import { cacheLife } from "next/cache"
 import { cache } from "react"
-import { buildFileTree } from "../services/tree-service"
-import type { FileTreeNode } from "../types/file-tree-node"
+import { buildFileTree } from "../services/file-explorer-service"
+import type { FileTreeNode } from "../types"
 
 interface TreeStructureResponse {
   totalFiles: number
@@ -20,7 +21,7 @@ export const generateTreeStructure = cache(
     "use cache"
     cacheLife("hours")
     try {
-      const filePaths = await getFilePaths()
+      const filePaths = await listDirectoryFiles(config.TARGET_PROJECT_PATH)
       const treeNodes = buildFileTree(filePaths)
       return { data: { totalFiles: filePaths.length, treeNodes } }
     } catch (error) {

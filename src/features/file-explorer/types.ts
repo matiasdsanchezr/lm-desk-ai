@@ -5,3 +5,8 @@ export interface FileTreeNode {
   filePath?: string
   children: FileTreeNode[]
 }
+
+export interface NodeState {
+  checked: boolean
+  indeterminate: boolean
+}

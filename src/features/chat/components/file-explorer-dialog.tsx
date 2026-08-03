@@ -13,7 +13,7 @@ import {
 import { Label } from "@/shared/components/ui/label"
 import { FileExplorerView } from "@/features/file-explorer/components/file-explorer-view"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
+import type { FileTreeNode } from "@/features/file-explorer/types"
 import { useShallow } from "zustand/shallow"
 
 interface FileExplorerDialogProps {

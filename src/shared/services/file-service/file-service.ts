@@ -1,25 +1,25 @@
 import "server-only"
 
-import fs from "node:fs/promises"
-import path from "node:path"
-import { cache } from "react"
 import { config } from "@/shared/lib/config"
-import { FileContent } from "./types"
 import { ImageFile } from "@/shared/types/image-file"
-import { getImageMimeType } from "@/features/file-explorer/utils/images"
-import { AbsolutePath, Extension } from "./types"
-import { validateAndSanitizePath } from "./utils"
+import fs from "fs/promises"
+import path from "path"
+import { cache } from "react"
+import { DEFAULT_IGNORE } from "./constants"
 import {
   ALLOWED_EXTENSIONS,
   getStrategyForExtension,
 } from "./strategies/strategy-registry"
+import { AbsolutePath, Extension, FileContent } from "./types"
+import {
+  getImageMimeType,
+  sanitizePathWithinRoot,
+  scanDirectory,
+} from "./utils"
 
 const CONCURRENCY_LIMIT = 20
 
-/**
- * Lee un archivo de manera segura procesando sus dependencias mediante la estrategia adecuada.
- */
-const processFile = cache(
+const readFileWithDependencies = cache(
   async (
     currentPath: AbsolutePath,
     projectRoot: AbsolutePath
@@ -70,10 +70,7 @@ const processFile = cache(
   }
 )
 
-/**
- * Carga contenidos en lotes concurrentes para evitar agotar FDs (File Descriptors).
- */
-async function getFileContentsWithDependencies(
+async function readFilesBatch(
   paths: AbsolutePath[],
   projectRoot: AbsolutePath
 ): Promise<FileContent[]> {
@@ -83,7 +80,7 @@ async function getFileContentsWithDependencies(
   for (let i = 0; i < uniquePaths.length; i += CONCURRENCY_LIMIT) {
     const batch = uniquePaths.slice(i, i + CONCURRENCY_LIMIT)
     const batchResults = await Promise.all(
-      batch.map((p) => processFile(p, projectRoot))
+      batch.map((p) => readFileWithDependencies(p, projectRoot))
     )
     results.push(...batchResults)
   }
@@ -91,10 +88,7 @@ async function getFileContentsWithDependencies(
   return results
 }
 
-/**
- * Carga imágenes locales codificadas en Base64 de forma segura.
- */
-export async function loadLocalImages(
+export async function readLocalImagesAsBase64(
   filePaths: string[],
   projectRoot: string = config.TARGET_PROJECT_PATH
 ): Promise<ImageFile[]> {
@@ -102,7 +96,7 @@ export async function loadLocalImages(
 
   const images = await Promise.all(
     filePaths.map(async (filePath) => {
-      const safePath = validateAndSanitizePath(filePath, root)
+      const safePath = sanitizePathWithinRoot(filePath, root)
       if (!safePath) {
         console.error(`Acceso denegado fuera de la raíz: ${filePath}`)
         return null
@@ -127,7 +121,7 @@ export async function loadLocalImages(
 /**
  * Construye el grafo de archivos a partir de puntos de entrada de forma recursiva.
  */
-export const loadProjectGraph = cache(
+export const buildProjectDependencyGraph = cache(
   async (
     entryPoints: string[],
     includeDeps = true,
@@ -135,7 +129,7 @@ export const loadProjectGraph = cache(
   ): Promise<FileContent[]> => {
     const root = path.resolve(projectRoot) as AbsolutePath
     const resolvedEntryPoints = entryPoints
-      .map((p) => validateAndSanitizePath(p, root))
+      .map((p) => sanitizePathWithinRoot(p, root))
       .filter((p): p is AbsolutePath => p !== null)
 
     const visited = new Set<AbsolutePath>()
@@ -148,10 +142,7 @@ export const loadProjectGraph = cache(
       if (toProcess.length === 0) break
 
       toProcess.forEach((p) => visited.add(p))
-      const processedFiles = await getFileContentsWithDependencies(
-        toProcess,
-        root
-      )
+      const processedFiles = await readFilesBatch(toProcess, root)
 
       for (const file of processedFiles) {
         const absPath = file.path as AbsolutePath
@@ -175,5 +166,27 @@ export const loadProjectGraph = cache(
         path.relative(root, dep).replace(/\\/g, "/")
       ),
     }))
+  }
+)
+
+export const listDirectoryFiles = cache(
+  async (
+    folder: string,
+    extensions: ReadonlySet<Extension> = ALLOWED_EXTENSIONS,
+    ignore: string[] = Array.from(DEFAULT_IGNORE)
+  ) => {
+    const stat = await fs.stat(folder).catch(() => null)
+    if (!stat?.isDirectory()) throw new Error(`Path invalido: ${folder}`)
+
+    const absolutePaths = await scanDirectory(
+      folder,
+      extensions,
+      new Set(ignore)
+    )
+    const resolvedRoot = path.resolve(folder)
+
+    return absolutePaths.map((p) =>
+      path.relative(resolvedRoot, p).replace(/\\/g, "/")
+    )
   }
 )

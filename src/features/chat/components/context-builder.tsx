@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/card"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
+import type { FileTreeNode } from "@/features/file-explorer/types"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"

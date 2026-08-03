@@ -3,8 +3,8 @@
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import { cn } from "@/shared/lib/utils"
 import { memo, useCallback } from "react"
-import type { FileTreeNode } from "../types/file-tree-node"
-import type { NodeState } from "../types/node-state"
+import type { FileTreeNode } from "../types"
+import type { NodeState } from "../types"
 
 interface TreeNodeRowProps {
   node: FileTreeNode

@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation"
 import { useCallback, useMemo, useRef, useState, useTransition } from "react"
 import { useFileSelection } from "../hooks/use-file-selection"
 import { useTreeExpansion } from "../hooks/use-tree-expansion"
-import type { FileTreeNode } from "../types/file-tree-node"
+import type { FileTreeNode } from "../types"
 import { TreeNodeRow } from "./tree-node-row"
 
 interface FileExplorerProps {
