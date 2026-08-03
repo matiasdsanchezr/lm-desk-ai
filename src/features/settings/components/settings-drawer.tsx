@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/shared/components/ui/button"
+import { Separator } from "@/shared/components/ui/separator"
 import {
   Sheet,
   SheetContent,
@@ -7,7 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/shared/components/ui/sheet"
 import { notFound } from "next/navigation"
 import { use } from "react"
 import type { loadPrompts } from "../actions/prompt"

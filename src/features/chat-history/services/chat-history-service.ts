@@ -1,4 +1,4 @@
-import { config } from "@/lib/config"
+import { config } from "@/shared/lib/config"
 import { revalidatePath } from "next/cache"
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises"
 import path from "node:path"

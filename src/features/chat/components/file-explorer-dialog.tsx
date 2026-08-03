@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/shared/components/ui/button"
+import { Checkbox } from "@/shared/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -9,8 +9,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
+} from "@/shared/components/ui/dialog"
+import { Label } from "@/shared/components/ui/label"
 import { FileExplorerView } from "@/features/file-explorer/components/file-explorer-view"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"

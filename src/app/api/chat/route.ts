@@ -1,7 +1,7 @@
 import { chatHistoryService } from "@/features/chat-history/services/chat-history-service"
-import { streamText } from "@/services/inference/inference-service"
-import { InferenceProviderEnum } from "@/services/inference/schemas/provider-schema"
-import { InferenceModelSchema } from "@/services/inference/types/inference-model"
+import { streamText } from "@/shared/services/inference-service/inference-service"
+import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
+import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
 import {
   convertToModelMessages,
   createUIMessageStream,

@@ -1,16 +1,16 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Badge } from "@/shared/components/ui/badge"
+import { Button } from "@/shared/components/ui/button"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/shared/components/ui/collapsible"
+import { Textarea } from "@/shared/components/ui/textarea"
 import { useChatStore } from "@/features/chat/store/chat-store"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 
 export const GeneratedPrompt = () => {

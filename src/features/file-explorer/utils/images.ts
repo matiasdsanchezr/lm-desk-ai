@@ -1,4 +1,4 @@
-import { ImageFile } from "@/types/image-file"
+import { ImageFile } from "@/shared/types/image-file"
 
 const IMAGE_MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

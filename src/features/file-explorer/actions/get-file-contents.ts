@@ -1,9 +1,9 @@
 "use server"
 
-import { loadLocalImages, loadProjectGraph } from "@/services/file/file-service"
-import { ActionState } from "@/types/action-state"
-import { FileContent } from "@/services/file/types"
-import { ImageFile } from "@/types/image-file"
+import { loadLocalImages, loadProjectGraph } from "@/shared/services/file-service/file-service"
+import { ActionState } from "@/shared/types/action-state"
+import { FileContent } from "@/shared/services/file-service/types"
+import { ImageFile } from "@/shared/types/image-file"
 import { fetchImage, isImagePath } from "@/features/file-explorer/utils/images"
 import { z } from "zod"
 

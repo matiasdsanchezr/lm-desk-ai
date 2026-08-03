@@ -1,5 +1,5 @@
-import { InferenceProvider } from "@/services/inference/schemas/provider-schema"
-import { InferenceModel } from "@/services/inference/types/inference-model"
+import { InferenceProvider } from "@/shared/services/inference-service/schemas/provider-schema"
+import { InferenceModel } from "@/shared/services/inference-service/types/inference-model"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 

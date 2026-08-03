@@ -4,17 +4,17 @@ import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
-} from "@/components/ai-elements/reasoning"
-import { Button } from "@/components/ui/button"
+} from "@/shared/components/ai-elements/reasoning"
+import { Button } from "@/shared/components/ui/button"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Separator } from "@/components/ui/separator"
+} from "@/shared/components/ui/collapsible"
+import { Separator } from "@/shared/components/ui/separator"
 import { useCopyToClipboard } from "@/features/chat/hooks/use-copy-to-clipboard"
 import { getMessagePart, type ChatTurn } from "@/features/chat/utils/messages"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 import { createCodePlugin } from "@streamdown/code"
 import type { UIDataTypes, UIMessage, UITools } from "ai"
 import { memo, useState } from "react"

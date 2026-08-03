@@ -1,7 +1,7 @@
 "use server"
 
-import { getFilePaths } from "@/services/file/utils"
-import { ActionState } from "@/types/action-state"
+import { getFilePaths } from "@/shared/services/file-service/utils"
+import { ActionState } from "@/shared/types/action-state"
 import { cacheLife } from "next/cache"
 import { cache } from "react"
 import { buildFileTree } from "../services/tree-service"

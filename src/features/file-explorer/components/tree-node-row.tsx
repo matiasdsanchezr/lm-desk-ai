@@ -1,7 +1,7 @@
 "use client"
 
-import { Checkbox } from "@/components/ui/checkbox"
-import { cn } from "@/lib/utils"
+import { Checkbox } from "@/shared/components/ui/checkbox"
+import { cn } from "@/shared/lib/utils"
 import { memo, useCallback } from "react"
 import type { FileTreeNode } from "../types/file-tree-node"
 import type { NodeState } from "../types/node-state"

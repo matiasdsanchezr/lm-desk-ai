@@ -1,6 +1,6 @@
 "use client"
 
-import { Slider } from "@/components/ui/slider"
+import { Slider } from "@/shared/components/ui/slider"
 import { useShallow } from "zustand/shallow"
 import { useSettingsStore } from "../store/settings-store"
 

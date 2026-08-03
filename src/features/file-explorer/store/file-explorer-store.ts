@@ -1,5 +1,5 @@
-import { FileContent } from "@/services/file/types"
-import { ImageFile } from "@/types/image-file"
+import { FileContent } from "@/shared/services/file-service/types"
+import { ImageFile } from "@/shared/types/image-file"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 

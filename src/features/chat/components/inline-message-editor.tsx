@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/shared/components/ui/button"
+import { Textarea } from "@/shared/components/ui/textarea"
 import { useCallback, useState } from "react"
 
 interface InlineMessageEditorProps {

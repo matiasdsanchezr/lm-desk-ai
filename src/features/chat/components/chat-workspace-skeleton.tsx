@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card"
 
 export function ChatWorkspaceSkeleton() {
   return (

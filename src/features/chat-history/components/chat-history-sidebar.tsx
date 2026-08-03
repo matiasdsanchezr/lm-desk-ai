@@ -8,9 +8,9 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/shared/components/ui/sidebar"
 import { useChatActions } from "@/features/chat/store/chat-store"
-import { ActionState } from "@/types/action-state"
+import { ActionState } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
 import { startTransition, use, useCallback } from "react"
 import type { SavedChatMeta } from "../types/saved-chat"

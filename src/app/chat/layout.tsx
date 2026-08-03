@@ -1,4 +1,4 @@
-import { SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/shared/components/ui/sidebar"
 import { listChats } from "@/features/chat-history/actions/chat-history-actions"
 import { ChatHistorySidebar } from "@/features/chat-history/components/chat-history-sidebar"
 import { ChatHistorySidebarSkeleton } from "@/features/chat-history/components/chat-history-sidebar-skeleton"

@@ -1,14 +1,14 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/shared/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+} from "@/shared/components/ui/card"
+import { Separator } from "@/shared/components/ui/separator"
 import { useChatActions } from "@/features/chat/store/chat-store"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import React from "react"

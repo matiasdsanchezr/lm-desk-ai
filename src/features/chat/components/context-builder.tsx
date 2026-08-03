@@ -1,20 +1,20 @@
 "use client"
 
-import { MentionOption, TextEditor } from "@/components/text-editor/text-editor"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
+import { MentionOption, TextEditor } from "@/shared/components/text-editor/text-editor"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
+import { Button } from "@/shared/components/ui/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/shared/components/ui/card"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import type { FileTreeNode } from "@/features/file-explorer/types/file-tree-node"
 import { useSettingsStore } from "@/features/settings/store/settings-store"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
 import { FileExplorerDialog } from "./file-explorer-dialog"
