@@ -10,12 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { useChatActions, useChatStore } from "@/entities/chat/model/chat-store"
-import {
-  useFileExplorerStore,
-  type FileTreeNode,
-} from "@/features/file-explorer"
 import { useSettingsStore } from "@/features/inference-settings"
 import { cn } from "@/shared/lib/utils"
+import { FileTreeNode } from "@/widgets/file-explorer/model/file-explorer-get-tree-types"
+import { useFileExplorerStore } from "@/widgets/file-explorer/model/file-explorer-store"
 import { FileExplorerDialog } from "@/widgets/file-explorer/ui/file-explorer-dialog"
 import { MentionOption, TextEditor } from "@/widgets/text-editor"
 import { useMemo, useState } from "react"

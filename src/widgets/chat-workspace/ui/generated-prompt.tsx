@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/collapsible"
 import { Textarea } from "@/components/ui/textarea"
 import { useChatStore } from "@/entities/chat/model/chat-store"
-import { useFileExplorerStore } from "@/features/file-explorer"
 import { cn } from "@/shared/lib/utils"
+import { useFileExplorerStore } from "@/widgets/file-explorer/model/file-explorer-store"
 import { useMemo, useState } from "react"
 
 export const GeneratedPrompt = () => {

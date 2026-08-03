@@ -11,11 +11,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import {
-  useFileExplorerStore,
-  type FileTreeNode,
-} from "@/features/file-explorer"
 import { useShallow } from "zustand/shallow"
+import { FileTreeNode } from "../model/file-explorer-get-tree-types"
+import { useFileExplorerStore } from "../model/file-explorer-store"
 import { FileExplorerView } from "./file-explorer-view"
 
 interface FileExplorerDialogProps {

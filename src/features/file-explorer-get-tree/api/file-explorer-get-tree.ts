@@ -1,13 +1,13 @@
 "use server"
 
-import { getFilePaths } from "@/entities/file/api/file-api"
+import { getFilePaths } from "@/entities/file"
 import type { ActionState } from "@/shared/types/action-state"
 import { cacheLife } from "next/cache"
 import { cache } from "react"
-import { buildFileTree } from "../lib/file-explorer-utils"
-import type { TreeStructureResponse } from "../model/file-explorer-types"
+import { buildFileTree } from "../lib/file-explorer-get-tree-utils"
+import type { TreeStructureResponse } from "../../../widgets/file-explorer/model/file-explorer-get-tree-types"
 
-export const getTreeStructure = cache(
+export const fileExplorerGetTree = cache(
   async (): Promise<ActionState<TreeStructureResponse>> => {
     "use cache"
     cacheLife("hours")

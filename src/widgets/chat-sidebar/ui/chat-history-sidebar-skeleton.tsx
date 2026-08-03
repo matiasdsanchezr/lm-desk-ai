@@ -8,7 +8,7 @@ export function ChatHistorySidebarSkeleton() {
           <div className="h-8 w-16 animate-pulse rounded-lg bg-muted" />
         </div>
       </div>
-      
+
       {/* Content Skeleton */}
       <div className="flex flex-1 flex-col space-y-2 p-2">
         {Array.from({ length: 5 }).map((_, i) => (

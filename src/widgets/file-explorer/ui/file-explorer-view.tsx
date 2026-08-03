@@ -1,5 +1,4 @@
 "use client"
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,16 +12,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  useFileSelection,
-  useTreeExpansion,
-  type FileTreeNode,
-} from "@/features/file-explorer"
 import { cn } from "@/shared/lib/utils"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { useRouter } from "next/navigation"
 import { useCallback, useMemo, useRef, useState, useTransition } from "react"
+import { FileTreeNode } from "../model/file-explorer-get-tree-types"
+import { useTreeExpansion } from "../model/use-tree-expansion"
 import { TreeNodeRow } from "./tree-node-row"
+import { useFileSelection } from "./use-file-selection"
 
 interface FileExplorerProps {
   treeNodes: FileTreeNode[]

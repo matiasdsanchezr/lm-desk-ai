@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useChatActions } from "@/entities/chat/model/chat-store"
-import { useFileExplorerStore } from "@/features/file-explorer"
+import { useFileExplorerStore } from "@/widgets/file-explorer/model/file-explorer-store"
+
 import React from "react"
 
 interface PromptReviewerProps {

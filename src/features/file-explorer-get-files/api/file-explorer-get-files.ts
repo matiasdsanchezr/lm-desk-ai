@@ -1,17 +1,22 @@
 "use server"
 
-import { loadLocalImages, loadProjectGraph } from "@/entities/file/api/file-api"
+import { loadLocalImages, loadProjectGraph } from "@/entities/file"
 import { fetchImage, isImagePath } from "@/entities/file/lib/image-utils"
 import type { FileContents, ImageFile } from "@/entities/file/model/file-types"
 import type { ActionState } from "@/shared/types/action-state"
 import { z } from "zod"
-import { GetFileContentsSchema } from "../model/file-explorer-schemas"
 
-export const getFileContents = async (
+const FileExplorerGetFiles = z.object({
+  filePaths: z.array(z.string().trim().min(1)).min(0).max(200),
+  includeDependencies: z.preprocess((val) => val === "true", z.boolean()),
+  imageUrls: z.string().optional(),
+})
+
+export const fileExplorerGetFiles = async (
   _prev: ActionState<FileContents>,
   formData: FormData
 ): Promise<ActionState<FileContents>> => {
-  const parsed = GetFileContentsSchema.safeParse({
+  const parsed = FileExplorerGetFiles.safeParse({
     filePaths: formData.getAll("filePath"),
     includeDependencies: formData.get("includeDependencies"),
     imageUrls: formData.get("imageUrls"),
@@ -24,7 +29,6 @@ export const getFileContents = async (
 
   const localImagePaths = filePaths.filter(isImagePath)
   const textFilePaths = filePaths.filter((path) => !isImagePath(path))
-
   const imagesToFetch = imageUrls
     ?.split("\n")
     .map((src) => src.trim())

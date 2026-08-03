@@ -4,12 +4,10 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useChatStore } from "@/entities/chat/model/chat-store"
 import { SavedChat } from "@/entities/chat/model/types"
 import { PromptBuilder } from "@/entities/prompt"
-import {
-  getFileContents,
-  getTreeStructure,
-  useFileExplorerStore,
-} from "@/features/file-explorer"
+import { fileExplorerGetFiles } from "@/features/file-explorer-get-files"
+import { fileExplorerGetTree } from "@/features/file-explorer-get-tree"
 import { useSettingsStore } from "@/features/inference-settings"
+import { useFileExplorerStore } from "@/widgets/file-explorer/model/file-explorer-store"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
 import { notFound, useRouter } from "next/navigation"
@@ -22,7 +20,7 @@ import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
-  treeStructurePromise: ReturnType<typeof getTreeStructure>
+  treeStructurePromise: ReturnType<typeof fileExplorerGetTree>
   initialChatPromise?: Promise<SavedChat>
 }
 
@@ -74,7 +72,7 @@ export function ChatWorkspace({
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
-        const { data, error } = await getFileContents({}, formData)
+        const { data, error } = await fileExplorerGetFiles({}, formData)
         if (error || !data) {
           return {
             error: error ?? "Se produjo un error al analizar los archivos",

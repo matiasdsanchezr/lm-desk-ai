@@ -1,7 +1,7 @@
 "use client"
 
 import type { FileTreeNode } from "@/entities/file/model/file-types"
-import type { NodeState } from "./file-explorer-types"
+import type { NodeState } from "./file-explorer-get-tree-types"
 import { useCallback, useMemo } from "react"
 
 interface UseFileSelectionOptions {

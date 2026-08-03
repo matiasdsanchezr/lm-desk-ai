@@ -1,5 +1,5 @@
 import { getChatById } from "@/entities/chat"
-import { getTreeStructure } from "@/features/file-explorer"
+import { fileExplorerGetTree } from "@/features/file-explorer-get-tree"
 import { ChatWorkspace, ChatWorkspaceSkeleton } from "@/widgets/chat-workspace"
 import { Suspense } from "react"
 
@@ -11,7 +11,7 @@ export async function Chat({ params }: ChatProps) {
   const { chatId } = await params
 
   const initialChatPromise = chatId ? getChatById(chatId) : undefined
-  const treeStructurePromise = getTreeStructure()
+  const treeStructurePromise = fileExplorerGetTree()
 
   return (
     <Suspense fallback={<ChatWorkspaceSkeleton />}>

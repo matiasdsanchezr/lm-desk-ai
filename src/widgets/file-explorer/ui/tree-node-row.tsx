@@ -1,7 +1,7 @@
 "use client"
 
 import { Checkbox } from "@/components/ui/checkbox"
-import type { FileTreeNode, NodeState } from "@/features/file-explorer"
+import type { FileTreeNode, NodeState } from "@/features/file-explorer-get-tree"
 import { cn } from "@/shared/lib/utils"
 import { memo, useCallback } from "react"
 
