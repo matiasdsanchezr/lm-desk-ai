@@ -4,28 +4,28 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 interface FileExplorerState {
-  selectedFiles: string[]
+  selectedFilePaths: string[]
   fileContents: FileContent[]
   includeDependencies: boolean
   imageUrls: string
-  images: ImageFile[]
+  imageFiles: ImageFile[]
 }
 
 interface FileExplorerActions {
-  setSelectedFiles: (files: string[]) => void
+  setSelectedFilePaths: (files: string[]) => void
   setFileContents: (data: FileContent[]) => void
   setImageUrls: (urls: string) => void
-  setImages: (images: ImageFile[]) => void
+  setImageFiles: (imageFiles: ImageFile[]) => void
   setIncludeDependencies: (val: boolean) => void
-  resetFiles: () => void
+  resetState: () => void
 }
 
 const initialState: FileExplorerState = {
-  selectedFiles: [],
+  selectedFilePaths: [],
   fileContents: [],
   includeDependencies: true,
   imageUrls: "",
-  images: [],
+  imageFiles: [],
 }
 
 export const useFileExplorerStore = create<
@@ -34,17 +34,17 @@ export const useFileExplorerStore = create<
   persist(
     (set) => ({
       ...initialState,
-      setSelectedFiles: (files) => set({ selectedFiles: files }),
+      setSelectedFilePaths: (files) => set({ selectedFilePaths: files }),
       setFileContents: (data) => set({ fileContents: data }),
       setImageUrls: (urls) => set({ imageUrls: urls }),
-      setImages: (images) => set({ images }),
+      setImageFiles: (images) => set({ imageFiles: images }),
       setIncludeDependencies: (val) => set({ includeDependencies: val }),
-      resetFiles: () => set(initialState),
+      resetState: () => set(initialState),
     }),
     {
       name: "file-explorer-state",
       partialize: (state) => ({
-        selectedFiles: state.selectedFiles,
+        selectedFilePaths: state.selectedFilePaths,
         includeDependencies: state.includeDependencies,
         imageUrls: state.imageUrls,
       }),

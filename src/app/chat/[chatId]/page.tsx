@@ -2,7 +2,7 @@ import { ChatWorkspace } from "@/features/chat/components/chat-workspace"
 import { ChatWorkspaceSkeleton } from "@/features/chat/components/chat-workspace-skeleton"
 import { ChatCompletionProvider } from "@/features/chat/providers/chat-completion-provider"
 import { getChatById } from "@/features/chat/services/history-service"
-import { generateTreeStructure } from "@/features/file-explorer/actions/get-file-tree"
+import { getFileTreeAction } from "@/features/file-explorer/actions/get-file-tree"
 import { FileExplorerProvider } from "@/features/file-explorer/context/file-explorer-context"
 import { Suspense } from "react"
 
@@ -13,12 +13,12 @@ interface ChatPageProps {
 export default async function ChatIdPage({ params }: ChatPageProps) {
   const { chatId } = await params
 
-  const treeStructurePromise = generateTreeStructure()
+  const treeStructurePromise = getFileTreeAction()
   const initialChatPromise = getChatById(chatId)
 
   return (
     <Suspense fallback={<ChatWorkspaceSkeleton />}>
-      <FileExplorerProvider treeStructurePromise={treeStructurePromise}>
+      <FileExplorerProvider fileTreePromise={treeStructurePromise}>
         <ChatCompletionProvider initialChatPromise={initialChatPromise}>
           <ChatWorkspace />
         </ChatCompletionProvider>

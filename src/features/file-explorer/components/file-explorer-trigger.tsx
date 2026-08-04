@@ -5,16 +5,16 @@ import { useState } from "react"
 import { useFileExplorerStore } from "../store/file-explorer-store"
 import { FileExplorerDialog } from "./file-explorer-dialog"
 
-interface FileExplorerModalProps {
+interface FileExplorerTriggerProps {
   disabled?: boolean
 }
 
-export function FileExplorerModal({
+export function FileExplorerTrigger({
   disabled = false,
-}: FileExplorerModalProps) {
+}: FileExplorerTriggerProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const selectedCount = useFileExplorerStore(
-    (state) => state.selectedFiles.length
+  const selectedFilesCount = useFileExplorerStore(
+    (state) => state.selectedFilePaths.length
   )
 
   return (
@@ -30,7 +30,7 @@ export function FileExplorerModal({
         <span className="icon-[fa7-solid--folder-open]" />
         <span>Explorador de archivos</span>
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-          {selectedCount}
+          {selectedFilesCount}
         </span>
       </Button>
 

@@ -4,13 +4,13 @@ import { Checkbox } from "@/shared/components/ui/checkbox"
 import { cn } from "@/shared/lib/utils"
 import { memo, useCallback } from "react"
 import type { FileTreeNode } from "../types"
-import type { NodeState } from "../types"
+import type { TreeNodeSelectionState } from "../types"
 
 interface TreeNodeRowProps {
   node: FileTreeNode
   depth: number
-  nodeState: NodeState
-  onToggleSelection: (node: FileTreeNode) => void
+  selectionState: TreeNodeSelectionState
+  onToggleNodeSelection: (node: FileTreeNode) => void
   onToggleExpand: (nodeId: string) => void
   isExpanded: boolean
   disabled: boolean
@@ -22,8 +22,8 @@ interface TreeNodeRowProps {
 export const TreeNodeRow = memo(function TreeNodeRow({
   node,
   depth,
-  nodeState,
-  onToggleSelection,
+  selectionState,
+  onToggleNodeSelection,
   onToggleExpand,
   isExpanded,
   disabled,
@@ -31,15 +31,15 @@ export const TreeNodeRow = memo(function TreeNodeRow({
   rowIndex,
   totalVisibleNodes,
 }: TreeNodeRowProps) {
-  const { checked, indeterminate } = nodeState
+  const { checked, indeterminate } = selectionState
 
   const handleRowClick = useCallback(() => {
     if (!node.isFile) {
       onToggleExpand(node.id)
     } else {
-      onToggleSelection(node)
+      onToggleNodeSelection(node)
     }
-  }, [node, onToggleExpand, onToggleSelection])
+  }, [node, onToggleExpand, onToggleNodeSelection])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -52,8 +52,8 @@ export const TreeNodeRow = memo(function TreeNodeRow({
   )
 
   const handleCheckboxChange = useCallback(() => {
-    onToggleSelection(node)
-  }, [node, onToggleSelection])
+    onToggleNodeSelection(node)
+  }, [node, onToggleNodeSelection])
 
   return (
     <div

@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/dialog"
 import { Label } from "@/shared/components/ui/label"
 import { useShallow } from "zustand/shallow"
-import { FileExplorer } from "./file-explorer"
+import { FileExplorerPanel } from "./file-explorer-panel"
 
 interface FileExplorerDialogProps {
   open: boolean
@@ -27,15 +27,15 @@ export function FileExplorerDialog({
   disabled,
 }: FileExplorerDialogProps) {
   const {
-    selectedFiles,
+    selectedFilePaths,
     includeDependencies,
-    setSelectedFiles,
+    setSelectedFilePaths,
     setIncludeDependencies,
   } = useFileExplorerStore(
     useShallow((s) => ({
-      selectedFiles: s.selectedFiles,
+      selectedFilePaths: s.selectedFilePaths,
       includeDependencies: s.includeDependencies,
-      setSelectedFiles: s.setSelectedFiles,
+      setSelectedFilePaths: s.setSelectedFilePaths,
       setIncludeDependencies: s.setIncludeDependencies,
     }))
   )
@@ -56,10 +56,10 @@ export function FileExplorerDialog({
 
         <div className="flex min-h-0 flex-1 flex-col gap-3 p-4 sm:p-6">
           <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border/40 p-1">
-            <FileExplorer
+            <FileExplorerPanel
               disabled={disabled}
-              selectedFiles={selectedFiles}
-              onSelectionChange={setSelectedFiles}
+              selectedFilePaths={selectedFilePaths}
+              onSelectionChange={setSelectedFilePaths}
             />
           </div>
 
@@ -83,7 +83,7 @@ export function FileExplorerDialog({
         <DialogFooter className="border-t border-border/40 bg-muted/20 px-4 py-3 sm:px-6">
           <div className="flex w-full items-center justify-between gap-2">
             <span className="text-xs font-medium text-muted-foreground">
-              {selectedFiles.length} archivo(s) seleccionado(s)
+              {selectedFilePaths.length} archivo(s) seleccionado(s)
             </span>
             <Button onClick={() => onOpenChange(false)} size="sm">
               Confirmar selección

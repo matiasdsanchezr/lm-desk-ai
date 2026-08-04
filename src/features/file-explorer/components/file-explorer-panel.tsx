@@ -23,9 +23,9 @@ import { useTreeExpansion } from "../hooks/use-tree-expansion"
 import type { FileTreeNode } from "../types"
 import { TreeNodeRow } from "./tree-node-row"
 
-interface FileExplorerProps {
+interface FileExplorerPanelProps {
   disabled?: boolean
-  selectedFiles: string[]
+  selectedFilePaths: string[]
   onSelectionChange: (files: string[]) => void
 }
 
@@ -34,27 +34,31 @@ interface FlattenedNode {
   depth: number
 }
 
-export function FileExplorer({
+export function FileExplorerPanel({
   disabled = false,
-  selectedFiles,
+  selectedFilePaths,
   onSelectionChange,
-}: FileExplorerProps) {
+}: FileExplorerPanelProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const { treeNodes, totalFiles } = useFileExplorerContext()
 
-  const { getNodeState, toggleFile, clearSelection, totalSelected } =
-    useFileSelection({
-      selectedFiles,
-      onSelectionChange,
-    })
+  const {
+    getNodeSelectionState,
+    toggleNodeSelection,
+    clearSelectedFilePaths,
+    selectedFilesCount,
+  } = useFileSelection({
+    selectedFilePaths,
+    onSelectionChange,
+  })
 
   const { isExpanded, toggleExpand, expandedNodes } = useTreeExpansion()
   const [activeTab, setActiveTab] = useState<"tree" | "selected">("tree")
 
-  const sortedSelectedFiles = useMemo(() => {
-    return [...selectedFiles].sort()
-  }, [selectedFiles])
+  const sortedSelectedFilePaths = useMemo(() => {
+    return [...selectedFilePaths].sort()
+  }, [selectedFilePaths])
 
   const flattenTree = useCallback(
     (nodes: FileTreeNode[], currentDepth = 0): FlattenedNode[] => {
@@ -74,7 +78,7 @@ export function FileExplorer({
     [expandedNodes]
   )
 
-  const visibleTreeNodes = useMemo(
+  const flattenedTreeNodes = useMemo(
     () => flattenTree(treeNodes),
     [treeNodes, flattenTree]
   )
@@ -89,14 +93,14 @@ export function FileExplorer({
   )
 
   const treeVirtualizer = useVirtualizer({
-    count: visibleTreeNodes.length,
+    count: flattenedTreeNodes.length,
     getScrollElement: getTreeScrollElement,
     estimateSize: () => 32,
     overscan: 10,
   })
 
   const selectedVirtualizer = useVirtualizer({
-    count: sortedSelectedFiles.length,
+    count: sortedSelectedFilePaths.length,
     getScrollElement: getSelectedScrollElement,
     estimateSize: () => 64,
     overscan: 5,
@@ -144,7 +148,7 @@ export function FileExplorer({
           <span className="mr-1.5 icon-[fa7-solid--square-check] h-3.5 w-3.5" />
           Seleccionados
           <Badge variant="secondary" className="ml-1.5 text-[10px]">
-            {totalSelected}
+            {selectedFilesCount}
           </Badge>
         </Button>
       </div>
@@ -204,19 +208,19 @@ export function FileExplorer({
               }}
             >
               {treeVirtualizer.getVirtualItems().map((virtualRow) => {
-                const { node, depth } = visibleTreeNodes[virtualRow.index]!
+                const { node, depth } = flattenedTreeNodes[virtualRow.index]!
                 return (
                   <TreeNodeRow
                     key={node.id}
                     node={node}
                     depth={depth}
-                    nodeState={getNodeState(node)}
-                    onToggleSelection={toggleFile}
+                    selectionState={getNodeSelectionState(node)}
+                    onToggleNodeSelection={toggleNodeSelection}
                     onToggleExpand={toggleExpand}
                     isExpanded={isExpanded(node.id)}
                     disabled={disabled || isPending}
                     rowIndex={virtualRow.index}
-                    totalVisibleNodes={visibleTreeNodes.length}
+                    totalVisibleNodes={flattenedTreeNodes.length}
                     style={{
                       position: "absolute",
                       top: 0,
@@ -244,9 +248,9 @@ export function FileExplorer({
               Archivos seleccionados
             </span>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">{totalSelected}</Badge>
+              <Badge variant="secondary">{selectedFilesCount}</Badge>
 
-              {selectedFiles.length > 0 && (
+              {selectedFilePaths.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger
                     render={
@@ -267,14 +271,14 @@ export function FileExplorer({
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Limpiar selección?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Se de-seleccionarán {selectedFiles.length} archivos.
+                        Se de-seleccionarán {selectedFilePaths.length} archivos.
                         Esta acción no se puede deshacer.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={clearSelection}
+                        onClick={clearSelectedFilePaths}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Confirmar
@@ -287,7 +291,7 @@ export function FileExplorer({
           </div>
 
           <div ref={selectedScrollRef} className="flex-1 overflow-y-auto px-3">
-            {sortedSelectedFiles.length === 0 ? (
+            {sortedSelectedFilePaths.length === 0 ? (
               <div className="flex h-40 flex-col items-center justify-center gap-3 text-muted-foreground">
                 <span className="icon-[fa7-solid--arrow-pointer] h-8 w-8 opacity-50" />
                 <p className="px-4 text-center text-sm">
@@ -304,7 +308,7 @@ export function FileExplorer({
                 }}
               >
                 {selectedVirtualizer.getVirtualItems().map((virtualRow) => {
-                  const file = sortedSelectedFiles[virtualRow.index]!
+                  const file = sortedSelectedFilePaths[virtualRow.index]!
                   const parts = file.split("/")
                   const fileName = parts.pop() ?? file
                   const folderPath = parts.join("/")
@@ -334,7 +338,7 @@ export function FileExplorer({
                             size="icon"
                             className="h-6 w-6 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                             onClick={() =>
-                              toggleFile({
+                              toggleNodeSelection({
                                 id: file,
                                 name: fileName,
                                 isFile: true,

@@ -21,7 +21,7 @@ interface PromptReviewerProps {
 
 export const PromptReviewer = ({ disabled, children }: PromptReviewerProps) => {
   const { clearPrompts, resetAll: resetAllChat } = useChatActions()
-  const resetFiles = useFileExplorerStore((s) => s.resetFiles)
+  const resetFiles = useFileExplorerStore((s) => s.resetState)
   const { isStreaming, generateContent, stop } = useChatCompletion()
 
   const handleModifyQuery = () => {

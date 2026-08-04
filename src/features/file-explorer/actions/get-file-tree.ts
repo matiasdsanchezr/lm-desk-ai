@@ -3,18 +3,12 @@
 import { config } from "@/shared/lib/config"
 import { listDirectoryFiles } from "@/shared/services/file-service"
 import { ActionResponse } from "@/shared/types/action-state"
-import { cacheLife } from "next/cache"
 import { cache } from "react"
-import { buildFileTree } from "../services/file-explorer-service"
-import type { TreeStructureResponse } from "../types"
+import type { FileTreeData } from "../types"
+import { buildFileTree } from "../utils"
 
-/**
- * Genera la estructura en árbol memorizada por request.
- */
-export const generateTreeStructure = cache(
-  async (): ActionResponse<TreeStructureResponse> => {
-    "use cache"
-    cacheLife("hours")
+export const getFileTreeAction = cache(
+  async (): ActionResponse<FileTreeData> => {
     try {
       const filePaths = await listDirectoryFiles(config.TARGET_PROJECT_PATH)
       const treeNodes = buildFileTree(filePaths)

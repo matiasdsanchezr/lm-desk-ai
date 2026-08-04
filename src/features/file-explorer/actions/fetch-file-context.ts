@@ -9,24 +9,24 @@ import {
 import { ActionResponse } from "@/shared/types/action-state"
 import { ImageFile } from "@/shared/types/image-file"
 import { z } from "zod"
-import { fetchImage } from "../utils"
+import { fetchRemoteImageAsBase64 } from "../utils"
 
-const GeneratePromptSchema = z.object({
+const fetchFileContextSchema = z.object({
   filePaths: z.array(z.string().trim().min(1)).min(0).max(200),
   includeDependencies: z.preprocess((val) => val === "true", z.boolean()),
   imageUrls: z.string().optional(),
 })
 
-type GetFileContentsState = {
+type ProjectFileContext = {
   fileContents: FileContent[]
   imageFiles: ImageFile[]
 }
 
-export async function getFileContents(
+export async function fetchFileContextAction(
   _prev: unknown,
   formData: FormData
-): ActionResponse<GetFileContentsState> {
-  const parsed = GeneratePromptSchema.safeParse({
+): ActionResponse<ProjectFileContext> {
+  const parsed = fetchFileContextSchema.safeParse({
     filePaths: formData.getAll("filePath"),
     includeDependencies: formData.get("includeDependencies"),
     imageUrls: formData.get("imageUrls"),
@@ -48,7 +48,7 @@ export async function getFileContents(
 
   if (urls && urls.length > 0) {
     base64UrlImages = await Promise.all(
-      urls.map((src) => fetchImage(src).catch(() => null))
+      urls.map((src) => fetchRemoteImageAsBase64(src).catch(() => null))
     ).then((res) => res.filter((img): img is ImageFile => img !== null))
   }
 

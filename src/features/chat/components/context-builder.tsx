@@ -1,7 +1,7 @@
 "use client"
 
 import {
-  FileExplorerModal,
+  FileExplorerTrigger,
   useFileExplorerStore,
   type FileTreeNode,
 } from "@/features/file-explorer"
@@ -49,18 +49,18 @@ export const ContextBuilder = ({
   const systemPrompt = useSettingsStore((s) => s.systemPrompt)
 
   const {
-    selectedFiles,
+    selectedFilePaths,
     imageUrls,
     includeDependencies,
     fileContents,
-    setSelectedFiles,
+    setSelectedFilePaths,
   } = useFileExplorerStore(
     useShallow((s) => ({
-      selectedFiles: s.selectedFiles,
+      selectedFilePaths: s.selectedFilePaths,
       imageUrls: s.imageUrls,
       includeDependencies: s.includeDependencies,
       fileContents: s.fileContents,
-      setSelectedFiles: s.setSelectedFiles,
+      setSelectedFilePaths: s.setSelectedFilePaths,
     }))
   )
 
@@ -99,7 +99,7 @@ export const ContextBuilder = ({
     formData.append("includeDependencies", String(includeDependencies))
     formData.append("imageUrls", imageUrls)
     formData.append("systemPrompt", systemPrompt)
-    selectedFiles.forEach((path) => formData.append("filePath", path))
+    selectedFilePaths.forEach((path) => formData.append("filePath", path))
 
     handleFetchFileContents(formData)
   }
@@ -129,7 +129,7 @@ export const ContextBuilder = ({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <FileExplorerModal disabled={isDisabled} />
+            <FileExplorerTrigger disabled={isDisabled} />
 
             <Button
               type="button"
@@ -148,9 +148,9 @@ export const ContextBuilder = ({
               )}
             </Button>
 
-            {(selectedFiles.length > 0 || imageUrlCount > 0) && (
+            {(selectedFilePaths.length > 0 || imageUrlCount > 0) && (
               <span className="text-xs text-muted-foreground">
-                {selectedFiles.length} archivo(s)
+                {selectedFilePaths.length} archivo(s)
                 {imageUrlCount > 0 ? `, ${imageUrlCount} imagen(es)` : ""}
               </span>
             )}
@@ -202,8 +202,8 @@ export const ContextBuilder = ({
                 disabled={isDisabled}
                 mentionOptions={mentionOptions}
                 onMentionSelect={(filePath) => {
-                  if (!selectedFiles.includes(filePath)) {
-                    setSelectedFiles([...selectedFiles, filePath])
+                  if (!selectedFilePaths.includes(filePath)) {
+                    setSelectedFilePaths([...selectedFilePaths, filePath])
                   }
                 }}
               />

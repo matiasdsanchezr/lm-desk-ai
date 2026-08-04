@@ -20,7 +20,7 @@ const ChatRequestBodySchema = z.object({
   system: z.string().default(""),
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
-  selectedFiles: z.array(z.string()).optional(),
+  selectedFilePaths: z.array(z.string()).optional(),
   includeReasoning: z.boolean().default(true),
 })
 
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       system,
       temperature,
       topP,
-      selectedFiles,
+      selectedFilePaths,
       includeReasoning,
     } = parsedBody.data
 
@@ -130,7 +130,7 @@ export async function POST(req: Request) {
                       })
                     } else {
                       await saveChat({
-                        selectedFiles: selectedFiles || [],
+                        selectedFilePaths: selectedFilePaths || [],
                         messages,
                       })
                     }

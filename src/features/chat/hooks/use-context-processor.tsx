@@ -1,6 +1,6 @@
 "use client"
 
-import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
+import { fetchFileContextAction } from "@/features/file-explorer/actions/fetch-file-context"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { PromptBuilder } from "@/shared/utils/prompt-builder"
@@ -13,7 +13,7 @@ export function useContextProcessor() {
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(
       async (_: unknown, formData: FormData) => {
-        const { data, error } = await getFileContents({}, formData)
+        const { data, error } = await fetchFileContextAction({}, formData)
 
         if (error || !data) {
           return {
@@ -24,7 +24,7 @@ export function useContextProcessor() {
         if (data.fileContents) {
           const userTask = useChatStore.getState().userTask
           const setPrompts = useChatStore.getState().actions.setPrompts
-          const { setFileContents, setImages } = useFileExplorerStore.getState()
+          const { setFileContents, setImageFiles: setImages } = useFileExplorerStore.getState()
 
           const promptBuilder = new PromptBuilder()
             .addSystem(systemPrompt)

@@ -71,7 +71,8 @@ export function ChatCompletionProvider({
     setMessages([])
 
     const { contextualPrompt } = useChatStore.getState()
-    const { images, selectedFiles } = useFileExplorerStore.getState()
+    const { imageFiles: images, selectedFilePaths } =
+      useFileExplorerStore.getState()
     const settings = useSettingsStore.getState()
 
     const imageFiles: FileUIPart[] = images.map((i) => ({
@@ -94,7 +95,7 @@ export function ChatCompletionProvider({
           model: settings.modelConfig.model,
           temperature: settings.temperature,
           topP: settings.topP,
-          selectedFiles,
+          selectedFilePaths: selectedFilePaths,
         },
       }
     )
@@ -105,7 +106,7 @@ export function ChatCompletionProvider({
       if (!text.trim() || isStreaming) return
 
       const { includeReasoning } = useChatStore.getState()
-      const { selectedFiles } = useFileExplorerStore.getState()
+      const { selectedFilePaths } = useFileExplorerStore.getState()
       const settings = useSettingsStore.getState()
 
       sendMessage(
@@ -117,7 +118,7 @@ export function ChatCompletionProvider({
             model: settings.modelConfig.model,
             temperature: settings.temperature,
             topP: settings.topP,
-            selectedFiles,
+            selectedFilePaths,
             includeReasoning,
           },
         }

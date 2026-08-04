@@ -1,8 +1,8 @@
 "use client"
 
 import { useChatStore } from "@/features/chat/store/chat-store"
-import { useChatCompletion } from "../providers/chat-completion-provider"
 import { useContextProcessor } from "../hooks/use-context-processor"
+import { useChatCompletion } from "../providers/chat-completion-provider"
 import ChatMobileHeader from "./chat-mobile-header"
 import { ChatThread } from "./chat-thread"
 import { ContextBuilder } from "./context-builder"
@@ -11,8 +11,7 @@ import { PromptReviewer } from "./prompt-reviewer"
 
 export function ChatWorkspace() {
   const standalonePrompt = useChatStore((s) => s.standalonePrompt)
-  const { initialChat, messages, error, isStreaming } =
-    useChatCompletion()
+  const { initialChat, messages, error, isStreaming } = useChatCompletion()
 
   const { fetchFileState, handleFetchFileContents, isFetchingFiles } =
     useContextProcessor()

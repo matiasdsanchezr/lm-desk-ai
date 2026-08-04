@@ -29,7 +29,7 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
     id,
     title,
     createdAt,
-    selectedFiles: data.selectedFiles,
+    selectedFilePaths: data.selectedFilePaths,
     messages: data.messages,
   }
 

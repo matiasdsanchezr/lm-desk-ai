@@ -6,12 +6,12 @@ export interface FileTreeNode {
   children: FileTreeNode[]
 }
 
-export interface NodeState {
+export interface TreeNodeSelectionState {
   checked: boolean
   indeterminate: boolean
 }
 
-export interface TreeStructureResponse {
+export interface FileTreeData {
   totalFiles: number
   treeNodes: FileTreeNode[]
 }

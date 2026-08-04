@@ -2,7 +2,7 @@
 
 import { ActionResponse } from "@/shared/types/action-state"
 import { createContext, use, useContext, useMemo } from "react"
-import type { FileTreeNode, TreeStructureResponse } from "../types"
+import type { FileTreeData, FileTreeNode } from "../types"
 
 interface FileExplorerContextValue {
   treeNodes: FileTreeNode[]
@@ -12,28 +12,28 @@ interface FileExplorerContextValue {
 const FileExplorerContext = createContext<FileExplorerContextValue | null>(null)
 
 interface FileExplorerProviderProps {
-  treeStructurePromise: ActionResponse<TreeStructureResponse>
+  fileTreePromise: ActionResponse<FileTreeData>
   children: React.ReactNode
 }
 
 export function FileExplorerProvider({
-  treeStructurePromise,
+  fileTreePromise,
   children,
 }: FileExplorerProviderProps) {
-  const treeStructure = use(treeStructurePromise)
+  const fileTreeResponse = use(fileTreePromise)
 
-  if (treeStructure.error || !treeStructure.data) {
+  if (fileTreeResponse.error || !fileTreeResponse.data) {
     throw new Error(
-      treeStructure.error || "Error al cargar la estructura de archivos"
+      fileTreeResponse.error || "Error al cargar la estructura de archivos"
     )
   }
 
   const value = useMemo<FileExplorerContextValue>(
     () => ({
-      treeNodes: treeStructure.data?.treeNodes ?? [],
-      totalFiles: treeStructure.data?.totalFiles ?? 0,
+      treeNodes: fileTreeResponse.data?.treeNodes ?? [],
+      totalFiles: fileTreeResponse.data?.totalFiles ?? 0,
     }),
-    [treeStructure.data?.treeNodes, treeStructure.data?.totalFiles]
+    [fileTreeResponse.data?.treeNodes, fileTreeResponse.data?.totalFiles]
   )
 
   return <FileExplorerContext value={value}>{children}</FileExplorerContext>
