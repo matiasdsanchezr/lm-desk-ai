@@ -1,7 +1,7 @@
 "use client"
 
 import { useChatStore } from "@/features/chat/store/chat-store"
-import { SavedChat } from "@/features/chat/types"
+import { Chat } from "@/features/chat/types"
 import { notFound } from "next/navigation"
 import { useChatCompletion } from "../hooks/use-chat-completion"
 import { useContextProcessor } from "../hooks/use-context-processor"
@@ -12,7 +12,7 @@ import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
 interface ChatWorkspaceProps {
-  initialChatPromise?: Promise<SavedChat | null>
+  initialChatPromise?: Promise<Chat | null>
 }
 
 export function ChatWorkspace({ initialChatPromise }: ChatWorkspaceProps) {

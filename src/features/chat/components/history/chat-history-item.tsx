@@ -15,10 +15,10 @@ import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../../actions"
-import type { SavedChatMeta } from "../../types"
+import type { ChatMeta } from "../../types"
 
 interface ChatHistoryItemProps {
-  chat: SavedChatMeta
+  chat: ChatMeta
   isActive: boolean
   currentId?: string
   onSelect: (id: string) => void

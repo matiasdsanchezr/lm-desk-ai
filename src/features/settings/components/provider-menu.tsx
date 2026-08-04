@@ -8,7 +8,7 @@ import {
 } from "@/shared/services/inference-service/types/inference-model"
 import { formatProviderName } from "@/shared/services/inference-service/utils/model-formatter"
 import { useShallow } from "zustand/shallow"
-import { NavSelector } from "../../../shared/components/shared/nav-selector"
+import { NavSelector } from "../../../shared/components/nav-selector"
 import { useSettingsStore } from "../store/settings-store"
 
 export const ProviderMenu = () => {

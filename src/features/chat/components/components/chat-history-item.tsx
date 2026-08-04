@@ -18,10 +18,10 @@ import {
   deleteChat,
   updateChat,
 } from "../../actions"
-import type { SavedChatMeta } from "../../types"
+import type { ChatMeta } from "../../types"
 
 interface ChatHistoryItemProps {
-  chat: SavedChatMeta
+  chat: ChatMeta
   isActive: boolean
   currentId?: string
   onSelect: (id: string) => void

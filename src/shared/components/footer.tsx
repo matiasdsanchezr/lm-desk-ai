@@ -1,4 +1,4 @@
-// src/components/shared/footer.tsx
+import { cacheLife } from "next/cache"
 import Link from "next/link"
 
 const GITHUB_REPO_URL = "https://github.com/matiasdsanchezr/lm-desk-ai"
@@ -17,7 +17,9 @@ const navLinks = [
   { label: "Chat", href: "/chat" },
 ]
 
-export function Footer() {
+export async function Footer() {
+  "use cache"
+  cacheLife("weeks")
   const currentYear = new Date().getFullYear()
 
   return (

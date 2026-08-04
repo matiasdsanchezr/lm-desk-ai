@@ -1,14 +1,6 @@
 import { UIMessage } from "ai"
+import { ChatTurn } from "./types"
 
-export interface ChatTurn {
-  id: string
-  userMessage?: UIMessage
-  assistantMessage?: UIMessage
-}
-
-/**
- * Agrupa mensajes user/assistant en turnos de conversación
- */
 export function groupMessagesIntoTurns(messages: UIMessage[]): ChatTurn[] {
   const turns: ChatTurn[] = []
   let currentTurn: ChatTurn | null = null

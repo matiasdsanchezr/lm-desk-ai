@@ -125,17 +125,9 @@ export async function POST(req: Request) {
 
                   if (textContent) {
                     if (chatId) {
-                      try {
-                        await updateChat(chatId, {
-                          messages,
-                        })
-                      } catch {
-                        await saveChat({
-                          id: chatId,
-                          selectedFiles: selectedFiles || [],
-                          messages,
-                        })
-                      }
+                      await updateChat(chatId, {
+                        messages,
+                      })
                     } else {
                       await saveChat({
                         selectedFiles: selectedFiles || [],

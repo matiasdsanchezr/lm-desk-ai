@@ -8,10 +8,10 @@ import { useRouter } from "next/navigation"
 import { use } from "react"
 import { useShallow } from "zustand/shallow"
 import { useChatStore } from "../store/chat-store"
-import type { SavedChat } from "../types"
+import type { Chat } from "../types"
 
 export function useChatCompletion(
-  initialChatPromise?: Promise<SavedChat | null>
+  initialChatPromise?: Promise<Chat | null>
 ) {
   const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
