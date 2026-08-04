@@ -56,7 +56,10 @@ export const ChatTurnItem = memo(
   }: ChatTurnItemProps) {
     const [isOpen, setIsOpen] = useState(true)
     const [isUserTextExpanded, setIsUserTextExpanded] = useState(false)
-    const { isCopied, copy } = useCopyToClipboard()
+    const { isCopied: isUserCopied, copy: copyUser } = useCopyToClipboard()
+    const { isCopied: isAssistantCopied, copy: copyAssistant } =
+      useCopyToClipboard()
+
     const [editingRole, setEditingRole] = useState<"user" | "assistant" | null>(
       null
     )
@@ -140,35 +143,56 @@ export const ChatTurnItem = memo(
                     </span>
                   </CollapsibleTrigger>
 
-                  {!isStreaming && setMessages && editingRole !== "user" && (
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1">
+                    {editingRole !== "user" && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-foreground"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setIsUserTextExpanded(true)
-                          setEditingRole("user")
+                          copyUser(userText)
                         }}
-                        title="Editar consulta"
+                        title="Copiar entrada del usuario"
                       >
-                        <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
+                        {isUserCopied ? (
+                          <span className="icon-[fa7-solid--check] h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                          <span className="icon-[fa7-solid--copy] h-3.5 w-3.5" />
+                        )}
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteTurn()
-                        }}
-                        title="Eliminar turno completo"
-                      >
-                        <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
+                    )}
+
+                    {!isStreaming && setMessages && editingRole !== "user" && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsUserTextExpanded(true)
+                            setEditingRole("user")
+                          }}
+                          title="Editar consulta"
+                        >
+                          <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteTurn()
+                          }}
+                          title="Eliminar turno completo"
+                        >
+                          <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
@@ -247,10 +271,10 @@ export const ChatTurnItem = memo(
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copy(responseText)}
+                      onClick={() => copyAssistant(responseText)}
                       className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      {isCopied ? (
+                      {isAssistantCopied ? (
                         <>
                           <span className="icon-[fa7-solid--check] text-green-500" />
                           <span className="text-green-500">Copiado</span>

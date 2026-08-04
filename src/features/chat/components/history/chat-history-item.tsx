@@ -85,13 +85,13 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
   if (isEditing) {
     return (
-      <SidebarMenuItem className="px-2 py-1.5">
+      <SidebarMenuItem className="w-full min-w-0 px-1 py-0.5">
         <form
           onSubmit={(e) => {
             e.preventDefault()
             handleSaveTitle()
           }}
-          className="flex w-full items-center gap-1.5"
+          className="flex w-full min-w-0 items-center gap-1 rounded-md border border-primary/40 bg-background p-1 shadow-2xs ring-offset-background focus-within:ring-1 focus-within:ring-primary"
         >
           <input
             type="text"
@@ -105,35 +105,37 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
             }}
             disabled={isPending}
             autoFocus
-            className="h-8 flex-1 rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
-            placeholder="Título del análisis..."
+            className="h-7 min-w-0 flex-1 bg-transparent px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
+            placeholder="Título de la conversación..."
           />
 
-          <button
-            type="submit"
-            disabled={isPending || !titleInput.trim()}
-            title="Guardar título"
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-emerald-500 transition-colors hover:bg-emerald-500/10 hover:text-emerald-600 disabled:opacity-50"
-          >
-            <span
-              className={cn(
-                isPending
-                  ? "icon-[lucide--loader-2] animate-spin"
-                  : "icon-[lucide--check]",
-                "size-4"
-              )}
-            />
-          </button>
+          <div className="flex shrink-0 items-center gap-0.5">
+            <button
+              type="submit"
+              disabled={isPending || !titleInput.trim()}
+              title="Guardar título"
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-emerald-500 transition-colors hover:bg-emerald-500/15 hover:text-emerald-600 disabled:opacity-40"
+            >
+              <span
+                className={cn(
+                  isPending
+                    ? "icon-[lucide--loader-2] animate-spin"
+                    : "icon-[lucide--check]",
+                  "size-3.5"
+                )}
+              />
+            </button>
 
-          <button
-            type="button"
-            onClick={handleCancelEdit}
-            disabled={isPending}
-            title="Cancelar"
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-          >
-            <span className="icon-[lucide--x] size-4" />
-          </button>
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              disabled={isPending}
+              title="Cancelar"
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+            >
+              <span className="icon-[lucide--x] size-3.5" />
+            </button>
+          </div>
         </form>
       </SidebarMenuItem>
     )

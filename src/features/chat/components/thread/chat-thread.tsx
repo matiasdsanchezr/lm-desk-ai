@@ -153,7 +153,7 @@ export function ChatThread() {
                 placeholder="Escribe tu consulta adicional... (Ej: 'Explícame la función handleCopy' o 'Optimiza este fragmento')"
                 disabled={isStreaming}
                 rows={2}
-                className="min-h-18 w-full resize-none border-0 bg-transparent p-0 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm"
+                className="min-h-18 w-full rounded-none resize-none border-0 bg-transparent p-0 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
@@ -164,7 +164,7 @@ export function ChatThread() {
 
               {/* Barra inferior con atajos y botón de acción */}
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/30 pt-2">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <span className="icon-[lucide--corner-down-left] h-3 w-3 text-muted-foreground/70" />
                   <span>
                     <kbd className="rounded border bg-muted/80 px-1 font-mono text-[10px]">

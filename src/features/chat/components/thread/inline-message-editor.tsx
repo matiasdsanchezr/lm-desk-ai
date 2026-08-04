@@ -43,7 +43,7 @@ export function InlineMessageEditor({
         className={`resize-y bg-background font-mono text-xs md:text-sm ${className}`}
       />
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-muted-foreground">
+        <span className="text-[10px] text-muted-foreground hidden sm:inline">
           <kbd className="rounded border bg-muted px-1 font-sans">Esc</kbd> para
           cancelar ·{" "}
           <kbd className="rounded border bg-muted px-1 font-sans">
