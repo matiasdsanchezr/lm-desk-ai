@@ -1,6 +1,8 @@
-import { ChatHistorySidebar } from "@/features/chat/components/history/chat-history-sidebar"
-import { ChatHistorySidebarSkeleton } from "@/features/chat/components/history/chat-history-sidebar-skeleton"
-import { listChats } from "@/features/chat/services/history-service"
+import {
+  ChatHistorySidebar,
+  ChatHistorySidebarSkeleton,
+  getChatList,
+} from "@/features/chat"
 import {
   SettingsDrawer,
   SettingsDrawerSkeleton,
@@ -20,7 +22,7 @@ export default function ChatLayout({
 }: {
   children: React.ReactNode
 }) {
-  const chatListPromise = listChats()
+  const chatListPromise = getChatList()
   const promptListPromise = getPromptList()
 
   return (

@@ -12,14 +12,14 @@ import {
   CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible"
 import { Separator } from "@/shared/components/ui/separator"
-import { useCopyToClipboard } from "@/features/chat/hooks/use-copy-to-clipboard"
-import { getMessagePart } from "@/features/chat/utils"
-import { type ChatTurn } from "../types"
 import { cn } from "@/shared/lib/utils"
 import { createCodePlugin } from "@streamdown/code"
 import type { UIDataTypes, UIMessage, UITools } from "ai"
 import { memo, useState } from "react"
 import { Streamdown } from "streamdown"
+import { useCopyToClipboard } from "../../hooks/use-copy-to-clipboard"
+import type { ChatTurn } from "../../types"
+import { getMessagePart } from "../../utils"
 import { InlineMessageEditor } from "./inline-message-editor"
 
 export function ChatTurnSkeleton() {

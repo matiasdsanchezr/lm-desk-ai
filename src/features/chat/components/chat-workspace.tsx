@@ -1,13 +1,13 @@
 "use client"
 
-import { useChatStore } from "@/features/chat/store/chat-store"
 import { useContextProcessor } from "../hooks/use-context-processor"
 import { useChatCompletion } from "../providers/chat-completion-provider"
-import ChatMobileHeader from "./chat-mobile-header"
-import { ChatThread } from "./chat-thread"
-import { ContextBuilder } from "./context-builder"
-import { GeneratedPrompt } from "./generated-prompt"
-import { PromptReviewer } from "./prompt-reviewer"
+import { useChatStore } from "../store/chat-store"
+import { ContextBuilder } from "./builder/context-builder"
+import { GeneratedPrompt } from "./builder/generated-prompt"
+import { PromptReviewer } from "./builder/prompt-reviewer"
+import { ChatMobileHeader } from "./chat-mobile-header"
+import { ChatThread } from "./thread/chat-thread"
 
 export function ChatWorkspace() {
   const standalonePrompt = useChatStore((s) => s.standalonePrompt)

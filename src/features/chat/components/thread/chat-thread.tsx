@@ -13,11 +13,11 @@ import {
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
-import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
-import { groupMessagesIntoTurns } from "@/features/chat/utils"
 import { useCallback, useMemo, useState } from "react"
+import { useChatCompletion } from "../../providers/chat-completion-provider"
+import { useChatActions, useChatStore } from "../../store/chat-store"
+import { groupMessagesIntoTurns } from "../../utils"
 import { ChatTurnItem, ChatTurnSkeleton } from "./chat-turn-item"
-import { useChatCompletion } from "../providers/chat-completion-provider"
 
 export function ChatThread() {
   const [followUpText, setFollowUpText] = useState("")

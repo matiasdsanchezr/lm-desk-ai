@@ -23,8 +23,8 @@ import {
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
-import { ImageUploadDialog } from "../../chat/components/image-upload-dialog"
-import { useChatActions, useChatStore } from "../../chat/store/chat-store"
+import { useChatActions, useChatStore } from "../../store/chat-store"
+import { ImageUploadDialog } from "./image-upload-dialog"
 
 interface ContextBuilderProps {
   isDisabled: boolean

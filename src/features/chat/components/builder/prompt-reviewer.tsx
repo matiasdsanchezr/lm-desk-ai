@@ -1,6 +1,5 @@
 "use client"
 
-import { useChatActions } from "@/features/chat/store/chat-store"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { Button } from "@/shared/components/ui/button"
 import {
@@ -12,7 +11,8 @@ import {
 } from "@/shared/components/ui/card"
 import { Separator } from "@/shared/components/ui/separator"
 import React from "react"
-import { useChatCompletion } from "../providers/chat-completion-provider"
+import { useChatCompletion } from "../../providers/chat-completion-provider"
+import { useChatActions } from "../../store/chat-store"
 
 interface PromptReviewerProps {
   disabled: boolean
