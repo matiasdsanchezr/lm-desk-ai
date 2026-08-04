@@ -15,44 +15,28 @@ import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { useChatActions, useChatStore } from "@/features/chat/store/chat-store"
 import { groupMessagesIntoTurns } from "@/features/chat/utils"
-import type { UIDataTypes, UIMessage, UITools } from "ai"
 import { useCallback, useMemo, useState } from "react"
 import { ChatTurnItem, ChatTurnSkeleton } from "./chat-turn-item"
+import { useChatCompletion } from "../providers/chat-completion-provider"
 
-interface ChatThreadProps {
-  messages: UIMessage<unknown, UIDataTypes, UITools>[]
-  error: Error | undefined
-  isStreaming: boolean
-  onSendFollowUp?: (text: string) => void
-  setMessages?: (messages: UIMessage<unknown, UIDataTypes, UITools>[]) => void
-}
-
-export function ChatThread({
-  messages,
-  error,
-  isStreaming,
-  onSendFollowUp,
-  setMessages,
-}: ChatThreadProps) {
+export function ChatThread() {
   const [followUpText, setFollowUpText] = useState("")
   const includeReasoning = useChatStore((s) => s.includeReasoning)
   const { setIncludeReasoning } = useChatActions()
+  const { messages, error, isStreaming, sendFollowUp, setMessages } =
+    useChatCompletion()
 
   const handleFollowUpSubmit = useCallback(
     (e: React.SubmitEvent | React.KeyboardEvent) => {
       e.preventDefault()
-      if (!followUpText.trim() || isStreaming || !onSendFollowUp) return
-      onSendFollowUp(followUpText)
+      if (!followUpText.trim() || isStreaming || !sendFollowUp) return
+      sendFollowUp(followUpText)
       setFollowUpText("")
     },
-    [followUpText, isStreaming, onSendFollowUp]
+    [followUpText, isStreaming, sendFollowUp]
   )
 
-  const visibleMessages = messages
-  const turns = useMemo(
-    () => groupMessagesIntoTurns(visibleMessages),
-    [visibleMessages]
-  )
+  const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages])
 
   return (
     <Card className="overflow-hidden border-border/60 shadow-md transition-all">
@@ -132,7 +116,7 @@ export function ChatThread({
           ) : null}
         </div>
 
-        {messages.length > 0 && onSendFollowUp && (
+        {messages.length > 0 && (
           <div className="border-t border-border/60 bg-muted/20 p-4 sm:p-5">
             <form
               onSubmit={handleFollowUpSubmit}

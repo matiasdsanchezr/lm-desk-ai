@@ -1,18 +1,16 @@
 "use client"
 
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { useSettingsStore } from "@/features/settings/store/settings-store"
+import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart } from "ai"
 import { useRouter } from "next/navigation"
-import { use } from "react"
+import { createContext, ReactNode, use, useContext } from "react"
 import { useShallow } from "zustand/shallow"
 import { useChatStore } from "../store/chat-store"
 import type { Chat } from "../types"
 
-export function useChatCompletion(
-  initialChatPromise?: Promise<Chat | null>
-) {
+function useChatCompletionLogic(initialChatPromise?: Promise<Chat | null>) {
   const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
 
@@ -112,4 +110,47 @@ export function useChatCompletion(
     sendFollowUp,
     stop,
   }
+}
+
+type ChatCompletionLogicReturn = ReturnType<typeof useChatCompletionLogic>
+
+interface ChatCompletionContextType extends ChatCompletionLogicReturn {
+  isExistingChat: boolean
+}
+
+const ChatCompletionContext = createContext<ChatCompletionContextType | null>(
+  null
+)
+
+interface ChatCompletionProviderProps {
+  children: ReactNode
+  initialChatPromise?: Promise<Chat | null>
+}
+
+export function ChatCompletionProvider({
+  children,
+  initialChatPromise,
+}: ChatCompletionProviderProps) {
+  const chatLogic = useChatCompletionLogic(initialChatPromise)
+
+  return (
+    <ChatCompletionContext.Provider
+      value={{
+        ...chatLogic,
+        isExistingChat: initialChatPromise !== undefined,
+      }}
+    >
+      {children}
+    </ChatCompletionContext.Provider>
+  )
+}
+
+export function useChatCompletion() {
+  const context = useContext(ChatCompletionContext)
+  if (!context) {
+    throw new Error(
+      "useChatCompletionContext debe usarse dentro de un ChatCompletionProvider"
+    )
+  }
+  return context
 }

@@ -8,23 +8,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/shared/components/ui/sheet"
-import { notFound } from "next/navigation"
 import { use } from "react"
-import type { loadPrompts } from "../actions"
-import { InstructionsMenu } from "../components/instructions-menu"
-import { ModelParameters } from "../components/model-parameters"
-import { ProviderMenu } from "../components/provider-menu"
+import { PromptMeta } from "../types"
+import { InstructionsMenu } from "./instructions-menu"
+import { ModelParameters } from "./model-parameters"
+import { ProviderMenu } from "./provider-menu"
 
 export function SettingsDrawer({
   initialPromptsPromise,
 }: {
-  initialPromptsPromise: ReturnType<typeof loadPrompts>
+  initialPromptsPromise: Promise<PromptMeta[]>
 }) {
-  const initialPromptsResult = use(initialPromptsPromise)
-  if (!initialPromptsResult.data) {
-    notFound()
-  }
-  const initialPrompts = initialPromptsResult.data
+  const initialPrompts = use(initialPromptsPromise)
 
   return (
     <Sheet>

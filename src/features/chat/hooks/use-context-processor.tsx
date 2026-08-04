@@ -2,7 +2,7 @@
 
 import { getFileContents } from "@/features/file-explorer/actions/get-file-contents"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { useSettingsStore } from "@/features/settings/store/settings-store"
+import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { PromptBuilder } from "@/shared/utils/prompt-builder"
 import { useActionState } from "react"
 import { useChatStore } from "../store/chat-store"

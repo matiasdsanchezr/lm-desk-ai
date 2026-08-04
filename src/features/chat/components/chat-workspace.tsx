@@ -1,9 +1,7 @@
 "use client"
 
 import { useChatStore } from "@/features/chat/store/chat-store"
-import { Chat } from "@/features/chat/types"
-import { notFound } from "next/navigation"
-import { useChatCompletion } from "../hooks/use-chat-completion"
+import { useChatCompletion } from "../providers/chat-completion-provider"
 import { useContextProcessor } from "../hooks/use-context-processor"
 import ChatMobileHeader from "./chat-mobile-header"
 import { ChatThread } from "./chat-thread"
@@ -11,29 +9,13 @@ import { ContextBuilder } from "./context-builder"
 import { GeneratedPrompt } from "./generated-prompt"
 import { PromptReviewer } from "./prompt-reviewer"
 
-interface ChatWorkspaceProps {
-  initialChatPromise?: Promise<Chat | null>
-}
-
-export function ChatWorkspace({ initialChatPromise }: ChatWorkspaceProps) {
+export function ChatWorkspace() {
   const standalonePrompt = useChatStore((s) => s.standalonePrompt)
+  const { initialChat, messages, error, isStreaming } =
+    useChatCompletion()
 
   const { fetchFileState, handleFetchFileContents, isFetchingFiles } =
     useContextProcessor()
-
-  const {
-    initialChat,
-    messages,
-    error,
-    isStreaming,
-    setMessages,
-    generateContent,
-    sendFollowUp,
-    stop,
-  } = useChatCompletion(initialChatPromise)
-  if (initialChatPromise && !initialChat) {
-    notFound()
-  }
 
   const isReadyToReview = Boolean(standalonePrompt)
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
@@ -51,25 +33,14 @@ export function ChatWorkspace({ initialChatPromise }: ChatWorkspaceProps) {
       />
 
       {isReadyToReview && (
-        <PromptReviewer
-          disabled={messages.length > 0}
-          isStreaming={isStreaming}
-          onGenerateContent={generateContent}
-          stop={stop}
-        >
+        <PromptReviewer disabled={messages.length > 0}>
           <GeneratedPrompt />
         </PromptReviewer>
       )}
 
       {(messages.length > 0 || error) && (
         <div className="space-y-4">
-          <ChatThread
-            messages={messages}
-            error={error}
-            isStreaming={isStreaming}
-            onSendFollowUp={sendFollowUp}
-            setMessages={setMessages}
-          />
+          <ChatThread />
         </div>
       )}
     </div>

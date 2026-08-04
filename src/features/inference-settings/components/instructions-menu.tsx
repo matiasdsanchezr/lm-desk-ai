@@ -1,5 +1,6 @@
 "use client"
 
+import { deletePrompt, savePrompt } from "@/features/inference-settings/actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,17 +24,14 @@ import {
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
-import {
-  deletePrompt,
-  loadPrompt,
-  savePrompt,
-} from "@/features/settings/actions"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
+import { getPromptAction } from "../api/get-prompt-action"
 import { useSettingsStore } from "../store/settings-store"
+import { PromptMeta } from "../types"
 
 interface Props {
-  availablePrompts: string[]
+  availablePrompts: PromptMeta[]
 }
 
 export const InstructionsMenu = ({ availablePrompts }: Props) => {
@@ -44,7 +42,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
   const [isPending, startTransition] = useTransition()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"editor" | "templates">("editor")
-  const [promptsList, setPromptsList] = useState<string[]>(availablePrompts)
+  const [promptsList, setPromptsList] = useState<PromptMeta[]>(availablePrompts)
   const [newTemplateName, setNewTemplateName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
@@ -60,7 +58,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
   const handleSelectTemplate = (promptId: string) => {
     startTransition(async () => {
       try {
-        const result = await loadPrompt(promptId)
+        const result = await getPromptAction(promptId)
         if (result.data) {
           setDraft(result.data)
           setActiveTab("editor")
@@ -82,8 +80,8 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
         return
       }
 
-      if (result.data && !promptsList.includes(result.data.fileName)) {
-        setPromptsList((prev) => [...prev, result.data!.fileName])
+      if (result.data && !promptsList.some((p) => p.id === result.data?.id)) {
+        setPromptsList((prev) => [...prev, result.data!])
       }
 
       setNewTemplateName("")
@@ -108,7 +106,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
         alert(result.error)
         return
       }
-      setPromptsList((prev) => prev.filter((p) => p !== templateToDelete))
+      setPromptsList((prev) => prev.filter((p) => p.id !== templateToDelete))
     } catch (error) {
       console.error("Error al eliminar la plantilla:", error)
     } finally {
@@ -241,23 +239,23 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
                   ) : (
                     promptsList.map((p) => (
                       <div
-                        key={p}
+                        key={p.id}
                         className="group flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2 text-xs transition-colors hover:bg-muted/50"
                       >
                         <button
                           type="button"
                           className="mr-2 flex flex-1 items-center truncate text-left font-medium text-muted-foreground hover:text-foreground"
-                          onClick={() => handleSelectTemplate(p)}
+                          onClick={() => handleSelectTemplate(p.id)}
                         >
                           <span className="mr-2 icon-[fa6-solid--file-lines] h-3.5 w-3.5 shrink-0 opacity-70" />
                           <span className="truncate">
-                            {p.replace(".md", "")}
+                            {p.id.replace(".md", "")}
                           </span>
                         </button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => handleDeleteClick(p, e)}
+                          onClick={(e) => handleDeleteClick(p.id, e)}
                           className="h-7 w-7 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
                           title="Eliminar plantilla"
                         >

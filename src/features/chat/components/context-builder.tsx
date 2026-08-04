@@ -6,7 +6,7 @@ import {
   type FileTreeNode,
 } from "@/features/file-explorer"
 import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
-import { useSettingsStore } from "@/features/settings/store/settings-store"
+import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import {
   MentionOption,
   TextEditor,

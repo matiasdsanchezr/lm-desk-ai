@@ -1,5 +1,7 @@
 "use client"
 
+import { useChatActions } from "@/features/chat/store/chat-store"
+import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { Button } from "@/shared/components/ui/button"
 import {
   Card,
@@ -9,27 +11,18 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card"
 import { Separator } from "@/shared/components/ui/separator"
-import { useChatActions } from "@/features/chat/store/chat-store"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import React from "react"
+import { useChatCompletion } from "../providers/chat-completion-provider"
 
 interface PromptReviewerProps {
   disabled: boolean
-  isStreaming: boolean
-  onGenerateContent: () => void
-  stop: () => void
   children?: React.ReactNode
 }
 
-export const PromptReviewer = ({
-  disabled,
-  isStreaming,
-  onGenerateContent,
-  stop,
-  children,
-}: PromptReviewerProps) => {
+export const PromptReviewer = ({ disabled, children }: PromptReviewerProps) => {
   const { clearPrompts, resetAll: resetAllChat } = useChatActions()
   const resetFiles = useFileExplorerStore((s) => s.resetFiles)
+  const { isStreaming, generateContent, stop } = useChatCompletion()
 
   const handleModifyQuery = () => {
     clearPrompts()
@@ -67,7 +60,7 @@ export const PromptReviewer = ({
               type="button"
               disabled={isStreaming || disabled}
               className="inline-flex items-center gap-2 px-5"
-              onClick={onGenerateContent}
+              onClick={generateContent}
             >
               {isStreaming ? (
                 <>
