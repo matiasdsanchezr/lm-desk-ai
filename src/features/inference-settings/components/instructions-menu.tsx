@@ -26,7 +26,7 @@ import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
-import { getPromptAction } from "../api/get-prompt-action"
+import { getPromptAction } from "../actions"
 import { useSettingsStore } from "../store/settings-store"
 import { PromptMeta } from "../types"
 

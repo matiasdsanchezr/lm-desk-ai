@@ -1,7 +1,7 @@
 "use server"
 
 import { ActionResponse } from "@/shared/types/action-state"
-import { mkdir, unlink, writeFile } from "fs/promises"
+import { mkdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
 import { PROMPTS_DIR } from "./constants"
@@ -34,5 +34,19 @@ export const deletePrompt = async (promptId: string): ActionResponse => {
     return { data: undefined }
   } catch (error) {
     return { error: "No se pudo eliminar la plantilla" }
+  }
+}
+
+export const getPromptAction = async (
+  promptId: string
+): Promise<ActionResponse<string>> => {
+  try {
+    const systemPrompt = await readFile(
+      path.join(PROMPTS_DIR, promptId),
+      "utf-8"
+    )
+    return { data: systemPrompt }
+  } catch (error) {
+    return { error: "No se pudo cargar la plantilla" }
   }
 }

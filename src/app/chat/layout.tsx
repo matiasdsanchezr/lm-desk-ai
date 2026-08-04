@@ -5,7 +5,7 @@ import {
   SettingsDrawer,
   SettingsDrawerSkeleton,
 } from "@/features/inference-settings"
-import { getPromptList } from "@/features/inference-settings/api/get-prompt-list"
+import { getPromptList } from "@/features/inference-settings/queries"
 import { SidebarProvider } from "@/shared/components/ui/sidebar"
 import { Metadata } from "next"
 import React, { Suspense } from "react"

@@ -5,13 +5,19 @@
 - Esta app esta diseñada para funcionar localmente y ser usada por un solo usuario
 - El `STORAGE_PATH` esta en el servidor
 
-## AI SDK 7+
+## Next.js 15+
+
+- Vercel recomienda usar `Streaming with Suspense`, es decir, hacer fetching en un server componente y usar `use` para resolver el promise. Esto permite que la página se muestre de inmediato
+
+## AI SDK 6+ (@ai-sdk/react - ai)
 
 - `ModelMessage` reemplaza el tipo `CoreMessage`
 - `Output.object()` es un método para crear un objeto `Output` con un `JSON schema`
-- El hook `useChat` envia mensajes mediante la función `sendMessage`
-- Las imagenes pasadas en el hook `useChat` se hacen mediante la propiedad `files`
-- Los mensajes generados por `sendMessage()` siempre tienen la propiedad `parts`. No existe contenido en `message.content`
+- El hook `useChat`:
+  - Envía mensajes mediante la función `sendMessage`
+  - El campo`messages` posee el historial de mensajes `UIMessage`. `initialMessages` no existe.
+  - Las imagenes pasadas `sendMessage` se hacen mediante la propiedad `files`
+  - Los mensajes generados por `sendMessage` siempre tienen la propiedad `parts`. No existe contenido en `message.content` (legacy)
 
 ## Zod 4+
 
