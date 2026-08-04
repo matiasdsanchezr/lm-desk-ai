@@ -27,7 +27,7 @@ import {
   deletePrompt,
   loadPrompt,
   savePrompt,
-} from "@/features/settings/actions/prompt"
+} from "@/features/settings/actions"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
 import { useSettingsStore } from "../store/settings-store"

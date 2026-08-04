@@ -1,5 +1,6 @@
 "use client"
 
+import { useChatActions } from "@/features/chat/store/chat-store"
 import {
   Sidebar,
   SidebarContent,
@@ -9,15 +10,14 @@ import {
   SidebarMenu,
   SidebarTrigger,
 } from "@/shared/components/ui/sidebar"
-import { useChatActions } from "@/features/chat/store/chat-store"
-import { ActionState } from "@/shared/types/action-state"
+import { ActionResponse } from "@/shared/types/action-state"
 import { useParams, useRouter } from "next/navigation"
 import { startTransition, use, useCallback } from "react"
 import type { ChatMeta } from "../../types"
 import { ChatHistoryItem } from "./chat-history-item"
 
 interface ChatHistorySidebarProps {
-  savedChatsPromise: Promise<ActionState<ChatMeta[]>>
+  savedChatsPromise: ActionResponse<ChatMeta[]>
 }
 
 export function ChatHistorySidebar({
@@ -28,7 +28,7 @@ export function ChatHistorySidebar({
     return <div>Error: {savedChatsResult.error}</div>
   }
 
-  const savedChats = savedChatsResult.data || [] 
+  const chatList = savedChatsResult.data || []
   const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()
@@ -86,14 +86,14 @@ export function ChatHistorySidebar({
       <SidebarContent className="p-2 group-data-[collapsible=icon]:hidden">
         <SidebarGroup>
           <SidebarGroupContent>
-            {savedChats.length === 0 ? (
+            {chatList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center text-xs text-muted-foreground">
                 <span className="mb-2 icon-[lucide--archive-x] size-8 opacity-40" />
                 <span>No hay sesiones guardadas</span>
               </div>
             ) : (
               <SidebarMenu className="gap-1.5">
-                {savedChats.map((chat) => (
+                {chatList.map((chat) => (
                   <ChatHistoryItem
                     key={chat.id}
                     chat={chat}

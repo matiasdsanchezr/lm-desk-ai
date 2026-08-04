@@ -1,6 +1,6 @@
 "use client"
 
-import { ActionState } from "@/shared/types/action-state"
+import { ActionResponse } from "@/shared/types/action-state"
 import { createContext, use, useContext, useMemo } from "react"
 import type { FileTreeNode, TreeStructureResponse } from "../types"
 
@@ -12,7 +12,7 @@ interface FileExplorerContextValue {
 const FileExplorerContext = createContext<FileExplorerContextValue | null>(null)
 
 interface FileExplorerProviderProps {
-  treeStructurePromise: Promise<ActionState<TreeStructureResponse>>
+  treeStructurePromise: ActionResponse<TreeStructureResponse>
   children: React.ReactNode
 }
 

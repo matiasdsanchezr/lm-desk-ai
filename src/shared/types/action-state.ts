@@ -3,3 +3,5 @@ export type ActionState<T = void> = {
   error?: string
   validationErrors?: Record<string, string[]>
 }
+
+export type ActionResponse<T = void> = Promise<ActionState<T>>

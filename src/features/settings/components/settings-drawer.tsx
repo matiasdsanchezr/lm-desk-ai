@@ -10,7 +10,7 @@ import {
 } from "@/shared/components/ui/sheet"
 import { notFound } from "next/navigation"
 import { use } from "react"
-import type { loadPrompts } from "../actions/prompt"
+import type { loadPrompts } from "../actions"
 import { InstructionsMenu } from "../components/instructions-menu"
 import { ModelParameters } from "../components/model-parameters"
 import { ProviderMenu } from "../components/provider-menu"

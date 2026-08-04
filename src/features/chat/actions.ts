@@ -1,23 +1,23 @@
 "use server"
 
-import { ActionState } from "@/shared/types/action-state"
+import { ActionResponse } from "@/shared/types/action-state"
 import { revalidatePath } from "next/cache"
 import * as historyService from "./services/history-service"
-import type { CreateChatInput, UpdateChatInput } from "./types"
+import type { Chat, CreateChatInput, UpdateChatInput } from "./types"
 
 export const saveChat = async (
   data: CreateChatInput
-): Promise<ActionState<{ id: string }>> => {
+): ActionResponse<Chat> => {
   try {
     const result = await historyService.createChat(data)
     revalidatePath("/chat")
-    return { data: { id: result.id } }
+    return { data: result }
   } catch (error) {
     return { error: "No se pudo guardar el chat" }
   }
 }
 
-export const deleteChat = async (id: string): Promise<ActionState<void>> => {
+export const deleteChat = async (id: string): ActionResponse<void> => {
   try {
     await historyService.deleteChat(id)
     revalidatePath("/chat")
@@ -30,7 +30,7 @@ export const deleteChat = async (id: string): Promise<ActionState<void>> => {
 export const updateChat = async (
   id: string,
   updates: UpdateChatInput
-): Promise<ActionState<void>> => {
+): ActionResponse<void> => {
   try {
     await historyService.updateChat(id, updates)
     revalidatePath("/chat")

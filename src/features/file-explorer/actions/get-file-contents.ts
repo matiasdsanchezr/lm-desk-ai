@@ -6,7 +6,7 @@ import {
   isImageFile,
   readLocalImagesAsBase64,
 } from "@/shared/services/file-service"
-import { ActionState } from "@/shared/types/action-state"
+import { ActionResponse } from "@/shared/types/action-state"
 import { ImageFile } from "@/shared/types/image-file"
 import { z } from "zod"
 import { fetchImage } from "../utils"
@@ -23,9 +23,9 @@ type GetFileContentsState = {
 }
 
 export async function getFileContents(
-  _prev: ActionState<GetFileContentsState>,
+  _prev: unknown,
   formData: FormData
-): Promise<ActionState<GetFileContentsState>> {
+): ActionResponse<GetFileContentsState> {
   const parsed = GeneratePromptSchema.safeParse({
     filePaths: formData.getAll("filePath"),
     includeDependencies: formData.get("includeDependencies"),
