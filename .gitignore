@@ -43,3 +43,11 @@ next-env.d.ts
 !/storage/prompts/default.md
 !/storage/prompts/nextjs-expert.md
 !/storage/prompts/prompt-engineering-expert
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

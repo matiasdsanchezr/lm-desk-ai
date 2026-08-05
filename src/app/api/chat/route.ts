@@ -5,11 +5,16 @@ import { streamText } from "@/shared/services/inference-service/inference-servic
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
 import {
+  applyPostProcessorScript,
+  postProcessorTransform,
+} from "@/shared/services/inference-service/utils/post-processor"
+import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   safeValidateUIMessages,
   toUIMessageStream,
+  UIMessage,
 } from "ai"
 import { NextResponse } from "next/server"
 import { string, z } from "zod"
@@ -90,41 +95,94 @@ export async function POST(req: Request) {
           const result = streamText({
             inferenceModel: inferenceModelResult.data,
             instructions: instructions,
-            messages: modelMessages,
+            messages: modelMessages.map((m) =>
+              m.role === "user"
+                ? {
+                    ...m,
+                    content:
+                      typeof m.content === "string"
+                        ? m.content.replace(/ /g, "¶")
+                        : m.content.map((c) =>
+                            c.type === "text"
+                              ? { ...c, text: c.text.replace(/ /g, "¶") }
+                              : c
+                          ),
+                  }
+                : m
+            ),
             temperature,
             topP,
+            experimental_transform: [postProcessorTransform()],
           })
+
+          let chatId = id
+          if (!chatId) {
+            chatId = `session-${Date.now()}`
+            writer.write({
+              type: "data-chat-id",
+              data: { id: chatId },
+              transient: true,
+            })
+          }
 
           writer.merge(
             toUIMessageStream({
               stream: result.stream,
               originalMessages: validatedMessages.data,
               sendReasoning: includeReasoning,
-              onEnd: async ({ messages }) => {
+              onEnd: async ({ messages, responseMessage }) => {
                 try {
-                  if (id) {
-                    const existingChat = await getChatById(id)
-                    if (existingChat) {
-                      await updateChat(id, {
-                        messages: messages,
-                      })
+                  let textContent = ""
+                  for (const part of responseMessage.parts) {
+                    if (part.type === "text") {
+                      textContent += (textContent ? "\n\n" : "") + part.text
+                    }
+                  }
+
+                  if (textContent) {
+                    const processedText =
+                      await applyPostProcessorScript(textContent)
+
+                    const finalMessages: UIMessage[] = messages.map((msg) => {
+                      if (
+                        msg.id === responseMessage.id &&
+                        Array.isArray(msg.parts)
+                      ) {
+                        return {
+                          ...msg,
+                          parts: msg.parts.map((p) =>
+                            p.type === "text"
+                              ? { ...p, text: processedText }
+                              : p
+                          ),
+                        }
+                      }
+                      return msg
+                    })
+                    if (chatId) {
+                      const existingChat = await getChatById(chatId)
+                      if (existingChat) {
+                        await updateChat(chatId, {
+                          messages: finalMessages,
+                        })
+                      } else {
+                        await saveChat({
+                          id: chatId,
+                          selectedFilePaths: selectedFilePaths || [],
+                          messages: finalMessages,
+                        })
+                      }
                     } else {
-                      await saveChat({
-                        id: id,
+                      const result = await saveChat({
                         selectedFilePaths: selectedFilePaths || [],
                         messages: messages,
                       })
+                      writer.write({
+                        type: "data-chat-id",
+                        data: { id: result.data?.id },
+                        transient: true,
+                      })
                     }
-                  } else {
-                    const result = await saveChat({
-                      selectedFilePaths: selectedFilePaths || [],
-                      messages: messages,
-                    })
-                    writer.write({
-                      type: "data-chat-id",
-                      data: { id: result.data?.id },
-                      transient: true,
-                    })
                   }
                 } catch (err) {
                   console.error(

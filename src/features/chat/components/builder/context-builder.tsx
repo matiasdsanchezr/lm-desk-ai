@@ -7,6 +7,7 @@ import {
 } from "@/features/file-explorer"
 import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
 import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
+import { WebCrawlerTrigger } from "@/features/web-crawler/components/web-crawler-trigger"
 import {
   MentionOption,
   TextEditor,
@@ -130,6 +131,7 @@ export const ContextBuilder = ({
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <FileExplorerTrigger disabled={isDisabled} />
+            <WebCrawlerTrigger disabled={isDisabled} />
 
             <Button
               type="button"
