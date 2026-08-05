@@ -1,4 +1,6 @@
-import { saveChat, updateChat } from "@/features/chat"
+import { saveChat, updateChat } from "@/features/chat/actions"
+import { getChatById } from "@/features/chat/queries"
+
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
@@ -10,14 +12,14 @@ import {
   toUIMessageStream,
 } from "ai"
 import { NextResponse } from "next/server"
-import { z } from "zod"
+import { string, z } from "zod"
 
 const ChatRequestBodySchema = z.object({
-  chatId: z.string().optional(),
+  id: string(),
   provider: InferenceProviderEnum,
   messages: z.array(z.unknown()),
   model: z.string(),
-  system: z.string().default(""),
+  instructions: z.string().default(""),
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   selectedFilePaths: z.array(z.string()).optional(),
@@ -47,11 +49,11 @@ export async function POST(req: Request) {
       )
     }
     const {
-      chatId,
+      id,
       provider,
       messages,
       model,
-      system,
+      instructions,
       temperature,
       topP,
       selectedFilePaths,
@@ -78,20 +80,7 @@ export async function POST(req: Request) {
     if (!validatedMessages.success) {
       throw new Error(validatedMessages.error.message)
     }
-
-    const messagesToProcess = includeReasoning
-      ? validatedMessages.data
-      : validatedMessages.data.map((msg) => {
-          if (msg.role === "assistant" && Array.isArray(msg.parts)) {
-            return {
-              ...msg,
-              parts: msg.parts.filter((part) => part.type !== "reasoning"),
-            }
-          }
-          return msg
-        })
-
-    const modelMessages = await convertToModelMessages(messagesToProcess)
+    const modelMessages = await convertToModelMessages(validatedMessages.data)
 
     return createUIMessageStreamResponse({
       status: 200,
@@ -99,48 +88,54 @@ export async function POST(req: Request) {
       stream: createUIMessageStream({
         execute({ writer }) {
           const result = streamText({
-            system,
-            messages: modelMessages,
             inferenceModel: inferenceModelResult.data,
-            config: { temperature, topP },
+            instructions: instructions,
+            messages: modelMessages,
+            temperature,
+            topP,
           })
 
           writer.merge(
             toUIMessageStream({
               stream: result.stream,
               originalMessages: validatedMessages.data,
-              sendReasoning: true,
-              onError: (error: unknown) => {
-                console.error("[/api/chat] Error en el stream:", error)
-                return "Error al generar la respuesta"
-              },
-              onFinish: async ({ messages, responseMessage }) => {
+              sendReasoning: includeReasoning,
+              onEnd: async ({ messages }) => {
                 try {
-                  let textContent = ""
-                  for (const part of responseMessage.parts) {
-                    if (part.type === "text") {
-                      textContent += (textContent ? "\n\n" : "") + part.text
-                    }
-                  }
-
-                  if (textContent) {
-                    if (chatId) {
-                      await updateChat(chatId, {
-                        messages,
+                  if (id) {
+                    const existingChat = await getChatById(id)
+                    if (existingChat) {
+                      await updateChat(id, {
+                        messages: messages,
                       })
                     } else {
                       await saveChat({
+                        id: id,
                         selectedFilePaths: selectedFilePaths || [],
-                        messages,
+                        messages: messages,
                       })
                     }
+                  } else {
+                    const result = await saveChat({
+                      selectedFilePaths: selectedFilePaths || [],
+                      messages: messages,
+                    })
+                    writer.write({
+                      type: "data-chat-id",
+                      data: { id: result.data?.id },
+                      transient: true,
+                    })
                   }
                 } catch (err) {
                   console.error(
-                    "[/api/chat] Error al guardar el chat automáticamente:",
+                    "[/api/chat] Error al procesar o guardar el chat dinámicamente:",
                     err
                   )
                 }
+              },
+              onError: (error: unknown) => {
+                console.error("[/api/chat] Error en el stream:", error)
+                return "Error al generar la respuesta"
               },
             })
           )

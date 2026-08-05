@@ -1,9 +1,7 @@
-import { generateId } from "ai"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 interface ChatState {
-  sessionId: string
   userTask: string
   contextualPrompt: string
   standalonePrompt: string
@@ -24,7 +22,6 @@ interface ChatActions {
 }
 
 const createInitialState = () => ({
-  sessionId: generateId(),
   userTask: "",
   contextualPrompt: "",
   standalonePrompt: "",
@@ -42,7 +39,6 @@ export const useChatStore = create<ChatState & ChatActions>()(
         setIncludeReasoning: (includeReasoning) => set({ includeReasoning }),
         clearPrompts: () =>
           set({
-            sessionId: generateId(),
             contextualPrompt: "",
             standalonePrompt: "",
           }),
@@ -52,7 +48,6 @@ export const useChatStore = create<ChatState & ChatActions>()(
     {
       name: "chat-state",
       partialize: (state) => ({
-        sessionId: state.sessionId,
         userTask: state.userTask,
         includeReasoning: state.includeReasoning,
       }),

@@ -11,6 +11,7 @@ export interface Chat {
 export type ChatMeta = Pick<Chat, "id" | "title" | "createdAt">
 
 export type CreateChatInput = {
+  id?: string
   title?: string
   selectedFilePaths: string[]
   messages: UIMessage[]

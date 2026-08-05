@@ -24,7 +24,7 @@ const loadTargetProjectPath = () => {
   return targetPath
 }
 
-const GENAI_API_KEY = process.env.GENAI_API_KEY
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
 const VERTEX_API_KEY = process.env.VERTEX_API_KEY
 const OPEN_ROUTER_API_KEY = process.env.OPEN_ROUTER_API_KEY
 const NVIDIA_NIM_API_KEY = process.env.NVIDIA_NIM_API_KEY
@@ -41,7 +41,7 @@ if (!TARGET_PROJECT_PATH) {
 
 export const config = {
   TARGET_PROJECT_PATH,
-  GENAI_API_KEY,
+  GOOGLE_API_KEY,
   VERTEX_API_KEY,
   OPEN_ROUTER_API_KEY,
   NVIDIA_NIM_API_KEY,

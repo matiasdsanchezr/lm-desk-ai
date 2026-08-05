@@ -11,6 +11,7 @@ import {
   use,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
 } from "react"
 import { useChatStore } from "../store/chat-store"
@@ -43,7 +44,6 @@ export function ChatCompletionProvider({
 }: ChatCompletionProviderProps) {
   const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
-  const sessionId = useChatStore((s) => s.sessionId)
   const isExistingChat = initialChatPromise !== undefined
 
   const handleFinish = useCallback(() => {
@@ -59,10 +59,28 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: initialChat?.id || sessionId,
+    id: initialChat?.id ?? "",
     messages: initialChat?.messages,
-    onFinish: handleFinish,
+    onData: ({ data, type }: { type: string; data: unknown }) => {
+      if (type === "data-chat-id") {
+        console.log("data", data)
+        window.history.replaceState(
+          null,
+          "",
+          `/chat/${(data as { id: string }).id}`
+        )
+      }
+    },
   })
+
+  useEffect(() => {
+    setMessages(initialChat?.messages ?? [])
+    if (initialChat?.selectedFilePaths) {
+      useFileExplorerStore
+        .getState()
+        .setSelectedFilePaths(initialChat.selectedFilePaths)
+    }
+  }, [initialChat?.id, setMessages])
 
   const isStreaming = status === "streaming" || status === "submitted"
 
@@ -74,7 +92,6 @@ export function ChatCompletionProvider({
     const { imageFiles: images, selectedFilePaths } =
       useFileExplorerStore.getState()
     const settings = useSettingsStore.getState()
-
     const imageFiles: FileUIPart[] = images.map((i) => ({
       type: "file",
       mediaType: i.mimeType,
@@ -90,7 +107,8 @@ export function ChatCompletionProvider({
       },
       {
         body: {
-          system: settings.systemPrompt,
+          chatId: initialChat?.id,
+          instructions: settings.systemPrompt,
           provider: settings.modelConfig.provider,
           model: settings.modelConfig.model,
           temperature: settings.temperature,
@@ -113,7 +131,7 @@ export function ChatCompletionProvider({
         { text },
         {
           body: {
-            system: settings.systemPrompt,
+            instructions: settings.systemPrompt,
             provider: settings.modelConfig.provider,
             model: settings.modelConfig.model,
             temperature: settings.temperature,

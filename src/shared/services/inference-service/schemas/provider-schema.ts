@@ -1,12 +1,12 @@
 import z from "zod"
 
 export const InferenceProviderEnum = z.enum([
-  "genai",
+  "google",
   "vertex",
   "nvidiaNim",
   "openRouter",
   "antigravity",
-  "openai"
+  "openai",
 ])
 
 export type InferenceProvider = z.infer<typeof InferenceProviderEnum>

@@ -21,8 +21,8 @@ async function ensureDirectoryExists(): Promise<void> {
 export async function createChat(data: CreateChatInput): Promise<Chat> {
   await ensureDirectoryExists()
 
-  const id = `session-${Date.now()}`
-  const title = data.title ?? id
+  const id = data.id ?? `session-${Date.now()}`
+  const title = data.title ?? "Chat sin titulo"
   const createdAt = new Date().toISOString()
 
   const newChat: Chat = {
@@ -109,7 +109,7 @@ export async function listChats(): Promise<ChatMeta[]> {
         } satisfies ChatMeta
       } catch (err) {
         console.error("Error al listar sesiones previas", err)
-        return []
+        return null
       }
     })
   )

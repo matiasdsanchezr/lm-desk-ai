@@ -1,36 +1,21 @@
-import { ModelMessage } from "ai"
+import { generateText, ModelMessage, streamText } from "ai"
 import { type ZodType } from "zod"
 import { type InferenceModel } from "./inference-model"
 
-export type InferenceRequestOptions = {
-  /**
-   * Objeto unificado provider+model.
-   * Usar InferenceModelSchema.parse(...) al construir desde input no tipado
-   * (formularios, URL params, payloads de API) para garantizar combinaciones válidas.
-   */
+export type GenerateTextOptions = Omit<
+  Parameters<typeof generateText>[0],
+  "model" | "prompt"
+> & {
   inferenceModel: InferenceModel
-  system?: string
-  messages: ModelMessage[]
-  contextInfo?: string
-  debug?: boolean
   responseJsonSchema?: ZodType
-  signal?: AbortSignal
-  config?: {
-    temperature?: number
-    topP?: number
-    topK?: number
-    maxOutputTokens?: number
-  }
-  enableThinking?: boolean
-  includeThoughts?: boolean
-  maxRetries?: number
+  messages: ModelMessage[]
 }
 
-/**
- * Helper opcional para extraer campos sueltos si algún cliente
- * aún los necesita por separado (transitorio durante el refactor).
- */
-export const getProviderAndModel = (opts: InferenceRequestOptions) => ({
-  provider: opts.inferenceModel.provider,
-  model: opts.inferenceModel.model,
-})
+export type StreamTextOptions = Omit<
+  Parameters<typeof streamText>[0],
+  "model" | "prompt"
+> & {
+  inferenceModel: InferenceModel
+  responseJsonSchema?: ZodType
+  messages: ModelMessage[]
+}

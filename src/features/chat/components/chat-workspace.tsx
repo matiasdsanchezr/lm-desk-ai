@@ -12,10 +12,8 @@ import { ChatThread } from "./thread/chat-thread"
 export function ChatWorkspace() {
   const standalonePrompt = useChatStore((s) => s.standalonePrompt)
   const { initialChat, messages, error, isStreaming } = useChatCompletion()
-
   const { fetchFileState, handleFetchFileContents, isFetchingFiles } =
     useContextProcessor()
-
   const isReadyToReview = Boolean(standalonePrompt)
   const isDisabled = isFetchingFiles || isStreaming || isReadyToReview
 

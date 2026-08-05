@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "Aplicación para analizar código mediante LLMs y generar sugerencias de mejoras.",
   openGraph: {
     title: "Code Advisor",
-    description: "Next.js - TypeScript - Node.js - GenAI - Vertex - NVIDIA NIM",
+    description: "Next.js - TypeScript - Node.js",
     locale: "es_AR",
   },
   keywords: ["AI", "LLM", "Coding", "Agent"],
@@ -33,10 +33,12 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", inter.variable)} suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} dark antialiased`}
-      >
+    <html
+      lang="en"
+      className={cn("font-sans", inter.variable)}
+      suppressHydrationWarning
+    >
+      <body className={`${geistSans.variable} dark antialiased`}>
         {children}
       </body>
     </html>

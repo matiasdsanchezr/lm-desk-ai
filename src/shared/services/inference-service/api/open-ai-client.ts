@@ -6,8 +6,11 @@ import {
   streamText as aiStreamText,
   Output,
 } from "ai"
-import { type InferenceClient } from "../../types/inference-client"
-import { type InferenceRequestOptions } from "../../types/inference-request-options"
+import { type InferenceClient } from "../types/inference-client"
+import {
+  StreamTextOptions,
+  type GenerateTextOptions,
+} from "../types/inference-request-options"
 
 export class OpenAiClient implements InferenceClient {
   private _providerInstance?: OpenAIProvider
@@ -30,44 +33,34 @@ export class OpenAiClient implements InferenceClient {
   }
 
   public generateText = async (
-    params: InferenceRequestOptions
+    params: GenerateTextOptions
   ): ReturnType<typeof aiGenerateText> => {
-    const { model } = params.inferenceModel
+    const { inferenceModel, responseJsonSchema, ...config } = params
     const provider = this.getProvider()
     const result = await aiGenerateText({
-      model: provider.chat(model),
-      temperature: params.config?.temperature,
-      topP: params.config?.topP,
-      topK: params.config?.topK,
-      maxRetries: params.maxRetries ?? 0,
-      system: params.system,
-      messages: params.messages,
-      output: params.responseJsonSchema
-        ? Output.object({ schema: params.responseJsonSchema })
+      ...config,
+      model: provider.chat(inferenceModel.model),
+      maxRetries: config.maxRetries ?? 0,
+      output: responseJsonSchema
+        ? Output.object({ schema: responseJsonSchema })
         : undefined,
-      abortSignal: params.signal,
     })
 
     return result
   }
 
   public streamText = (
-    params: InferenceRequestOptions
+    params: StreamTextOptions
   ): ReturnType<typeof aiStreamText> => {
-    const { model } = params.inferenceModel
+    const { inferenceModel, responseJsonSchema, ...config } = params
     const provider = this.getProvider()
     const result = aiStreamText({
-      model: provider.chat(model),
-      temperature: params.config?.temperature,
-      topP: params.config?.topP,
-      topK: params.config?.topK,
-      maxRetries: params.maxRetries ?? 0,
-      system: params.system,
-      messages: params.messages,
-      output: params.responseJsonSchema
-        ? Output.object({ schema: params.responseJsonSchema })
+      ...config,
+      model: provider.chat(inferenceModel.model),
+      maxRetries: config.maxRetries ?? 0,
+      output: responseJsonSchema
+        ? Output.object({ schema: responseJsonSchema })
         : undefined,
-      abortSignal: params.signal,
     })
 
     return result

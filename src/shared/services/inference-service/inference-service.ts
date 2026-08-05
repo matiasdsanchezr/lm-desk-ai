@@ -1,15 +1,18 @@
 import "server-only"
 
 import { config } from "@/shared/lib/config"
-import { AntigravityClient } from "./api/antigravity/antigravity-client"
-import { GoogleGenAIClient } from "./api/google-genai/google-genai-client"
-import { GoogleVertexClient } from "./api/google-vertex/google-vertex-client"
-import { NvidiaNimClient } from "./api/nvidia-nim/nvidia-nim-client"
-import { OpenAiClient } from "./api/open-ai/open-ai-client"
-import { OpenRouterClient } from "./api/open-router/open-router-client"
+import { AntigravityClient } from "./api/antigravity-client"
+import { GoogleClient } from "./api/google-client"
+import { GoogleVertexClient } from "./api/google-vertex-client"
+import { NvidiaNimClient } from "./api/nvidia-nim-client"
+import { OpenAiClient } from "./api/open-ai-client"
+import { OpenRouterClient } from "./api/open-router-client"
 import { type InferenceProvider } from "./schemas/provider-schema"
 import { type InferenceClient } from "./types/inference-client"
-import { type InferenceRequestOptions } from "./types/inference-request-options"
+import {
+  StreamTextOptions,
+  type GenerateTextOptions,
+} from "./types/inference-request-options"
 
 const _clientCache = new Map<InferenceProvider, InferenceClient>()
 
@@ -32,11 +35,11 @@ const PROVIDER_FACTORIES: Record<InferenceProvider, () => InferenceClient> = {
     }
     return new GoogleVertexClient()
   },
-  genai: () => {
-    if (!config.GENAI_API_KEY) {
-      throw new Error("Falta GENAI_API_KEY")
+  google: () => {
+    if (!config.GOOGLE_API_KEY) {
+      throw new Error("Falta GOOGLE_API_KEY")
     }
-    return new GoogleGenAIClient()
+    return new GoogleClient()
   },
   antigravity: () => {
     if (!config.ANTIGRAVITY_API_KEY) {
@@ -74,12 +77,12 @@ function getClient(provider: InferenceProvider): InferenceClient {
   }
 }
 
-export async function generateText(requestOptions: InferenceRequestOptions) {
+export async function generateText(requestOptions: GenerateTextOptions) {
   const { provider } = requestOptions.inferenceModel
   return getClient(provider).generateText(requestOptions)
 }
 
-export function streamText(requestOptions: InferenceRequestOptions) {
+export function streamText(requestOptions: StreamTextOptions) {
   const { provider } = requestOptions.inferenceModel
   return getClient(provider).streamText(requestOptions)
 }

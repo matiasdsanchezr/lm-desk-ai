@@ -8,7 +8,7 @@ export function formatModelName(model: string): string {
 export function formatProviderName(provider: string): string {
   const map: Record<string, string> = {
     geminiCli: "Gemini CLI",
-    genai: "Google GenAI",
+    google: "Google Generative AI",
     vertex: "Google Vertex",
     nvidiaNim: "NVIDIA NIM",
     openRouter: "OpenRouter",
