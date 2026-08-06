@@ -8,6 +8,7 @@ import {
 import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
 import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { WebCrawlerTrigger } from "@/features/web-crawler/components/web-crawler-trigger"
+import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
 import {
   MentionOption,
   TextEditor,
@@ -44,9 +45,8 @@ export const ContextBuilder = ({
 }: ContextBuilderProps) => {
   const [showImageDialog, setShowImageDialog] = useState(false)
   const { treeNodes } = useFileExplorerContext()
-
-  const userTask = useChatStore((s) => s.userTask)
   const { setUserTask } = useChatActions()
+  const userTask = useChatStore((s) => s.userTask)
   const systemPrompt = useSettingsStore((s) => s.systemPrompt)
 
   const {
@@ -64,6 +64,8 @@ export const ContextBuilder = ({
       setSelectedFilePaths: s.setSelectedFilePaths,
     }))
   )
+
+  const selectedWebUrlsCount = useWebCrawlerStore((s) => s.selectedUrls.length)
 
   const imageUrlCount = useMemo(() => {
     return imageUrls
@@ -105,6 +107,11 @@ export const ContextBuilder = ({
     handleFetchFileContents(formData)
   }
 
+  const hasSelectedItems =
+    selectedFilePaths.length > 0 ||
+    imageUrlCount > 0 ||
+    selectedWebUrlsCount > 0
+
   return (
     <>
       <Card
@@ -123,7 +130,8 @@ export const ContextBuilder = ({
                 Define tu consulta
               </CardTitle>
               <CardDescription className="text-sm md:text-base">
-                Selecciona los archivos y describe la tarea que deseas realizar.
+                Selecciona los archivos o páginas web y describe la tarea que
+                deseas realizar.
               </CardDescription>
             </div>
           </div>
@@ -150,10 +158,17 @@ export const ContextBuilder = ({
               )}
             </Button>
 
-            {(selectedFilePaths.length > 0 || imageUrlCount > 0) && (
+            {hasSelectedItems && (
               <span className="text-xs text-muted-foreground">
-                {selectedFilePaths.length} archivo(s)
-                {imageUrlCount > 0 ? `, ${imageUrlCount} imagen(es)` : ""}
+                {[
+                  selectedFilePaths.length > 0 &&
+                    `${selectedFilePaths.length} archivo(s)`,
+                  selectedWebUrlsCount > 0 &&
+                    `${selectedWebUrlsCount} página(s) web`,
+                  imageUrlCount > 0 && `${imageUrlCount} imagen(es)`,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
               </span>
             )}
           </div>

@@ -23,11 +23,10 @@ export function ChatHistorySidebar({
   savedChatsPromise,
 }: ChatHistorySidebarProps) {
   const savedChats = use(savedChatsPromise)
-
   const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()
-  const currentId = params?.chatId as string | undefined
+  const chatId = params?.chatId as string | undefined
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -40,13 +39,8 @@ export function ChatHistorySidebar({
 
   const handleNewChat = useCallback(() => {
     clearPrompts()
-    if (!currentId) {
-      router.refresh()
-      return
-    }
-
     router.push("/chat")
-  }, [router, currentId, clearPrompts])
+  }, [router, clearPrompts])
 
   return (
     <Sidebar
@@ -92,8 +86,8 @@ export function ChatHistorySidebar({
                   <ChatHistoryItem
                     key={chat.id}
                     chat={chat}
-                    isActive={currentId === chat.id}
-                    currentId={currentId}
+                    isActive={chatId === chat.id}
+                    currentId={chatId}
                     onSelect={handleSelect}
                   />
                 ))}

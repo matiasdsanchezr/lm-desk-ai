@@ -116,7 +116,7 @@ export async function POST(req: Request) {
           })
 
           let chatId = id
-          if (!chatId) {
+          if (!chatId || chatId == "new-chat") {
             chatId = `session-${Date.now()}`
             writer.write({
               type: "data-chat-id",

@@ -18,20 +18,19 @@ export async function applyPostProcessorScript(text: string): Promise<string> {
 
   try {
     const sourceCode = await readFile(SCRIPT_PATH, "utf-8")
-
-    const module = {
+    const genericModule = {
       exports: {} as
         | { default?: TextTransformFunction }
         | TextTransformFunction,
     }
 
     const runModule = new Function("module", "exports", sourceCode)
-    runModule(module, module.exports)
+    runModule(genericModule, genericModule.exports)
 
     const transformFn =
-      typeof module.exports === "function"
-        ? module.exports
-        : module.exports.default
+      typeof genericModule.exports === "function"
+        ? genericModule.exports
+        : genericModule.exports.default
 
     if (typeof transformFn === "function") {
       const result = await transformFn(text)
@@ -50,7 +49,7 @@ export async function applyPostProcessorScript(text: string): Promise<string> {
 
 export const postProcessorTransform =
   <TOOLS extends ToolSet>() =>
-  (options: { tools: TOOLS; stopStream: () => void }) =>
+  () =>
     new TransformStream<TextStreamPart<TOOLS>, TextStreamPart<TOOLS>>({
       async transform(chunk, controller) {
         controller.enqueue(

@@ -13,7 +13,7 @@ import {
 import { Checkbox } from "@/shared/components/ui/checkbox"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
 import { useChatActions, useChatStore } from "../../store/chat-store"
 import { groupMessagesIntoTurns } from "../../utils"
@@ -26,6 +26,11 @@ export function ChatThread() {
   const { messages, error, isStreaming, sendFollowUp, setMessages } =
     useChatCompletion()
 
+  const latestMessagesRef = useRef(messages)
+  useEffect(() => {
+    latestMessagesRef.current = messages
+  }, [messages])
+
   const handleFollowUpSubmit = useCallback(
     (e: React.SubmitEvent | React.KeyboardEvent) => {
       e.preventDefault()
@@ -34,6 +39,32 @@ export function ChatThread() {
       setFollowUpText("")
     },
     [followUpText, isStreaming, sendFollowUp]
+  )
+
+  const handleEditMessage = useCallback(
+    (messageId: string, newText: string) => {
+      const updated = latestMessagesRef.current.map((msg) => {
+        if (msg.id !== messageId) return msg
+        const newParts =
+          msg.parts?.map((p) =>
+            p.type === "text" ? { ...p, text: newText } : p
+          ) ?? [{ type: "text" as const, text: newText }]
+        return { ...msg, parts: newParts }
+      })
+      setMessages(updated)
+    },
+    [setMessages]
+  )
+
+  const handleDeleteTurn = useCallback(
+    (userMsgId?: string, asstMsgId?: string) => {
+      const idsToRemove = [userMsgId, asstMsgId].filter(Boolean)
+      const updated = latestMessagesRef.current.filter(
+        (msg) => !idsToRemove.includes(msg.id)
+      )
+      setMessages(updated)
+    },
+    [setMessages]
   )
 
   const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages])
@@ -79,8 +110,8 @@ export function ChatThread() {
                   turn={turn}
                   isStreaming={isStreaming}
                   isLast={index === turns.length - 1}
-                  messages={messages}
-                  setMessages={setMessages}
+                  onEditMessage={handleEditMessage}
+                  onDeleteTurn={handleDeleteTurn}
                 />
               ))}
               {error && (
@@ -122,7 +153,6 @@ export function ChatThread() {
               onSubmit={handleFollowUpSubmit}
               className="group relative flex flex-col rounded-xl border border-border/80 bg-background/95 p-3 shadow-xs transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 hover:border-border"
             >
-              {/* Barra superior de opciones y contexto */}
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground/80">
                   <span className="icon-[lucide--messages-square] h-4 w-4 text-primary" />
@@ -146,7 +176,6 @@ export function ChatThread() {
                 </div>
               </div>
 
-              {/* Área del editor de texto */}
               <Textarea
                 value={followUpText}
                 onChange={(e) => setFollowUpText(e.target.value)}
@@ -162,7 +191,6 @@ export function ChatThread() {
                 }}
               />
 
-              {/* Barra inferior con atajos y botón de acción */}
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/30 pt-2">
                 <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <span className="icon-[lucide--corner-down-left] h-3 w-3 text-muted-foreground/70" />

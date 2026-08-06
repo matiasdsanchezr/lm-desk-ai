@@ -12,6 +12,10 @@ import { SidebarProvider } from "@/shared/components/ui/sidebar"
 import { Metadata } from "next"
 import React, { Suspense } from "react"
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export const metadata: Metadata = {
   title: "Chat - LM Desk",
   description: "Generar consultas para LLMs sobre tus archivos locales",

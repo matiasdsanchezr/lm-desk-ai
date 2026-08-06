@@ -14,7 +14,6 @@ import {
 import { Separator } from "@/shared/components/ui/separator"
 import { cn } from "@/shared/lib/utils"
 import { createCodePlugin } from "@streamdown/code"
-import type { UIDataTypes, UIMessage, UITools } from "ai"
 import { memo, useState } from "react"
 import { Streamdown } from "streamdown"
 import { useCopyToClipboard } from "../../hooks/use-copy-to-clipboard"
@@ -37,8 +36,8 @@ interface ChatTurnItemProps {
   turn: ChatTurn
   isStreaming: boolean
   isLast: boolean
-  messages: UIMessage<unknown, UIDataTypes, UITools>[]
-  setMessages?: (messages: UIMessage<unknown, UIDataTypes, UITools>[]) => void
+  onEditMessage?: (messageId: string, newText: string) => void
+  onDeleteTurn?: (userMsgId?: string, asstMsgId?: string) => void
 }
 
 const codePlugin = createCodePlugin({
@@ -51,8 +50,8 @@ export const ChatTurnItem = memo(
     turn,
     isStreaming,
     isLast,
-    messages,
-    setMessages,
+    onEditMessage,
+    onDeleteTurn,
   }: ChatTurnItemProps) {
     const [isOpen, setIsOpen] = useState(true)
     const [isUserTextExpanded, setIsUserTextExpanded] = useState(false)
@@ -69,33 +68,19 @@ export const ChatTurnItem = memo(
     const responseText = getMessagePart(turn.assistantMessage, "text")
 
     const handleSave = (role: "user" | "assistant", newText: string) => {
-      if (!setMessages) return
+      if (!onEditMessage) return
 
       const messageToUpdate =
         role === "user" ? turn.userMessage : turn.assistantMessage
       if (!messageToUpdate) return
 
-      const updatedMessages = messages.map((msg) => {
-        if (msg.id !== messageToUpdate.id) return msg
-
-        const newParts = msg.parts?.map((p) =>
-          p.type === "text" ? { ...p, text: newText } : p
-        ) ?? [{ type: "text" as const, text: newText }]
-
-        return { ...msg, parts: newParts }
-      })
-
-      setMessages(updatedMessages)
+      onEditMessage(messageToUpdate.id, newText)
       setEditingRole(null)
     }
 
-    const handleDeleteTurn = () => {
-      if (!setMessages) return
-      const idsToRemove = [
-        turn.userMessage?.id,
-        turn.assistantMessage?.id,
-      ].filter(Boolean)
-      setMessages(messages.filter((msg) => !idsToRemove.includes(msg.id)))
+    const handleDeleteTurnClick = () => {
+      if (!onDeleteTurn) return
+      onDeleteTurn(turn.userMessage?.id, turn.assistantMessage?.id)
     }
 
     const isUserContentVisible = isUserTextExpanded || editingRole === "user"
@@ -163,35 +148,37 @@ export const ChatTurnItem = memo(
                       </Button>
                     )}
 
-                    {!isStreaming && setMessages && editingRole !== "user" && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setIsUserTextExpanded(true)
-                            setEditingRole("user")
-                          }}
-                          title="Editar consulta"
-                        >
-                          <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteTurn()
-                          }}
-                          title="Eliminar turno completo"
-                        >
-                          <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
-                        </Button>
-                      </>
-                    )}
+                    {!isStreaming &&
+                      onEditMessage &&
+                      editingRole !== "user" && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setIsUserTextExpanded(true)
+                              setEditingRole("user")
+                            }}
+                            title="Editar consulta"
+                          >
+                            <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteTurnClick()
+                            }}
+                            title="Eliminar turno completo"
+                          >
+                            <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
+                          </Button>
+                        </>
+                      )}
                   </div>
                 </div>
 
@@ -253,7 +240,7 @@ export const ChatTurnItem = memo(
               <div className="flex items-center gap-1">
                 {!isStreaming &&
                   turn.assistantMessage &&
-                  setMessages &&
+                  onEditMessage &&
                   editingRole !== "assistant" && (
                     <Button
                       variant="ghost"

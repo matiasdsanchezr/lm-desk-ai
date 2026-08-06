@@ -1,7 +1,9 @@
+import { generateId } from "ai"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 interface ChatState {
+  chatId?: string
   userTask: string
   contextualPrompt: string
   standalonePrompt: string
@@ -10,6 +12,7 @@ interface ChatState {
 
 interface ChatActions {
   actions: {
+    setChatId: (id: string) => void
     setUserTask: (query: string) => void
     setPrompts: (prompts: {
       contextualPrompt: string
@@ -17,11 +20,13 @@ interface ChatActions {
     }) => void
     setIncludeReasoning: (include: boolean) => void
     clearPrompts: () => void
+    resetChat: () => void
     resetAll: () => void
   }
 }
 
 const createInitialState = () => ({
+  chatId: generateId(),
   userTask: "",
   contextualPrompt: "",
   standalonePrompt: "",
@@ -33,6 +38,7 @@ export const useChatStore = create<ChatState & ChatActions>()(
     (set) => ({
       ...createInitialState(),
       actions: {
+        setChatId: (chatId) => set({ chatId }),
         setUserTask: (userTask) => set({ userTask }),
         setPrompts: ({ contextualPrompt, standalonePrompt }) =>
           set({ contextualPrompt, standalonePrompt }),
@@ -42,6 +48,7 @@ export const useChatStore = create<ChatState & ChatActions>()(
             contextualPrompt: "",
             standalonePrompt: "",
           }),
+        resetChat: () => set({ chatId: generateId() }),
         resetAll: () => set(createInitialState()),
       },
     }),

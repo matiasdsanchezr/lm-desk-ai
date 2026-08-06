@@ -4,7 +4,6 @@ import { useFileExplorerStore } from "@/features/file-explorer/store/file-explor
 import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart, type UIMessage } from "ai"
-import { useRouter } from "next/navigation"
 import {
   createContext,
   ReactNode,
@@ -22,7 +21,6 @@ interface ChatCompletionContextType {
   messages: UIMessage[]
   error: Error | undefined
   isStreaming: boolean
-  isExistingChat: boolean
   setMessages: (messages: UIMessage[]) => void
   generateContent: () => void
   sendFollowUp: (text: string) => void
@@ -42,13 +40,7 @@ export function ChatCompletionProvider({
   children,
   initialChatPromise,
 }: ChatCompletionProviderProps) {
-  const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
-  const isExistingChat = initialChatPromise !== undefined
-
-  const handleFinish = useCallback(() => {
-    router.refresh()
-  }, [router])
 
   const {
     messages,
@@ -59,28 +51,24 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: initialChat?.id ?? "",
-    messages: initialChat?.messages,
-    onData: ({ data, type }: { type: string; data: unknown }) => {
-      if (type === "data-chat-id") {
-        console.log("data", data)
-        window.history.replaceState(
-          null,
-          "",
-          `/chat/${(data as { id: string }).id}`
-        )
-      }
-    },
+    id: initialChat?.id || "new-chat",
+    messages: initialChat?.messages || [],
+    // onData: ({ data, type }: { type: string; data: unknown }) => {
+    //   if (type === "data-chat-id") {
+    //     const newChatId = (data as { id: string }).id
+    //     if (window.location.pathname !== `/chat/${newChatId}`) {
+    //       window.history.replaceState(null, "", `/chat/${newChatId}`)
+    //     }
+    //   }
+    // },
   })
 
   useEffect(() => {
-    setMessages(initialChat?.messages ?? [])
-    if (initialChat?.selectedFilePaths) {
-      useFileExplorerStore
-        .getState()
-        .setSelectedFilePaths(initialChat.selectedFilePaths)
+    console.log("asdfadafsdffaffsfs")
+    if (!initialChat) {
+      setMessages([])
     }
-  }, [initialChat?.id, setMessages])
+  }, [initialChat, setMessages])
 
   const isStreaming = status === "streaming" || status === "submitted"
 
@@ -89,10 +77,9 @@ export function ChatCompletionProvider({
     setMessages([])
 
     const { contextualPrompt } = useChatStore.getState()
-    const { imageFiles: images, selectedFilePaths } =
-      useFileExplorerStore.getState()
+    const { imageFiles, selectedFilePaths } = useFileExplorerStore.getState()
     const settings = useSettingsStore.getState()
-    const imageFiles: FileUIPart[] = images.map((i) => ({
+    const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
       type: "file",
       mediaType: i.mimeType,
       url: i.base64.startsWith("data:")
@@ -103,11 +90,10 @@ export function ChatCompletionProvider({
     sendMessage(
       {
         text: contextualPrompt,
-        files: imageFiles.length > 0 ? imageFiles : undefined,
+        files: fileUIParts.length > 0 ? fileUIParts : undefined,
       },
       {
         body: {
-          chatId: initialChat?.id,
           instructions: settings.systemPrompt,
           provider: settings.modelConfig.provider,
           model: settings.modelConfig.model,
@@ -151,7 +137,6 @@ export function ChatCompletionProvider({
       messages,
       error,
       isStreaming,
-      isExistingChat,
       setMessages,
       generateContent,
       sendFollowUp,
@@ -162,7 +147,6 @@ export function ChatCompletionProvider({
       messages,
       error,
       isStreaming,
-      isExistingChat,
       setMessages,
       generateContent,
       sendFollowUp,
@@ -177,13 +161,12 @@ export function ChatCompletionProvider({
   )
 }
 
-export function useChatCompletion() {
+export function useChatCompletion(): ChatCompletionContextType {
   const context = useContext(ChatCompletionContext)
   if (!context) {
     throw new Error(
-      "useChatCompletion debe usarse dentro de un ChatCompletionProvider"
+      "useChatCompletion must be used within a ChatCompletionProvider"
     )
   }
-
   return context
 }

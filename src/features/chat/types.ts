@@ -6,6 +6,7 @@ export interface Chat {
   title: string
   selectedFilePaths: string[]
   messages?: UIMessage[]
+  activeStreamId?: string
 }
 
 export type ChatMeta = Pick<Chat, "id" | "title" | "createdAt">
