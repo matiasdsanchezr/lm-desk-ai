@@ -89,7 +89,7 @@ export const ChatTurnItem = memo(
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
-        className="group border-b border-border/40 bg-muted/5 last:border-0"
+        className="group border-b border-border/40 bg-muted/5 last:border-0 [content-visibility:auto] [contain-intrinsic-size:auto_300px]"
       >
         <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/20 focus-visible:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1">
           <div className="flex items-center gap-3 overflow-hidden">
@@ -282,27 +282,12 @@ export const ChatTurnItem = memo(
     )
   },
   (prevProps, nextProps) => {
-    if (prevProps.isLast !== nextProps.isLast) return false
-    if (prevProps.isStreaming !== nextProps.isStreaming && nextProps.isLast)
-      return false
-
-    const prevUserText = getMessagePart(prevProps.turn.userMessage, "text")
-    const nextUserText = getMessagePart(nextProps.turn.userMessage, "text")
-    const prevAsstText = getMessagePart(prevProps.turn.assistantMessage, "text")
-    const nextAsstText = getMessagePart(nextProps.turn.assistantMessage, "text")
-    const prevReasoning = getMessagePart(
-      prevProps.turn.assistantMessage,
-      "reasoning"
-    )
-    const nextReasoning = getMessagePart(
-      nextProps.turn.assistantMessage,
-      "reasoning"
-    )
-
     return (
-      prevUserText === nextUserText &&
-      prevAsstText === nextAsstText &&
-      prevReasoning === nextReasoning
+      prevProps.isLast === nextProps.isLast &&
+      prevProps.isStreaming === nextProps.isStreaming &&
+      prevProps.title === nextProps.title &&
+      prevProps.turn.userMessage === nextProps.turn.userMessage &&
+      prevProps.turn.assistantMessage === nextProps.turn.assistantMessage
     )
   }
 )

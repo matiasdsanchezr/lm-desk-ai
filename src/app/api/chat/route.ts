@@ -1,26 +1,31 @@
-import { saveChat, updateChat } from "@/features/chat/actions"
+import { streamContext } from "@/features/chat/lib/resumable-stream"
 import { getChatById } from "@/features/chat/queries"
+import {
+  createChat,
+  updateChat,
+} from "@/features/chat/services/history-service"
 
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
 import {
-  applyPostProcessorScript,
-  postProcessorTransform,
-} from "@/shared/services/inference-service/utils/post-processor"
+  applyTransformScript,
+  createScriptTransformStream,
+} from "@/shared/services/inference-service/utils/script-transformer"
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  generateId,
   safeValidateUIMessages,
   toUIMessageStream,
   UIMessage,
 } from "ai"
+import { revalidatePath } from "next/cache"
 import { NextResponse } from "next/server"
-import { string, z } from "zod"
-
+import { z } from "zod"
 const ChatRequestBodySchema = z.object({
-  id: string(),
+  id: z.string(),
   provider: InferenceProviderEnum,
   messages: z.array(z.unknown()),
   model: z.string(),
@@ -87,6 +92,19 @@ export async function POST(req: Request) {
     }
     const modelMessages = await convertToModelMessages(validatedMessages.data)
 
+    let chatId = id
+    const streamId = generateId()
+    if (!chatId || chatId === "new-chat") {
+      const newChat = await createChat({
+        messages: [],
+        selectedFilePaths: [],
+        activeStreamId: streamId,
+      })
+      chatId = newChat.id
+    } else {
+      await updateChat(chatId, { activeStreamId: streamId })
+    }
+
     return createUIMessageStreamResponse({
       status: 200,
       statusText: "OK",
@@ -112,18 +130,16 @@ export async function POST(req: Request) {
             ),
             temperature,
             topP,
-            experimental_transform: [postProcessorTransform()],
+            experimental_transform: [
+              createScriptTransformStream("post-transform.js"),
+            ],
           })
 
-          let chatId = id
-          if (!chatId || chatId == "new-chat") {
-            chatId = `session-${Date.now()}`
-            writer.write({
-              type: "data-chat-id",
-              data: { id: chatId },
-              transient: true,
-            })
-          }
+          writer.write({
+            type: "data-chat-id",
+            data: { id: chatId },
+            transient: true,
+          })
 
           writer.merge(
             toUIMessageStream({
@@ -140,8 +156,10 @@ export async function POST(req: Request) {
                   }
 
                   if (textContent) {
-                    const processedText =
-                      await applyPostProcessorScript(textContent)
+                    const processedText = await applyTransformScript(
+                      textContent,
+                      "post-transform.js"
+                    )
 
                     const finalMessages: UIMessage[] = messages.map((msg) => {
                       if (
@@ -166,20 +184,23 @@ export async function POST(req: Request) {
                           messages: finalMessages,
                         })
                       } else {
-                        await saveChat({
+                        await createChat({
                           id: chatId,
                           selectedFilePaths: selectedFilePaths || [],
                           messages: finalMessages,
                         })
                       }
+                      revalidatePath(`/chat/${chatId}`)
                     } else {
-                      const result = await saveChat({
+                      const result = await createChat({
+                        id: chatId,
                         selectedFilePaths: selectedFilePaths || [],
                         messages: messages,
                       })
+                      revalidatePath(`/chat/${result.id}`)
                       writer.write({
                         type: "data-chat-id",
-                        data: { id: result.data?.id },
+                        data: { id: result.id },
                         transient: true,
                       })
                     }
@@ -199,6 +220,13 @@ export async function POST(req: Request) {
           )
         },
       }),
+      async consumeSseStream({ stream }) {
+        try {
+          await streamContext.createNewResumableStream(streamId, () => stream)
+        } catch (error) {
+          console.error(error)
+        }
+      },
     })
   } catch (error) {
     console.error("[/api/chat] Error no controlado:", error)

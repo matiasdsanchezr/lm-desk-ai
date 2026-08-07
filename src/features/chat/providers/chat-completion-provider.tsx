@@ -4,6 +4,7 @@ import { useFileExplorerStore } from "@/features/file-explorer/store/file-explor
 import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { useChat } from "@ai-sdk/react"
 import { type FileUIPart, type UIMessage } from "ai"
+import { useRouter } from "next/navigation"
 import {
   createContext,
   ReactNode,
@@ -34,13 +35,17 @@ const ChatCompletionContext = createContext<ChatCompletionContextType | null>(
 interface ChatCompletionProviderProps {
   children: ReactNode
   initialChatPromise?: Promise<Chat | null>
+  chatId?: string
 }
 
 export function ChatCompletionProvider({
   children,
+  chatId,
   initialChatPromise,
 }: ChatCompletionProviderProps) {
+  const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
+  // const [currentChatId, setCurrentChatId] = useState(chatId || "new-chat")
 
   const {
     messages,
@@ -51,23 +56,19 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: initialChat?.id || "new-chat",
+    id: chatId || "new-chat",
     messages: initialChat?.messages || [],
-    // onData: ({ data, type }: { type: string; data: unknown }) => {
-    //   if (type === "data-chat-id") {
-    //     const newChatId = (data as { id: string }).id
-    //     if (window.location.pathname !== `/chat/${newChatId}`) {
-    //       window.history.replaceState(null, "", `/chat/${newChatId}`)
-    //     }
-    //   }
-    // },
+    resume: true,
+    onData: ({ data, type }: { type: string; data: unknown }) => {
+      if (type == "data-chat-id") {
+        const newChatId = (data as { id: string }).id
+        router.push(`/chat/${newChatId}`)
+      }
+    },
   })
 
   useEffect(() => {
-    console.log("asdfadafsdffaffsfs")
-    if (!initialChat) {
-      setMessages([])
-    }
+    if (!initialChat) setMessages([])
   }, [initialChat, setMessages])
 
   const isStreaming = status === "streaming" || status === "submitted"

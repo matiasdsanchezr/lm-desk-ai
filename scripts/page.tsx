@@ -2,30 +2,18 @@ import {
   ChatCompletionProvider,
   ChatWorkspace,
   ChatWorkspaceSkeleton,
-  getChatById,
 } from "@/features/chat"
 import { getFileTreeAction } from "@/features/file-explorer/actions/get-file-tree"
 import { FileExplorerProvider } from "@/features/file-explorer/context/file-explorer-context"
 import { Suspense } from "react"
 
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
-interface ChatPageProps {
-  params: Promise<{ chatId: string }>
-}
-
-export default async function ChatIdPage({ params }: ChatPageProps) {
-  const { chatId } = await params
-
+export default async function NewChatPage() {
   const treeStructurePromise = getFileTreeAction()
-  const initialChatPromise = getChatById(chatId)
 
   return (
     <Suspense fallback={<ChatWorkspaceSkeleton />}>
       <FileExplorerProvider fileTreePromise={treeStructurePromise}>
-        <ChatCompletionProvider initialChatPromise={initialChatPromise}>
+        <ChatCompletionProvider>
           <ChatWorkspace />
         </ChatCompletionProvider>
       </FileExplorerProvider>

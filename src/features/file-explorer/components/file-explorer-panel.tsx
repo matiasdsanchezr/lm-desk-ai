@@ -92,6 +92,7 @@ export function FileExplorerPanel({
     []
   )
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const treeVirtualizer = useVirtualizer({
     count: flattenedTreeNodes.length,
     getScrollElement: getTreeScrollElement,

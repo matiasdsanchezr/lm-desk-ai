@@ -5,14 +5,12 @@ import { revalidatePath } from "next/cache"
 import * as historyService from "./services/history-service"
 import type { Chat, CreateChatInput, UpdateChatInput } from "./types"
 
-export const saveChat = async (
-  data: CreateChatInput
-): ActionResponse<Chat> => {
+export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
   try {
     const result = await historyService.createChat(data)
     revalidatePath("/chat")
     return { data: result }
-  } catch (error) {
+  } catch {
     return { error: "No se pudo guardar el chat" }
   }
 }
@@ -22,7 +20,7 @@ export const deleteChat = async (id: string): ActionResponse<void> => {
     await historyService.deleteChat(id)
     revalidatePath("/chat")
     return {}
-  } catch (error) {
+  } catch {
     return { error: "No se pudo eliminar el chat" }
   }
 }
@@ -33,9 +31,9 @@ export const updateChat = async (
 ): ActionResponse<void> => {
   try {
     await historyService.updateChat(id, updates)
-    revalidatePath("/chat")
+    revalidatePath(`/chat/${id}`)
     return {}
-  } catch (error) {
+  } catch {
     return { error: "No se pudo actualizar el chat" }
   }
 }

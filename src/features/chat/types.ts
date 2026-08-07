@@ -16,6 +16,7 @@ export type CreateChatInput = {
   title?: string
   selectedFilePaths: string[]
   messages: UIMessage[]
+  activeStreamId?: string
 }
 
 export type UpdateChatInput = Partial<Omit<Chat, "id" | "createdAt">>

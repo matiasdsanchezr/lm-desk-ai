@@ -12,7 +12,6 @@ export async function scrapeUrlsWithPlaywright(
   const results: CrawledPageNode[] = []
 
   try {
-    // 1. Lanzamiento del navegador Chromium con los flags de evasión
     browser = await chromium.launch({
       headless: true,
       args: [
@@ -26,11 +25,8 @@ export async function scrapeUrlsWithPlaywright(
 
     for (const url of urls) {
       try {
-        // Dimensiones aleatorias para simular usuarios reales
         const randomWidth = Math.floor(Math.random() * (1440 - 1280 + 1)) + 1280
         const randomHeight = Math.floor(Math.random() * (980 - 820 + 1)) + 820
-
-        // Creación del contexto simulando un usuario legítimo
         const context = await browser.newContext({
           userAgent:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
@@ -75,8 +71,6 @@ export async function scrapeUrlsWithPlaywright(
         await page.waitForTimeout(1000)
 
         const title = await page.title()
-
-        // Extracción y limpieza del DOM dentro de la página
         const cleanedText = await page.evaluate(() => {
           // Eliminar elementos irrelevantes para contexto LLM
           const selectorsToRemove = [

@@ -21,22 +21,19 @@ async function ensureDirectoryExists(): Promise<void> {
 export async function createChat(data: CreateChatInput): Promise<Chat> {
   await ensureDirectoryExists()
 
-  const id = data.id ?? `session-${Date.now()}`
-  const title = data.title ?? "Chat sin titulo"
+  const id = data.id || `session-${Date.now()}`
+  const title = data.title || "Chat sin titulo"
   const createdAt = new Date().toISOString()
-
   const newChat: Chat = {
     id,
     title,
     createdAt,
     selectedFilePaths: data.selectedFilePaths,
     messages: data.messages,
+    activeStreamId: data.activeStreamId,
   }
-
   const filePath = path.join(GENERATED_DIR, `${id}.json`)
   await writeFile(filePath, JSON.stringify(newChat, null, 2), "utf-8")
-
-  revalidatePath("/chat")
   return newChat
 }
 
@@ -80,8 +77,6 @@ export async function updateChat(
     const fileName = id.endsWith(".json") ? id : `${id}.json`
     const filePath = path.join(GENERATED_DIR, fileName)
     await writeFile(filePath, JSON.stringify(updatedChat, null, 2), "utf-8")
-
-    revalidatePath(`/chat/${id}`)
     return updatedChat
   } catch (error) {
     throw error
