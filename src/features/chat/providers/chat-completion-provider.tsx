@@ -3,7 +3,7 @@
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
 import { useChat } from "@ai-sdk/react"
-import { type FileUIPart, type UIMessage } from "ai"
+import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
 import { useRouter } from "next/navigation"
 import {
   createContext,
@@ -45,7 +45,6 @@ export function ChatCompletionProvider({
 }: ChatCompletionProviderProps) {
   const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
-  // const [currentChatId, setCurrentChatId] = useState(chatId || "new-chat")
 
   const {
     messages,
@@ -59,6 +58,24 @@ export function ChatCompletionProvider({
     id: chatId || "new-chat",
     messages: initialChat?.messages || [],
     resume: true,
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      prepareSendMessagesRequest(data) {
+        const settings = useSettingsStore.getState()
+
+        return {
+          body: {
+            ...data,
+            message: data.messages[data.messages.length - 1],
+            instructions: settings.systemPrompt,
+            provider: settings.modelConfig.provider,
+            model: settings.modelConfig.model,
+            temperature: settings.temperature,
+            topP: settings.topP,
+          },
+        }
+      },
+    }),
     onData: ({ data, type }: { type: string; data: unknown }) => {
       if (type == "data-chat-id") {
         const newChatId = (data as { id: string }).id
@@ -78,8 +95,7 @@ export function ChatCompletionProvider({
     setMessages([])
 
     const { contextualPrompt } = useChatStore.getState()
-    const { imageFiles, selectedFilePaths } = useFileExplorerStore.getState()
-    const settings = useSettingsStore.getState()
+    const { imageFiles } = useFileExplorerStore.getState()
     const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
       type: "file",
       mediaType: i.mimeType,
@@ -88,22 +104,10 @@ export function ChatCompletionProvider({
         : `data:${i.mimeType};base64,${i.base64}`,
     }))
 
-    sendMessage(
-      {
-        text: contextualPrompt,
-        files: fileUIParts.length > 0 ? fileUIParts : undefined,
-      },
-      {
-        body: {
-          instructions: settings.systemPrompt,
-          provider: settings.modelConfig.provider,
-          model: settings.modelConfig.model,
-          temperature: settings.temperature,
-          topP: settings.topP,
-          selectedFilePaths: selectedFilePaths,
-        },
-      }
-    )
+    sendMessage({
+      text: contextualPrompt,
+      files: fileUIParts.length > 0 ? fileUIParts : undefined,
+    })
   }, [clearError, setMessages, sendMessage])
 
   const sendFollowUp = useCallback(

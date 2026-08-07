@@ -27,7 +27,7 @@ import { z } from "zod"
 const ChatRequestBodySchema = z.object({
   id: z.string(),
   provider: InferenceProviderEnum,
-  messages: z.array(z.unknown()),
+  message: z.unknown(),
   model: z.string(),
   instructions: z.string().default(""),
   temperature: z.number().min(0).max(2).optional(),
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const {
       id,
       provider,
-      messages,
+      message,
       model,
       instructions,
       temperature,
@@ -84,26 +84,24 @@ export async function POST(req: Request) {
       )
     }
 
+    const streamId = generateId()
+    let chat = await getChatById(id)
+    if (!chat) {
+      chat = await createChat({
+        messages: [],
+        selectedFilePaths: selectedFilePaths || [],
+        activeStreamId: streamId,
+      })
+    }
+
     const validatedMessages = await safeValidateUIMessages({
-      messages,
+      messages: [...chat.messages, message],
     })
     if (!validatedMessages.success) {
       throw new Error(validatedMessages.error.message)
     }
-    const modelMessages = await convertToModelMessages(validatedMessages.data)
 
-    let chatId = id
-    const streamId = generateId()
-    if (!chatId || chatId === "new-chat") {
-      const newChat = await createChat({
-        messages: [],
-        selectedFilePaths: [],
-        activeStreamId: streamId,
-      })
-      chatId = newChat.id
-    } else {
-      await updateChat(chatId, { activeStreamId: streamId })
-    }
+    const modelMessages = await convertToModelMessages(validatedMessages.data)
 
     return createUIMessageStreamResponse({
       status: 200,
@@ -137,7 +135,7 @@ export async function POST(req: Request) {
 
           writer.write({
             type: "data-chat-id",
-            data: { id: chatId },
+            data: { id: chat.id },
             transient: true,
           })
 
@@ -177,33 +175,12 @@ export async function POST(req: Request) {
                       }
                       return msg
                     })
-                    if (chatId) {
-                      const existingChat = await getChatById(chatId)
-                      if (existingChat) {
-                        await updateChat(chatId, {
-                          messages: finalMessages,
-                        })
-                      } else {
-                        await createChat({
-                          id: chatId,
-                          selectedFilePaths: selectedFilePaths || [],
-                          messages: finalMessages,
-                        })
-                      }
-                      revalidatePath(`/chat/${chatId}`)
-                    } else {
-                      const result = await createChat({
-                        id: chatId,
-                        selectedFilePaths: selectedFilePaths || [],
-                        messages: messages,
-                      })
-                      revalidatePath(`/chat/${result.id}`)
-                      writer.write({
-                        type: "data-chat-id",
-                        data: { id: result.id },
-                        transient: true,
-                      })
-                    }
+
+                    await updateChat(chat.id, {
+                      messages: finalMessages,
+                    })
+
+                    revalidatePath(`/chat/${chat.id}`)
                   }
                 } catch (err) {
                   console.error(

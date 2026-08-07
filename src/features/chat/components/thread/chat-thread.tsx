@@ -45,10 +45,9 @@ export function ChatThread() {
     (messageId: string, newText: string) => {
       const updated = latestMessagesRef.current.map((msg) => {
         if (msg.id !== messageId) return msg
-        const newParts =
-          msg.parts?.map((p) =>
-            p.type === "text" ? { ...p, text: newText } : p
-          ) ?? [{ type: "text" as const, text: newText }]
+        const newParts = msg.parts?.map((p) =>
+          p.type === "text" ? { ...p, text: newText } : p
+        ) ?? [{ type: "text" as const, text: newText }]
         return { ...msg, parts: newParts }
       })
       setMessages(updated)
@@ -75,11 +74,11 @@ export function ChatThread() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <span className="icon-[fluent--brain-sparkle-20-regular]" />
+              <span className="icon-[mingcute--chat-2-ai-line]" />
             </div>
             <div>
               <CardTitle className="text-base font-semibold">
-                Respuesta generada
+                Respuestas generadas
               </CardTitle>
               <CardDescription className="text-xs">
                 Análisis basado en el contexto proporcionado

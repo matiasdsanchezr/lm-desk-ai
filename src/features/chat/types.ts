@@ -5,7 +5,7 @@ export interface Chat {
   createdAt: string
   title: string
   selectedFilePaths: string[]
-  messages?: UIMessage[]
+  messages: UIMessage[]
   activeStreamId?: string
 }
 

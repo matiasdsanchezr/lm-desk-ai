@@ -94,7 +94,7 @@ export const ChatTurnItem = memo(
         <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/20 focus-visible:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
-              <span className={"icon-[lucide--message-square-text]"} />
+              <span className="icon-[ic--outline-question-answer]"></span>
             </div>
             <span className="truncate text-sm font-medium text-foreground">
               {title || "Consulta de Usuario"}
@@ -235,7 +235,7 @@ export const ChatTurnItem = memo(
             <div className="flex items-center justify-between px-1">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 <span className="icon-[fluent--brain-sparkle-20-regular] h-3.5 w-3.5" />
-                Respuesta Generada
+                Contenido generado por IA
               </span>
               <div className="flex items-center gap-1">
                 {!isStreaming &&
