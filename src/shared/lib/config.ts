@@ -5,9 +5,9 @@ import path from "node:path"
 const loadStoragePath = () => {
   const storagePath = process.env.STORAGE_PATH
   if (!storagePath) {
-    console.warn(
-      "STORAGE_PATH no definido, usando directorio `storage` del proyecto"
-    )
+    // console.warn(
+    //   "STORAGE_PATH no definido, usando directorio `storage` del proyecto"
+    // )
     return path.join(process.cwd(), "storage")
   }
   return storagePath

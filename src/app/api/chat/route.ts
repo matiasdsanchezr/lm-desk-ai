@@ -4,12 +4,12 @@ import {
   createChat,
   updateChat,
 } from "@/features/chat/services/history-service"
-
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
 import {
   applyTransformScript,
+  applyTransformScriptToModelMessages,
   createScriptTransformStream,
 } from "@/shared/services/inference-service/utils/script-transformer"
 import {
@@ -102,6 +102,12 @@ export async function POST(req: Request) {
     }
 
     const modelMessages = await convertToModelMessages(validatedMessages.data)
+    const transformedMessages = await applyTransformScriptToModelMessages(
+      modelMessages,
+      "pre-transform.js"
+    )
+
+    console.log(transformedMessages)
 
     return createUIMessageStreamResponse({
       status: 200,
@@ -111,21 +117,7 @@ export async function POST(req: Request) {
           const result = streamText({
             inferenceModel: inferenceModelResult.data,
             instructions: instructions,
-            messages: modelMessages.map((m) =>
-              m.role === "user"
-                ? {
-                    ...m,
-                    content:
-                      typeof m.content === "string"
-                        ? m.content.replace(/ /g, "¶")
-                        : m.content.map((c) =>
-                            c.type === "text"
-                              ? { ...c, text: c.text.replace(/ /g, "¶") }
-                              : c
-                          ),
-                  }
-                : m
-            ),
+            messages: transformedMessages,
             temperature,
             topP,
             experimental_transform: [
