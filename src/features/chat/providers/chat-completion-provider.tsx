@@ -1,7 +1,7 @@
 "use client"
 
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
+import { useInferenceStore } from "@/features/inference/store/inference-store"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
 import { useRouter } from "next/navigation"
@@ -24,7 +24,7 @@ interface ChatCompletionContextType {
   isStreaming: boolean
   setMessages: (messages: UIMessage[]) => void
   generateContent: () => void
-  sendFollowUp: (text: string) => void
+  generateFollowUpContent: (text: string) => void
   stop: () => void
 }
 
@@ -35,16 +35,25 @@ const ChatCompletionContext = createContext<ChatCompletionContextType | null>(
 interface ChatCompletionProviderProps {
   children: ReactNode
   initialChatPromise?: Promise<Chat | null>
-  chatId?: string
 }
 
 export function ChatCompletionProvider({
   children,
-  chatId,
   initialChatPromise,
 }: ChatCompletionProviderProps) {
   const router = useRouter()
   const initialChat = initialChatPromise ? use(initialChatPromise) : null
+
+  const getInferenceConfig = useCallback(() => {
+    const settings = useInferenceStore.getState()
+    return {
+      instructions: settings.systemPrompt,
+      provider: settings.modelConfig.provider,
+      model: settings.modelConfig.model,
+      temperature: settings.temperature,
+      topP: settings.topP,
+    }
+  }, [])
 
   const {
     messages,
@@ -55,23 +64,21 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: chatId || "new-chat",
+    id: initialChat?.id || "new-chat",
     messages: initialChat?.messages || [],
     resume: true,
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest(data) {
-        const settings = useSettingsStore.getState()
-
+        const { includeReasoning } = useChatStore.getState()
+        const { selectedFilePaths } = useFileExplorerStore.getState()
         return {
           body: {
             ...data,
             message: data.messages[data.messages.length - 1],
-            instructions: settings.systemPrompt,
-            provider: settings.modelConfig.provider,
-            model: settings.modelConfig.model,
-            temperature: settings.temperature,
-            topP: settings.topP,
+            ...getInferenceConfig(),
+            selectedFilePaths,
+            includeReasoning,
           },
         }
       },
@@ -110,28 +117,10 @@ export function ChatCompletionProvider({
     })
   }, [clearError, setMessages, sendMessage])
 
-  const sendFollowUp = useCallback(
+  const generateFollowUpContent = useCallback(
     (text: string) => {
       if (!text.trim() || isStreaming) return
-
-      const { includeReasoning } = useChatStore.getState()
-      const { selectedFilePaths } = useFileExplorerStore.getState()
-      const settings = useSettingsStore.getState()
-
-      sendMessage(
-        { text },
-        {
-          body: {
-            instructions: settings.systemPrompt,
-            provider: settings.modelConfig.provider,
-            model: settings.modelConfig.model,
-            temperature: settings.temperature,
-            topP: settings.topP,
-            selectedFilePaths,
-            includeReasoning,
-          },
-        }
-      )
+      sendMessage({ text })
     },
     [isStreaming, sendMessage]
   )
@@ -144,7 +133,7 @@ export function ChatCompletionProvider({
       isStreaming,
       setMessages,
       generateContent,
-      sendFollowUp,
+      generateFollowUpContent,
       stop,
     }),
     [
@@ -154,7 +143,7 @@ export function ChatCompletionProvider({
       isStreaming,
       setMessages,
       generateContent,
-      sendFollowUp,
+      generateFollowUpContent,
       stop,
     ]
   )

@@ -19,7 +19,7 @@ interface SettingsState {
 
 interface SettingsActions {
   setModelConfig: (config: InferenceModel) => void
-  setSystemPrompt: (prompt: string) => void
+  setSystemPrompt: (systemPrompt: string) => void
   setTemperature: (temp: number) => void
   setTopP: (topP: number) => void
   resetSystemPrompt: () => void
@@ -33,7 +33,7 @@ const initialState: SettingsState = {
   topP: DEFAULT_TOP_P,
 }
 
-export const useSettingsStore = create<SettingsState & SettingsActions>()(
+export const useInferenceStore = create<SettingsState & SettingsActions>()(
   persist(
     (set) => ({
       modelConfig: { provider: DEFAULT_PROVIDER, model: DEFAULT_MODEL },

@@ -23,8 +23,13 @@ export function ChatThread() {
   const [followUpText, setFollowUpText] = useState("")
   const includeReasoning = useChatStore((s) => s.includeReasoning)
   const { setIncludeReasoning } = useChatActions()
-  const { messages, error, isStreaming, sendFollowUp, setMessages } =
-    useChatCompletion()
+  const {
+    messages,
+    error,
+    isStreaming,
+    generateFollowUpContent: sendFollowUp,
+    setMessages,
+  } = useChatCompletion()
 
   const latestMessagesRef = useRef(messages)
   useEffect(() => {

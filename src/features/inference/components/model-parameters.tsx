@@ -2,10 +2,10 @@
 
 import { Slider } from "@/shared/components/ui/slider"
 import { useShallow } from "zustand/shallow"
-import { useSettingsStore } from "../store/settings-store"
+import { useInferenceStore } from "../store/inference-store"
 
 export const ModelParameters = () => {
-  const { temperature, topP, setTemperature, setTopP } = useSettingsStore(
+  const { temperature, topP, setTemperature, setTopP } = useInferenceStore(
     useShallow((s) => ({
       temperature: s.temperature,
       topP: s.topP,

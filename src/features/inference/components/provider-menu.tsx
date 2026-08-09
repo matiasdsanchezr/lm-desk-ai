@@ -9,10 +9,10 @@ import {
 import { formatProviderName } from "@/shared/services/inference-service/utils/model-formatter"
 import { useShallow } from "zustand/shallow"
 import { NavSelector } from "../../../shared/components/nav-selector"
-import { useSettingsStore } from "../store/settings-store"
+import { useInferenceStore } from "../store/inference-store"
 
 export const ProviderMenu = () => {
-  const { config, setConfig } = useSettingsStore(
+  const { config, setConfig } = useInferenceStore(
     useShallow((s) => ({
       config: s.modelConfig,
       setConfig: s.setModelConfig,

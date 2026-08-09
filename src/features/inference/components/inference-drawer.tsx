@@ -9,15 +9,15 @@ import {
   SheetTrigger,
 } from "@/shared/components/ui/sheet"
 import { use } from "react"
-import { PromptMeta } from "../types"
-import { InstructionsMenu } from "./instructions-menu"
+import { SystemPromptMeta } from "../types"
+import { SystemPromptMenu } from "./system-prompt-menu"
 import { ModelParameters } from "./model-parameters"
 import { ProviderMenu } from "./provider-menu"
 
-export function SettingsDrawer({
+export function InferenceDrawer({
   initialPromptsPromise,
 }: {
-  initialPromptsPromise: Promise<PromptMeta[]>
+  initialPromptsPromise: Promise<SystemPromptMeta[]>
 }) {
   const initialPrompts = use(initialPromptsPromise)
 
@@ -95,7 +95,7 @@ export function SettingsDrawer({
                 Define el rol y contexto del sistema.
               </p>
             </div>
-            <InstructionsMenu availablePrompts={initialPrompts} />
+            <SystemPromptMenu availablePrompts={initialPrompts} />
           </section>
         </div>
       </SheetContent>

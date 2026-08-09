@@ -4,49 +4,49 @@ import { ActionResponse } from "@/shared/types/action-state"
 import { mkdir, readFile, unlink, writeFile } from "fs/promises"
 import { revalidatePath } from "next/cache"
 import path from "path"
-import { PROMPTS_DIR } from "./constants"
-import { Prompt } from "./types"
+import { SYSTEM_PROMPTS_DIR } from "./constants"
+import { SystemPromptTemplate } from "./types"
 
-export const savePrompt = async (
+export const saveSystemPrompt = async (
   name: string,
   content: string
-): ActionResponse<Prompt> => {
+): ActionResponse<SystemPromptTemplate> => {
   try {
     const fileName = name.endsWith(".md") ? name : `${name}.md`
-    const filePath = path.join(PROMPTS_DIR, fileName)
+    const filePath = path.join(SYSTEM_PROMPTS_DIR, fileName)
 
-    await mkdir(PROMPTS_DIR, { recursive: true })
+    await mkdir(SYSTEM_PROMPTS_DIR, { recursive: true })
     await writeFile(filePath, content, "utf-8")
 
     revalidatePath("/")
     return { data: { id: fileName, content } }
-  } catch (error) {
+  } catch {
     return { error: "No se pudo guardar la plantilla" }
   }
 }
 
-export const deletePrompt = async (promptId: string): ActionResponse => {
+export const deleteSystemPrompt = async (promptId: string): ActionResponse => {
   try {
-    const filePath = path.join(PROMPTS_DIR, promptId)
+    const filePath = path.join(SYSTEM_PROMPTS_DIR, promptId)
     await unlink(filePath)
 
     revalidatePath("/")
     return { data: undefined }
-  } catch (error) {
+  } catch {
     return { error: "No se pudo eliminar la plantilla" }
   }
 }
 
-export const getPromptAction = async (
+export const getSystemPrompt = async (
   promptId: string
 ): Promise<ActionResponse<string>> => {
   try {
-    const systemPrompt = await readFile(
-      path.join(PROMPTS_DIR, promptId),
+    const systemPrompts = await readFile(
+      path.join(SYSTEM_PROMPTS_DIR, promptId),
       "utf-8"
     )
-    return { data: systemPrompt }
-  } catch (error) {
+    return { data: systemPrompts }
+  } catch {
     return { error: "No se pudo cargar la plantilla" }
   }
 }

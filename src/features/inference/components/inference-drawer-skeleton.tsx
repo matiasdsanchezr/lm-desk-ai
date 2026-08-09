@@ -1,7 +1,7 @@
 "use client"
 import { Button } from "@/shared/components/ui/button"
 
-export function SettingsDrawerSkeleton() {
+export function InferenceDrawerSkeleton() {
   return (
     <Button
       variant="outline"

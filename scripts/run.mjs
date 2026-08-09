@@ -12,13 +12,13 @@ loadEnvConfig(projectDir, isDev)
 // 2. Procesar los argumentos CLI
 const { values } = parseArgs({
   options: {
-    target: {
-      type: "string",
-      short: "t",
-    },
     dev: {
       type: "boolean",
       default: false,
+    },
+    target: {
+      type: "string",
+      short: "t",
     },
     host: {
       type: "string",
@@ -45,7 +45,7 @@ const nextCommand = values.dev ? "dev" : "start"
 const env = {
   ...process.env,
   TARGET_PROJECT_PATH: targetPath,
-  HOST: values.host
+  HOST: values.host,
 }
 
 // Determinar el comando correcto según el S.O. para evitar 'shell: true' (DEP0190)

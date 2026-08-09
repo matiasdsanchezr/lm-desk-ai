@@ -1,7 +1,7 @@
 import { FileContent } from "@/shared/services/file-service"
 import { renderTemplate } from "./templates"
 
-const DEFAULT_INSTRUCTIONS = `\
+const DEFAULT_SYSTEM_PROMPT = `\
 <system_instructions>
 {{systemPrompt}}
 </system_instructions>`
@@ -61,7 +61,7 @@ export class PromptBuilder {
       return this
     }
 
-    this.system = renderTemplate(DEFAULT_INSTRUCTIONS, {
+    this.system = renderTemplate(DEFAULT_SYSTEM_PROMPT, {
       systemPrompt: trimmedPrompt,
     })
     return this

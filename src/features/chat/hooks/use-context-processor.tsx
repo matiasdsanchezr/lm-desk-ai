@@ -2,14 +2,14 @@
 
 import { fetchFileContextAction } from "@/features/file-explorer/actions/fetch-file-context"
 import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
-import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
+import { useInferenceStore } from "@/features/inference/store/inference-store"
 import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
 import { PromptBuilder } from "@/shared/utils/prompt-builder"
 import { useActionState } from "react"
 import { useChatStore } from "../store/chat-store"
 
 export function useContextProcessor() {
-  const systemPrompt = useSettingsStore((s) => s.systemPrompt)
+  const systemPrompt = useInferenceStore((s) => s.systemPrompt)
 
   const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
     useActionState(

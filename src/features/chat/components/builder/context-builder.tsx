@@ -6,7 +6,7 @@ import {
   type FileTreeNode,
 } from "@/features/file-explorer"
 import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
-import { useSettingsStore } from "@/features/inference-settings/store/settings-store"
+import { useInferenceStore } from "@/features/inference/store/inference-store"
 import { WebCrawlerTrigger } from "@/features/web-crawler/components/web-crawler-trigger"
 import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
 import {
@@ -47,7 +47,7 @@ export const ContextBuilder = ({
   const { treeNodes } = useFileExplorerContext()
   const { setUserTask } = useChatActions()
   const userTask = useChatStore((s) => s.userTask)
-  const systemPrompt = useSettingsStore((s) => s.systemPrompt)
+  const systemPrompts = useInferenceStore((s) => s.systemPrompt)
 
   const {
     selectedFilePaths,
@@ -101,7 +101,7 @@ export const ContextBuilder = ({
   const handleFormAction = (formData: FormData) => {
     formData.append("includeDependencies", String(includeDependencies))
     formData.append("imageUrls", imageUrls)
-    formData.append("systemPrompt", systemPrompt)
+    formData.append("systemPrompt", systemPrompts)
     selectedFilePaths.forEach((path) => formData.append("filePath", path))
 
     handleFetchFileContents(formData)

@@ -1,6 +1,9 @@
 "use client"
 
-import { deletePrompt, savePrompt } from "@/features/inference-settings/actions"
+import {
+  deleteSystemPrompt,
+  saveSystemPrompt,
+} from "@/features/inference/actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,23 +29,27 @@ import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { cn } from "@/shared/lib/utils"
 import { useState, useTransition } from "react"
-import { getPromptAction } from "../actions"
-import { useSettingsStore } from "../store/settings-store"
-import { PromptMeta } from "../types"
+import { getSystemPrompt } from "../actions"
+import { useInferenceStore } from "../store/inference-store"
+import { SystemPromptMeta } from "../types"
 
 interface Props {
-  availablePrompts: PromptMeta[]
+  availablePrompts: SystemPromptMeta[]
 }
 
-export const InstructionsMenu = ({ availablePrompts }: Props) => {
-  const { systemPrompt, setSystemPrompt, resetSystemPrompt } =
-    useSettingsStore()
+export const SystemPromptMenu = ({ availablePrompts }: Props) => {
+  const {
+    systemPrompt: systemPrompt,
+    setSystemPrompt: setSystemPrompt,
+    resetSystemPrompt: resetSystemPrompt,
+  } = useInferenceStore()
   const [draft, setDraft] = useState(systemPrompt)
   const [isOpen, setIsOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"editor" | "templates">("editor")
-  const [promptsList, setPromptsList] = useState<PromptMeta[]>(availablePrompts)
+  const [promptsList, setPromptsList] =
+    useState<SystemPromptMeta[]>(availablePrompts)
   const [newTemplateName, setNewTemplateName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
@@ -58,7 +65,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
   const handleSelectTemplate = (promptId: string) => {
     startTransition(async () => {
       try {
-        const result = await getPromptAction(promptId)
+        const result = await getSystemPrompt(promptId)
         if (result.data) {
           setDraft(result.data)
           setActiveTab("editor")
@@ -74,7 +81,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
     setIsSaving(true)
     try {
       const cleanName = newTemplateName.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
-      const result = await savePrompt(cleanName, draft)
+      const result = await saveSystemPrompt(cleanName, draft)
 
       if (result.error) {
         return
@@ -101,7 +108,7 @@ export const InstructionsMenu = ({ availablePrompts }: Props) => {
     if (!templateToDelete) return
     setIsDeleting(true)
     try {
-      const result = await deletePrompt(templateToDelete)
+      const result = await deleteSystemPrompt(templateToDelete)
       if (result.error) {
         alert(result.error)
         return
