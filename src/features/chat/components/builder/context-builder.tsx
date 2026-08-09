@@ -25,29 +25,22 @@ import {
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 import { useShallow } from "zustand/shallow"
+import { useContextProcessor } from "../../hooks/use-context-processor"
+import { useChatCompletion } from "../../providers/chat-completion-provider"
 import { useChatActions, useChatStore } from "../../store/chat-store"
-import { ImageUploadDialog } from "./image-upload-dialog"
+import { ImageUrlsDialog } from "./image-urls-dialog"
 
-interface ContextBuilderProps {
-  isDisabled: boolean
-  isFetchingFiles: boolean
-  isReadyToReview: boolean
-  fetchFileState?: { error: string | null }
-  handleFetchFileContents: (formData: FormData) => void
-}
-
-export const ContextBuilder = ({
-  isDisabled,
-  isFetchingFiles,
-  isReadyToReview,
-  fetchFileState,
-  handleFetchFileContents,
-}: ContextBuilderProps) => {
+export const ContextBuilder = () => {
   const [showImageDialog, setShowImageDialog] = useState(false)
   const { treeNodes } = useFileExplorerContext()
   const { setUserTask } = useChatActions()
+  const { isStreaming } = useChatCompletion()
+  const { contextProcessState, handleProcessContext, isProcessingContext } =
+    useContextProcessor()
   const userTask = useChatStore((s) => s.userTask)
-  const systemPrompts = useInferenceStore((s) => s.systemPrompt)
+  const systemPrompt = useInferenceStore((s) => s.systemPrompt)
+  const isReadyToReview = useChatStore((s) => Boolean(s.exportablePrompt))
+  const isDisabled = isProcessingContext || isStreaming || isReadyToReview
 
   const {
     selectedFilePaths,
@@ -101,10 +94,10 @@ export const ContextBuilder = ({
   const handleFormAction = (formData: FormData) => {
     formData.append("includeDependencies", String(includeDependencies))
     formData.append("imageUrls", imageUrls)
-    formData.append("systemPrompt", systemPrompts)
+    formData.append("systemPrompt", systemPrompt)
     selectedFilePaths.forEach((path) => formData.append("filePath", path))
 
-    handleFetchFileContents(formData)
+    handleProcessContext(formData)
   }
 
   const hasSelectedItems =
@@ -116,8 +109,7 @@ export const ContextBuilder = ({
     <>
       <Card
         className={cn(
-          "border-border/60 shadow-sm transition-colors",
-          isReadyToReview && "bg-muted/40"
+          "border-border/60 shadow-sm transition-colors bg-muted/40"
         )}
       >
         <CardHeader>
@@ -127,7 +119,7 @@ export const ContextBuilder = ({
                 <span>Paso 1</span>
               </div>
               <CardTitle className="text-lg md:text-xl">
-                Define tu consulta
+                Define el contexto
               </CardTitle>
               <CardDescription className="text-sm md:text-base">
                 Selecciona los archivos o páginas web y describe la tarea que
@@ -150,7 +142,7 @@ export const ContextBuilder = ({
               className="inline-flex items-center gap-2"
             >
               <span className="icon-[fa7-solid--images]" />
-              <span>Cargar Imágenes (URLs)</span>
+              <span>Imágenes por URL</span>
               {imageUrlCount > 0 && (
                 <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                   {imageUrlCount}
@@ -198,13 +190,13 @@ export const ContextBuilder = ({
             </Alert>
           )}
 
-          {fetchFileState?.error && (
+          {contextProcessState?.error && (
             <Alert
               variant="destructive"
               className="border-destructive/40 bg-destructive/5"
             >
               <AlertDescription className="text-sm font-medium">
-                {fetchFileState.error}
+                {contextProcessState.error}
               </AlertDescription>
             </Alert>
           )}
@@ -232,18 +224,18 @@ export const ContextBuilder = ({
             {!isReadyToReview && (
               <Button
                 type="submit"
-                disabled={!userTask.trim() || isFetchingFiles}
+                disabled={!userTask.trim() || isProcessingContext}
                 className="inline-flex max-w-60 items-center gap-2"
               >
-                {isFetchingFiles ? (
+                {isProcessingContext ? (
                   <>
                     <span className="icon-[fa7-solid--spinner] animate-spin" />
-                    Analizando archivos...
+                    Procesando contexto...
                   </>
                 ) : (
                   <>
                     <span className="icon-[fa7-solid--paper-plane]" />
-                    Generar y revisar prompt
+                    Generar prompt
                   </>
                 )}
               </Button>
@@ -252,7 +244,7 @@ export const ContextBuilder = ({
         </CardContent>
       </Card>
 
-      <ImageUploadDialog
+      <ImageUrlsDialog
         open={showImageDialog}
         onOpenChange={setShowImageDialog}
         disabled={isDisabled}

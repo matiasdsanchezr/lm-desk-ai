@@ -123,8 +123,8 @@ export const ChatTurnItem = memo(
                     <span className="icon-[lucide--user] h-3.5 w-3.5 text-primary" />
                     <span>
                       {isUserContentVisible
-                        ? "Ocultar Entrada de Usuario"
-                        : "Mostrar Entrada de Usuario"}
+                        ? "Ocultar consulta del usuario"
+                        : "Ver consulta del usuario"}
                     </span>
                   </CollapsibleTrigger>
 
@@ -164,18 +164,6 @@ export const ChatTurnItem = memo(
                             title="Editar consulta"
                           >
                             <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteTurnClick()
-                            }}
-                            title="Eliminar turno completo"
-                          >
-                            <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
                           </Button>
                         </>
                       )}
@@ -242,15 +230,30 @@ export const ChatTurnItem = memo(
                   turn.assistantMessage &&
                   onEditMessage &&
                   editingRole !== "assistant" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingRole("assistant")}
-                      className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
-                      Editar
-                    </Button>
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteTurnClick()
+                        }}
+                        className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-destructive"
+                        title="Eliminar esta interacción"
+                      >
+                        <span className="icon-[lucide--trash-2] h-3.5 w-3.5" />
+                        Eliminar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingRole("assistant")}
+                        className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <span className="icon-[lucide--edit-2] h-3.5 w-3.5" />
+                        Editar
+                      </Button>
+                    </>
                   )}
                 {turn.assistantMessage &&
                   !isStreaming &&

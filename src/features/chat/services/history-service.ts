@@ -6,13 +6,13 @@ import { revalidatePath } from "next/cache"
 import path from "path"
 import type { Chat, ChatMeta, CreateChatInput, UpdateChatInput } from "../types"
 
-const GENERATED_DIR = path.join(config.STORAGE_PATH, "chats")
+const CHATS_STORAGE_DIR = path.join(config.STORAGE_PATH, "chats")
 
 /**
  * Asegura que el directorio para guardar los chats exista.
  */
 async function ensureDirectoryExists(): Promise<void> {
-  await mkdir(GENERATED_DIR, { recursive: true })
+  await mkdir(CHATS_STORAGE_DIR, { recursive: true })
 }
 
 /**
@@ -22,7 +22,7 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
   await ensureDirectoryExists()
 
   const id = data.id || `session-${Date.now()}`
-  const title = data.title || "Chat sin titulo"
+  const title = data.title || "Sesión sin título"
   const createdAt = new Date().toISOString()
   const newChat: Chat = {
     id,
@@ -32,7 +32,7 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
     messages: data.messages,
     activeStreamId: data.activeStreamId,
   }
-  const filePath = path.join(GENERATED_DIR, `${id}.json`)
+  const filePath = path.join(CHATS_STORAGE_DIR, `${id}.json`)
   await writeFile(filePath, JSON.stringify(newChat, null, 2), "utf-8")
   return newChat
 }
@@ -43,7 +43,7 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
 export async function getChatById(id: string): Promise<Chat | null> {
   try {
     const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(GENERATED_DIR, fileName)
+    const filePath = path.join(CHATS_STORAGE_DIR, fileName)
     const savedChat = await readFile(filePath, "utf-8")
     return JSON.parse(savedChat) as Chat
   } catch (error: unknown) {
@@ -75,7 +75,7 @@ export async function updateChat(
     }
 
     const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(GENERATED_DIR, fileName)
+    const filePath = path.join(CHATS_STORAGE_DIR, fileName)
     await writeFile(filePath, JSON.stringify(updatedChat, null, 2), "utf-8")
     return updatedChat
   } catch (error) {
@@ -88,13 +88,13 @@ export async function updateChat(
  */
 export async function listChats(): Promise<ChatMeta[]> {
   await ensureDirectoryExists()
-  const files = await readdir(GENERATED_DIR)
+  const files = await readdir(CHATS_STORAGE_DIR)
   const jsonFiles = files.filter((file) => file.endsWith(".json"))
 
   const chatsData = await Promise.all(
     jsonFiles.map(async (file) => {
       try {
-        const filePath = path.join(GENERATED_DIR, file)
+        const filePath = path.join(CHATS_STORAGE_DIR, file)
         const content = await readFile(filePath, "utf-8")
         const savedChat = JSON.parse(content) as Chat
         return {
@@ -121,7 +121,7 @@ export async function listChats(): Promise<ChatMeta[]> {
  */
 export async function deleteChat(id: string): Promise<void> {
   const fileName = id.endsWith(".json") ? id : `${id}.json`
-  const filePath = path.join(GENERATED_DIR, fileName)
+  const filePath = path.join(CHATS_STORAGE_DIR, fileName)
   await unlink(filePath)
   revalidatePath("/chat")
 }

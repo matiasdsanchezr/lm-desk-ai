@@ -1,5 +1,6 @@
 "use client"
 
+import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { Button } from "@/shared/components/ui/button"
 import {
   Dialog,
@@ -11,20 +12,19 @@ import {
 } from "@/shared/components/ui/dialog"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { useShallow } from "zustand/shallow"
 
-interface ImageUploadDialogProps {
+interface ImageUrlsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   disabled?: boolean
 }
 
-export function ImageUploadDialog({
+export function ImageUrlsDialog({
   open,
   onOpenChange,
   disabled,
-}: ImageUploadDialogProps) {
+}: ImageUrlsDialogProps) {
   const { imageUrls, setImageUrls } = useFileExplorerStore(
     useShallow((s) => ({
       imageUrls: s.imageUrls,
@@ -43,7 +43,7 @@ export function ImageUploadDialog({
         <DialogHeader className="border-b border-border/40 pb-4">
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <span className="icon-[fa7-solid--images] text-primary" />
-            Cargar Imágenes (URLs)
+            Adjuntar URLs de imágenes
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
             Pega las URLs de las imágenes que deseas adjuntar como contexto

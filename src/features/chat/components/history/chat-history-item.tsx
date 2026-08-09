@@ -106,7 +106,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
             disabled={isPending}
             autoFocus
             className="h-7 min-w-0 flex-1 bg-transparent px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
-            placeholder="Título de la conversación..."
+            placeholder="Título de la sesión..."
           />
 
           <div className="flex shrink-0 items-center gap-0.5">
@@ -158,7 +158,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
             className="flex w-full flex-col items-start gap-1 p-2.5 disabled:opacity-60"
           >
             <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
-              {chat.title || "Análisis sin título"}
+              {chat.title || "Sesión sin título"}
             </span>
 
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
@@ -228,7 +228,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
             ) : (
               <>
                 <span className="icon-[lucide--trash-2] size-3.5" />
-                <span>Eliminar</span>
+                <span>Eliminar Sesión</span>
               </>
             )}
           </DropdownMenuItem>

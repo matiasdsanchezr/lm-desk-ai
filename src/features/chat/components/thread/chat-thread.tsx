@@ -23,13 +23,8 @@ export function ChatThread() {
   const [followUpText, setFollowUpText] = useState("")
   const includeReasoning = useChatStore((s) => s.includeReasoning)
   const { setIncludeReasoning } = useChatActions()
-  const {
-    messages,
-    error,
-    isStreaming,
-    generateFollowUpContent: sendFollowUp,
-    setMessages,
-  } = useChatCompletion()
+  const { messages, error, isStreaming, generateFollowUpContent, setMessages } =
+    useChatCompletion()
 
   const latestMessagesRef = useRef(messages)
   useEffect(() => {
@@ -39,11 +34,12 @@ export function ChatThread() {
   const handleFollowUpSubmit = useCallback(
     (e: React.SubmitEvent | React.KeyboardEvent) => {
       e.preventDefault()
-      if (!followUpText.trim() || isStreaming || !sendFollowUp) return
-      sendFollowUp(followUpText)
+      if (!followUpText.trim() || isStreaming || !generateFollowUpContent)
+        return
+      generateFollowUpContent(followUpText)
       setFollowUpText("")
     },
-    [followUpText, isStreaming, sendFollowUp]
+    [followUpText, isStreaming, generateFollowUpContent]
   )
 
   const handleEditMessage = useCallback(
@@ -72,6 +68,10 @@ export function ChatThread() {
   )
 
   const turns = useMemo(() => groupMessagesIntoTurns(messages), [messages])
+
+  if (!messages.length && !error) {
+    return null
+  }
 
   return (
     <Card className="overflow-hidden border-border/60 shadow-md transition-all">
@@ -160,7 +160,7 @@ export function ChatThread() {
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2.5">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground/80">
                   <span className="icon-[lucide--messages-square] h-4 w-4 text-primary" />
-                  <span>Consulta</span>
+                  <span>Nueva Consulta</span>
                 </div>
 
                 <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-2.5 py-1 transition-colors hover:bg-muted/80">
@@ -175,7 +175,7 @@ export function ChatThread() {
                     htmlFor="include-reasoning"
                     className="cursor-pointer select-none text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    Incluir razonamiento previo como contexto
+                    Incluir razonamientos previos en el contexto
                   </Label>
                 </div>
               </div>
@@ -183,7 +183,7 @@ export function ChatThread() {
               <Textarea
                 value={followUpText}
                 onChange={(e) => setFollowUpText(e.target.value)}
-                placeholder="Escribe tu consulta adicional... (Ej: 'Explícame la función handleCopy' o 'Optimiza este fragmento')"
+                placeholder="Escribe una consulta adicional... (Ej: 'Optimiza este fragmento')"
                 disabled={isStreaming}
                 rows={2}
                 className="min-h-18 w-full rounded-none resize-none border-0 bg-transparent p-0 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm"

@@ -12,25 +12,32 @@ import {
 import { Separator } from "@/shared/components/ui/separator"
 import React from "react"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
-import { useChatActions } from "../../store/chat-store"
+import { useChatActions, useChatStore } from "../../store/chat-store"
 
 interface PromptReviewerProps {
-  disabled: boolean
   children?: React.ReactNode
 }
 
-export const PromptReviewer = ({ disabled, children }: PromptReviewerProps) => {
-  const { clearPrompts, resetAll: resetAllChat } = useChatActions()
+export const PromptReviewer = ({ children }: PromptReviewerProps) => {
+  const { resetGeneratedPrompts: resetGeneratedPrompt, resetAll } =
+    useChatActions()
   const resetFiles = useFileExplorerStore((s) => s.resetState)
-  const { isStreaming, generateContent, stop } = useChatCompletion()
+  const { isStreaming, generateContent, stop, messages } = useChatCompletion()
+  const exportablePrompt = useChatStore((s) => s.exportablePrompt)
+  const isReadyToReview = Boolean(exportablePrompt)
+  const disabled = messages.length > 0
 
   const handleModifyQuery = () => {
-    clearPrompts()
+    resetGeneratedPrompt()
   }
 
   const handleResetAll = () => {
-    resetAllChat()
+    resetAll()
     resetFiles()
+  }
+
+  if (!isReadyToReview) {
+    return null
   }
 
   return (
@@ -97,7 +104,7 @@ export const PromptReviewer = ({ disabled, children }: PromptReviewerProps) => {
               className="inline-flex h-9 flex-1 items-center justify-center gap-2 text-xs sm:flex-initial"
             >
               <span className="icon-[fa7-solid--pencil] text-muted-foreground" />
-              Modificar consulta
+              Modificar contexto
             </Button>
 
             <Button

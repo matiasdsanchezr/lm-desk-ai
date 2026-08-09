@@ -1,6 +1,6 @@
 "use client"
 
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
+import { useFileExplorerStore } from "@/features/file-explorer"
 import { Badge } from "@/shared/components/ui/badge"
 import { Button } from "@/shared/components/ui/button"
 import {
@@ -17,7 +17,7 @@ export const GeneratedPrompt = () => {
   const [copied, setCopied] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 
-  const standalonePrompt = useChatStore((s) => s.standalonePrompt)
+  const exportablePrompt = useChatStore((s) => s.exportablePrompt)
   const fileContents = useFileExplorerStore((s) => s.fileContents)
 
   const validFiles = useMemo(
@@ -27,7 +27,7 @@ export const GeneratedPrompt = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(standalonePrompt)
+      await navigator.clipboard.writeText(exportablePrompt)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
@@ -95,17 +95,17 @@ export const GeneratedPrompt = () => {
 
         <Textarea
           readOnly
-          value={standalonePrompt}
+          value={exportablePrompt}
           className="max-h-125 min-h-64 resize-y bg-background font-mono text-xs focus-visible:ring-1"
-          aria-label="Código fuente unificado"
+          aria-label="Prompt generado completo"
         />
         <div className="flex items-center justify-between text-[10px] text-muted-foreground">
           <span>
-            Haga clic dentro y use Ctrl+A para seleccionar manualmente
+            Haz clic dentro y usa Ctrl / ⌘ + A para seleccionar manualmente
           </span>
           <span>
-            {standalonePrompt.length.toLocaleString()} caracteres · ~
-            {Math.ceil(standalonePrompt.length / 4).toLocaleString()} tokens
+            {exportablePrompt.length.toLocaleString()} caracteres · ~
+            {Math.ceil(exportablePrompt.length / 4).toLocaleString()} tokens
           </span>
         </div>
       </CollapsibleContent>

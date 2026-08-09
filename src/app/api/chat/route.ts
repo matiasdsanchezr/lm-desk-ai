@@ -167,7 +167,7 @@ export async function POST(req: Request) {
                   revalidatePath(`/chat/${chat.id}`)
                 } catch (err) {
                   console.error(
-                    "[/api/chat] Error al procesar o guardar el chat:",
+                    "[/api/chat] Error al procesar o guardar la sesión:",
                     err
                   )
                 }

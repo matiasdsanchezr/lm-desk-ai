@@ -11,7 +11,7 @@ export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
     revalidatePath("/chat")
     return { data: result }
   } catch {
-    return { error: "No se pudo guardar el chat" }
+    return { error: "No se pudo guardar la sesión" }
   }
 }
 
@@ -21,7 +21,7 @@ export const deleteChat = async (id: string): ActionResponse<void> => {
     revalidatePath("/chat")
     return {}
   } catch {
-    return { error: "No se pudo eliminar el chat" }
+    return { error: "No se pudo eliminar la sesión" }
   }
 }
 
@@ -34,6 +34,6 @@ export const updateChat = async (
     revalidatePath(`/chat/${id}`)
     return {}
   } catch {
-    return { error: "No se pudo actualizar el chat" }
+    return { error: "No se pudo actualizar la sesión" }
   }
 }

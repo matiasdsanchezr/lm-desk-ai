@@ -9,9 +9,7 @@ import { useActionState } from "react"
 import { useChatStore } from "../store/chat-store"
 
 export function useContextProcessor() {
-  const systemPrompt = useInferenceStore((s) => s.systemPrompt)
-
-  const [fetchFileState, handleFetchFileContents, isFetchingFiles] =
+  const [contextProcessState, handleProcessContext, isProcessingContext] =
     useActionState(
       async (_: unknown, formData: FormData) => {
         const { data, error } = await fetchFileContextAction({}, formData)
@@ -32,13 +30,14 @@ export function useContextProcessor() {
           (page) => selectedUrls.includes(page.url) && page.content
         )
 
-        const webContextFiles = selectedWebPages.map((page) => ({
+        const formattedWebSources = selectedWebPages.map((page) => ({
           path: `[Web] ${page.title || page.url} (${page.url})`,
           content: page.content ?? "",
         }))
 
         const localFiles = data.fileContents ?? []
-        const combinedContextFiles = [...localFiles, ...webContextFiles]
+        const combinedContextFiles = [...localFiles, ...formattedWebSources]
+        const systemPrompt = useInferenceStore.getState().systemPrompt
 
         const promptBuilder = new PromptBuilder()
           .addSystem(systemPrompt)
@@ -49,7 +48,7 @@ export function useContextProcessor() {
         setImages(data.imageFiles)
         setPrompts({
           contextualPrompt: promptBuilder.buildContextAndTask(),
-          standalonePrompt: promptBuilder.build(),
+          exportablePrompt: promptBuilder.build(),
         })
 
         return { error: null }
@@ -58,8 +57,8 @@ export function useContextProcessor() {
     )
 
   return {
-    fetchFileState,
-    handleFetchFileContents,
-    isFetchingFiles,
+    contextProcessState,
+    handleProcessContext,
+    isProcessingContext,
   }
 }

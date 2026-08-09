@@ -61,7 +61,7 @@ export default function NotFound() {
             className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-xs font-semibold text-primary-foreground shadow-md transition-all hover:scale-[1.02] hover:bg-primary/90"
           >
             <span className="icon-[lucide--bot] size-4" />
-            Ir al Espacio de Chat
+            Ir a una nueva sesión
           </Link>
           <Link
             href="/"

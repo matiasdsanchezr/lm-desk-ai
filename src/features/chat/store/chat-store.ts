@@ -6,7 +6,7 @@ interface ChatState {
   chatId?: string
   userTask: string
   contextualPrompt: string
-  standalonePrompt: string
+  exportablePrompt: string
   includeReasoning: boolean
 }
 
@@ -16,11 +16,10 @@ interface ChatActions {
     setUserTask: (query: string) => void
     setPrompts: (prompts: {
       contextualPrompt: string
-      standalonePrompt: string
+      exportablePrompt: string
     }) => void
     setIncludeReasoning: (include: boolean) => void
-    clearPrompts: () => void
-    resetChat: () => void
+    resetGeneratedPrompts: () => void
     resetAll: () => void
   }
 }
@@ -29,7 +28,7 @@ const createInitialState = () => ({
   chatId: generateId(),
   userTask: "",
   contextualPrompt: "",
-  standalonePrompt: "",
+  exportablePrompt: "",
   includeReasoning: true,
 })
 
@@ -40,15 +39,14 @@ export const useChatStore = create<ChatState & ChatActions>()(
       actions: {
         setChatId: (chatId) => set({ chatId }),
         setUserTask: (userTask) => set({ userTask }),
-        setPrompts: ({ contextualPrompt, standalonePrompt }) =>
-          set({ contextualPrompt, standalonePrompt }),
+        setPrompts: ({ contextualPrompt, exportablePrompt }) =>
+          set({ contextualPrompt, exportablePrompt }),
         setIncludeReasoning: (includeReasoning) => set({ includeReasoning }),
-        clearPrompts: () =>
+        resetGeneratedPrompts: () =>
           set({
             contextualPrompt: "",
-            standalonePrompt: "",
+            exportablePrompt: "",
           }),
-        resetChat: () => set({ chatId: generateId() }),
         resetAll: () => set(createInitialState()),
       },
     }),

@@ -47,7 +47,7 @@ export function InlineMessageEditor({
           <kbd className="rounded border bg-muted px-1 font-sans">Esc</kbd> para
           cancelar ·{" "}
           <kbd className="rounded border bg-muted px-1 font-sans">
-            Ctrl+Enter
+            Ctrl / ⌘ + Enter
           </kbd>{" "}
           para guardar
         </span>

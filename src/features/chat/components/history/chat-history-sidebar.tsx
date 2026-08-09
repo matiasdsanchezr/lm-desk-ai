@@ -22,11 +22,11 @@ interface ChatHistorySidebarProps {
 export function ChatHistorySidebar({
   savedChatsPromise,
 }: ChatHistorySidebarProps) {
-  const savedChats = use(savedChatsPromise)
-  const { clearPrompts } = useChatActions()
   const router = useRouter()
   const params = useParams()
   const chatId = params?.chatId as string | undefined
+  const savedChats = use(savedChatsPromise)
+  const { resetGeneratedPrompts } = useChatActions()
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -38,9 +38,11 @@ export function ChatHistorySidebar({
   )
 
   const handleNewChat = useCallback(() => {
-    clearPrompts()
-    router.push("/chat")
-  }, [router, clearPrompts])
+    resetGeneratedPrompts()
+    startTransition(() => {
+      router.push(`/chat`)
+    })
+  }, [router, resetGeneratedPrompts])
 
   return (
     <Sidebar
