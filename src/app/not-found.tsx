@@ -4,9 +4,9 @@ export default function NotFound() {
   return (
     <main className="relative flex min-h-dvh w-full flex-col items-center justify-center overflow-hidden bg-background p-4 text-foreground selection:bg-primary/10">
       {/* Cuadrícula decorativa y resplandor de fondo */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] mask-[radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] bg-[size:14px_24px]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] mask-[radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] bg-size-[14px_24px]" />
       <div className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center">
-        <div className="h-[300px] w-[500px] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="h-75 w-125 rounded-full bg-primary/10 blur-[120px]" />
       </div>
 
       <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center">

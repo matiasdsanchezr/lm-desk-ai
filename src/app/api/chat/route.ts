@@ -20,7 +20,7 @@ import {
   safeValidateUIMessages,
   toUIMessageStream,
 } from "ai"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 
@@ -92,6 +92,8 @@ export async function POST(req: Request) {
         selectedFilePaths: selectedFilePaths || [],
         activeStreamId: streamId,
       })
+      revalidateTag("chat-list", "max")
+      revalidateTag(`chat-${chat.id}`, "max")
     }
 
     const validatedMessages = await safeValidateUIMessages({
@@ -147,6 +149,8 @@ export async function POST(req: Request) {
 
                   if (!textContent) {
                     await updateChat(chat.id, { messages })
+                    revalidateTag("chat-list", "max")
+                    revalidateTag(`chat-${chat.id}`, "max")
                     revalidatePath(`/chat/${chat.id}`)
                     return
                   }
@@ -164,6 +168,8 @@ export async function POST(req: Request) {
                   }
 
                   await updateChat(chat.id, { messages })
+                  revalidateTag("chat-list", "max")
+                  revalidateTag(`chat-${chat.id}`, "max")
                   revalidatePath(`/chat/${chat.id}`)
                 } catch (err) {
                   console.error(

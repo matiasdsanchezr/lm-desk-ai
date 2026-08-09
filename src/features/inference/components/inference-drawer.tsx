@@ -8,18 +8,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/shared/components/ui/sheet"
-import { use } from "react"
-import { SystemPromptMeta } from "../types"
-import { SystemPromptMenu } from "./system-prompt-menu"
+import { cacheLife, cacheTag } from "next/cache"
+import { Suspense } from "react"
+import { getSystemPromptsList } from "../queries"
 import { ModelParameters } from "./model-parameters"
 import { ProviderMenu } from "./provider-menu"
+import { SystemPromptMenu } from "./system-prompt-menu"
 
-export function InferenceDrawer({
-  initialPromptsPromise,
-}: {
-  initialPromptsPromise: Promise<SystemPromptMeta[]>
-}) {
-  const initialPrompts = use(initialPromptsPromise)
+export async function InferenceDrawer() {
+  "use cache"
+  cacheTag("system-prompts-list")
+  cacheLife("days")
+
+  const initialPromptsPromise = getSystemPromptsList()
 
   return (
     <Sheet>
@@ -95,7 +96,11 @@ export function InferenceDrawer({
                 Define el rol y contexto del sistema.
               </p>
             </div>
-            <SystemPromptMenu availablePrompts={initialPrompts} />
+            <Suspense fallback={null}>
+              <SystemPromptMenu
+                availablePromptsPromise={initialPromptsPromise}
+              />
+            </Suspense>
           </section>
         </div>
       </SheetContent>

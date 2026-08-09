@@ -1,31 +1,34 @@
-// src/app/chat/[[...chatId]]/page.tsx
 import {
   ChatCompletionProvider,
   ChatWorkspace,
   getChatById,
 } from "@/features/chat"
-import { getFileTreeAction } from "@/features/file-explorer/actions/get-file-tree"
+import { ChatWorkspaceSkeleton } from "@/features/chat/components/chat-workspace-skeleton"
 import { FileExplorerProvider } from "@/features/file-explorer/context/file-explorer-context"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-export const instant = false
+import { getFileTree } from "@/features/file-explorer/queries"
+import { Suspense } from "react"
 
 interface ChatPageProps {
   params: Promise<{ chatId?: string[] }>
 }
 
-export default async function ChatPage({ params }: ChatPageProps) {
+async function getInitialChat(params: Promise<{ chatId?: string[] }>) {
   const { chatId } = await params
   const id = chatId?.[0]
+  return id ? getChatById(id) : null
+}
 
-  const treeStructurePromise = getFileTreeAction()
-  const initialChatPromise = id ? getChatById(id) : Promise.resolve(null)
+export default function ChatPage({ params }: ChatPageProps) {
+  const treeStructurePromise = getFileTree()
+  const initialChatPromise = getInitialChat(params)
 
   return (
-    <FileExplorerProvider fileTreePromise={treeStructurePromise}>
-      <ChatCompletionProvider initialChatPromise={initialChatPromise}>
-        <ChatWorkspace />
-      </ChatCompletionProvider>
-    </FileExplorerProvider>
+    <Suspense fallback={<ChatWorkspaceSkeleton />}>
+      <FileExplorerProvider fileTreePromise={treeStructurePromise}>
+        <ChatCompletionProvider initialChatPromise={initialChatPromise}>
+          <ChatWorkspace />
+        </ChatCompletionProvider>
+      </FileExplorerProvider>
+    </Suspense>
   )
 }

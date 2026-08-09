@@ -1,11 +1,7 @@
 import { cn } from "@/shared/lib/utils"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono, Inter } from "next/font/google"
+import { Geist, Inter } from "next/font/google"
 import "./globals.css"
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
@@ -14,10 +10,10 @@ const geistSans = Geist({
   subsets: ["latin"],
 })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-})
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// })
 
 export const metadata: Metadata = {
   title: "LM Desk",
@@ -31,7 +27,7 @@ export const metadata: Metadata = {
   keywords: ["AI", "LLM", "Coding", "Agent"],
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode

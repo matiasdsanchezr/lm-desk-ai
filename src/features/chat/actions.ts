@@ -1,13 +1,17 @@
 "use server"
 
 import { ActionResponse } from "@/shared/types/action-state"
-import { revalidatePath } from "next/cache"
+import { revalidatePath, updateTag } from "next/cache"
 import * as historyService from "./services/history-service"
 import type { Chat, CreateChatInput, UpdateChatInput } from "./types"
 
 export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
   try {
     const result = await historyService.createChat(data)
+    updateTag("chat-list")
+    if (result.id) {
+      updateTag(`chat-${result.id}`)
+    }
     revalidatePath("/chat")
     return { data: result }
   } catch {
@@ -18,6 +22,8 @@ export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
 export const deleteChat = async (id: string): ActionResponse<void> => {
   try {
     await historyService.deleteChat(id)
+    updateTag("chat-list")
+    updateTag(`chat-${id}`)
     revalidatePath("/chat")
     return {}
   } catch {
@@ -31,6 +37,8 @@ export const updateChat = async (
 ): ActionResponse<void> => {
   try {
     await historyService.updateChat(id, updates)
+    updateTag("chat-list")
+    updateTag(`chat-${id}`)
     revalidatePath(`/chat/${id}`)
     return {}
   } catch {

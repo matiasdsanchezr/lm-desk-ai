@@ -28,16 +28,17 @@ import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { cn } from "@/shared/lib/utils"
-import { useState, useTransition } from "react"
+import { use, useState, useTransition } from "react"
 import { getSystemPrompt } from "../actions"
 import { useInferenceStore } from "../store/inference-store"
 import { SystemPromptMeta } from "../types"
 
 interface Props {
-  availablePrompts: SystemPromptMeta[]
+  availablePromptsPromise: Promise<SystemPromptMeta[]>
 }
 
-export const SystemPromptMenu = ({ availablePrompts }: Props) => {
+export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
+  const availablePrompts = use(availablePromptsPromise)
   const {
     systemPrompt: systemPrompt,
     setSystemPrompt: setSystemPrompt,

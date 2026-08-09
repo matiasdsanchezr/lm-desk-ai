@@ -1,22 +1,29 @@
 import "server-only"
 
-import { cache } from "react"
+import { cacheLife, cacheTag } from "next/cache"
 import * as historyService from "./services/history-service"
 import type { Chat, ChatMeta } from "./types"
 
-export const getChatList = cache(async (): Promise<ChatMeta[]> => {
+export async function getChatList(): Promise<ChatMeta[]> {
+  "use cache"
+  cacheTag("chat-list")
+  cacheLife("days")
+
   try {
     return await historyService.listChats()
   } catch (error) {
     console.error("[Chat Query] Error al listar conversaciones:", error)
     return []
   }
-})
+}
 
-export const getChatById = cache(async (id: string): Promise<Chat | null> => {
+export async function getChatById(id: string): Promise<Chat | null> {
+  "use cache"
   if (!id || typeof id !== "string") {
     return null
   }
+  cacheTag(`chat-${id}`)
+  cacheLife("days")
 
   try {
     return await historyService.getChatById(id)
@@ -24,4 +31,4 @@ export const getChatById = cache(async (id: string): Promise<Chat | null> => {
     console.error(`[Chat Query] Error al obtener el chat con ID ${id}:`, error)
     return null
   }
-})
+}

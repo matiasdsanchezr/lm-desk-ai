@@ -2,7 +2,6 @@ import "server-only"
 
 import { config } from "@/shared/lib/config"
 import { mkdir, readdir, readFile, unlink, writeFile } from "fs/promises"
-import { revalidatePath } from "next/cache"
 import path from "path"
 import type { Chat, ChatMeta, CreateChatInput, UpdateChatInput } from "../types"
 
@@ -123,5 +122,4 @@ export async function deleteChat(id: string): Promise<void> {
   const fileName = id.endsWith(".json") ? id : `${id}.json`
   const filePath = path.join(CHATS_STORAGE_DIR, fileName)
   await unlink(filePath)
-  revalidatePath("/chat")
 }

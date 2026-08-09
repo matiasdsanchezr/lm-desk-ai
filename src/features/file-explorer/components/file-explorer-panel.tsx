@@ -17,6 +17,7 @@ import { cn } from "@/shared/lib/utils"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import { useRouter } from "next/navigation"
 import { useCallback, useMemo, useRef, useState, useTransition } from "react"
+import { refreshFileTreeAction } from "../actions"
 import { useFileExplorerContext } from "../context/file-explorer-context"
 import { useFileSelection } from "../hooks/use-file-selection"
 import { useTreeExpansion } from "../hooks/use-tree-expansion"
@@ -119,7 +120,8 @@ export function FileExplorerPanel({
   )
 
   const handleRefresh = useCallback(() => {
-    startTransition(() => {
+    startTransition(async () => {
+      await refreshFileTreeAction()
       router.refresh()
     })
   }, [router])
