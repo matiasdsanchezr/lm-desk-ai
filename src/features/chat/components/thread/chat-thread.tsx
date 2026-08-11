@@ -21,8 +21,8 @@ import { ChatTurnItem, ChatTurnSkeleton } from "./chat-turn-item"
 
 export function ChatThread() {
   const [followUpText, setFollowUpText] = useState("")
-  const includeReasoning = useChatStore((s) => s.includeReasoning)
-  const { setIncludeReasoning } = useChatActions()
+  const includeReasoning = useChatStore((s) => s.includeReasoningHistory)
+  const { setIncludeReasoningHistory: setIncludeReasoning } = useChatActions()
   const { messages, error, isStreaming, generateFollowUpContent, setMessages } =
     useChatCompletion()
 
@@ -34,8 +34,7 @@ export function ChatThread() {
   const handleFollowUpSubmit = useCallback(
     (e: React.SubmitEvent | React.KeyboardEvent) => {
       e.preventDefault()
-      if (!followUpText.trim() || isStreaming || !generateFollowUpContent)
-        return
+      if (!followUpText.trim() || isStreaming) return
       generateFollowUpContent(followUpText)
       setFollowUpText("")
     },

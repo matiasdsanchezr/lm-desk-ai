@@ -23,7 +23,7 @@ interface ChatCompletionContextType {
   error: Error | undefined
   isStreaming: boolean
   setMessages: (messages: UIMessage[]) => void
-  generateContent: () => void
+  generateContent: (text: string, includeContext?: boolean) => void
   generateFollowUpContent: (text: string) => void
   stop: () => void
 }
@@ -47,7 +47,7 @@ export function ChatCompletionProvider({
   const getInferenceConfig = useCallback(() => {
     const settings = useInferenceStore.getState()
     return {
-      instructions: settings.systemPrompt,
+      systemPrompt: settings.systemPrompt,
       provider: settings.modelConfig.provider,
       model: settings.modelConfig.model,
       temperature: settings.temperature,
@@ -70,15 +70,15 @@ export function ChatCompletionProvider({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest(data) {
-        const { includeReasoning } = useChatStore.getState()
         const { selectedFilePaths } = useFileExplorerStore.getState()
+        const { includeReasoningHistory } = useChatStore.getState()
         return {
           body: {
             ...data,
             message: data.messages[data.messages.length - 1],
             ...getInferenceConfig(),
             selectedFilePaths,
-            includeReasoning,
+            includeReasoningHistory,
           },
         }
       },
@@ -97,25 +97,34 @@ export function ChatCompletionProvider({
 
   const isStreaming = status === "streaming" || status === "submitted"
 
-  const generateContent = useCallback(() => {
-    clearError()
-    setMessages([])
+  const generateContent = useCallback(
+    (text: string, includeContext = true) => {
+      clearError()
+      setMessages([])
 
-    const { contextualPrompt } = useChatStore.getState()
-    const { imageFiles } = useFileExplorerStore.getState()
-    const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
-      type: "file",
-      mediaType: i.mimeType,
-      url: i.base64.startsWith("data:")
-        ? i.base64
-        : `data:${i.mimeType};base64,${i.base64}`,
-    }))
+      if (!text.trim() || isStreaming) return
 
-    sendMessage({
-      text: contextualPrompt,
-      files: fileUIParts.length > 0 ? fileUIParts : undefined,
-    })
-  }, [clearError, setMessages, sendMessage])
+      if (!includeContext) {
+        sendMessage({ text })
+        return
+      }
+
+      const { imageFiles } = useFileExplorerStore.getState()
+      const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
+        type: "file",
+        mediaType: i.mimeType,
+        url: i.base64.startsWith("data:")
+          ? i.base64
+          : `data:${i.mimeType};base64,${i.base64}`,
+      }))
+
+      sendMessage({
+        text,
+        files: fileUIParts.length > 0 ? fileUIParts : undefined,
+      })
+    },
+    [clearError, setMessages, sendMessage, isStreaming]
+  )
 
   const generateFollowUpContent = useCallback(
     (text: string) => {

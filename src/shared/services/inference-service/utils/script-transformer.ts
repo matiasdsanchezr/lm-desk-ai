@@ -94,7 +94,7 @@ export async function applyTransformScriptToModelMessages(
 
     for (let i = 0; i < messages.length; i++) {
       const m = messages[i]
-      if (m.role !== "user") {
+      if (m.role === "tool" || m.role === "system") {
         result[i] = m
         continue
       }

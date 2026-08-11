@@ -17,6 +17,7 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateId,
+  pruneMessages,
   safeValidateUIMessages,
   toUIMessageStream,
 } from "ai"
@@ -33,7 +34,7 @@ const ChatRequestBodySchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   selectedFilePaths: z.array(z.string()).optional(),
-  includeReasoning: z.boolean().default(true),
+  includeReasoningHistory: z.boolean().default(true),
 })
 
 export async function POST(req: Request) {
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
       temperature,
       topP,
       selectedFilePaths,
-      includeReasoning,
+      includeReasoningHistory,
     } = parsedBody.data
 
     const inferenceModelResult = InferenceModelSchema.safeParse({
@@ -92,8 +93,8 @@ export async function POST(req: Request) {
         selectedFilePaths: selectedFilePaths || [],
         activeStreamId: streamId,
       })
-      revalidateTag("chat-list", "max")
-      revalidateTag(`chat-${chat.id}`, "max")
+      revalidateTag("chat-list", "days")
+      revalidateTag(`chat-${chat.id}`, "days")
     }
 
     const validatedMessages = await safeValidateUIMessages({
@@ -104,8 +105,14 @@ export async function POST(req: Request) {
     }
 
     const modelMessages = await convertToModelMessages(validatedMessages.data)
+    const prunedMessages = includeReasoningHistory
+      ? modelMessages
+      : pruneMessages({
+          messages: modelMessages,
+          reasoning: "all",
+        })
     const transformedMessages = await applyTransformScriptToModelMessages(
-      modelMessages,
+      prunedMessages,
       "pre-transform.js"
     )
 
@@ -135,7 +142,7 @@ export async function POST(req: Request) {
             toUIMessageStream({
               stream: result.stream,
               originalMessages: validatedMessages.data,
-              sendReasoning: includeReasoning,
+              sendReasoning: true,
               onEnd: async ({ messages, responseMessage }) => {
                 try {
                   const parts = responseMessage.parts
@@ -149,8 +156,8 @@ export async function POST(req: Request) {
 
                   if (!textContent) {
                     await updateChat(chat.id, { messages })
-                    revalidateTag("chat-list", "max")
-                    revalidateTag(`chat-${chat.id}`, "max")
+                    revalidateTag("chat-list", "days")
+                    revalidateTag(`chat-${chat.id}`, "days")
                     revalidatePath(`/chat/${chat.id}`)
                     return
                   }
@@ -168,8 +175,8 @@ export async function POST(req: Request) {
                   }
 
                   await updateChat(chat.id, { messages })
-                  revalidateTag("chat-list", "max")
-                  revalidateTag(`chat-${chat.id}`, "max")
+                  revalidateTag("chat-list", "days")
+                  revalidateTag(`chat-${chat.id}`, "days")
                   revalidatePath(`/chat/${chat.id}`)
                 } catch (err) {
                   console.error(

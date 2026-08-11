@@ -20,7 +20,7 @@ export async function ChatHistorySidebar({
 }: ChatHistorySidebarProps) {
   "use cache"
   cacheTag("chat-list")
-  cacheLife("days")
+  cacheLife("seconds")
 
   return (
     <Sidebar

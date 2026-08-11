@@ -18,12 +18,9 @@ export async function getChatList(): Promise<ChatMeta[]> {
 }
 
 export async function getChatById(id: string): Promise<Chat | null> {
-  "use cache"
-  if (!id || typeof id !== "string") {
+  if (!id) {
     return null
   }
-  cacheTag(`chat-${id}`)
-  cacheLife("days")
 
   try {
     return await historyService.getChatById(id)

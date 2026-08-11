@@ -16,26 +16,13 @@ import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../../actions"
 import type { ChatMeta } from "../../types"
+import { DateDisplay } from "./date"
 
 interface ChatHistoryItemProps {
   chat: ChatMeta
   isActive: boolean
   currentId?: string
   onSelect: (id: string) => void
-}
-
-const dateFormatter = new Intl.DateTimeFormat("es-AR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-})
-
-function formatChatDate(dateValue: Date | string) {
-  const date = new Date(dateValue)
-  if (Number.isNaN(date.getTime())) return "Fecha desconocida"
-  return dateFormatter.format(date)
 }
 
 export const ChatHistoryItem = memo(function ChatHistoryItem({
@@ -50,8 +37,6 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   const [isConfirming, setIsConfirming] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [titleInput, setTitleInput] = useState(chat.title || "")
-
-  const formattedDate = formatChatDate(chat.createdAt || "0")
 
   const handleDelete = useCallback(() => {
     startTransition(async () => {
@@ -163,11 +148,8 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span className="icon-[lucide--calendar] size-3 shrink-0" />
-              <time
-                suppressHydrationWarning
-                dateTime={new Date(chat.createdAt).toISOString()}
-              >
-                {formattedDate}
+              <time dateTime={new Date(chat.createdAt).toISOString()}>
+                <DateDisplay dateValue={chat.createdAt || "0"} />
               </time>
             </div>
           </button>

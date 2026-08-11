@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card"
 import { Separator } from "@/shared/components/ui/separator"
-import React from "react"
+import React, { useCallback } from "react"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
 import { useChatActions, useChatStore } from "../../store/chat-store"
 
@@ -19,16 +19,26 @@ interface PromptReviewerProps {
 }
 
 export const PromptReviewer = ({ children }: PromptReviewerProps) => {
-  const { resetGeneratedPrompts: resetGeneratedPrompt, resetAll } =
-    useChatActions()
+  const { resetGeneratedPrompts, resetAll } = useChatActions()
   const resetFiles = useFileExplorerStore((s) => s.resetState)
   const { isStreaming, generateContent, stop, messages } = useChatCompletion()
   const exportablePrompt = useChatStore((s) => s.exportablePrompt)
   const isReadyToReview = Boolean(exportablePrompt)
   const disabled = messages.length > 0
 
+  const handleGenerateContentSubmit = useCallback(
+    (e: React.SubmitEvent | React.KeyboardEvent) => {
+      e.preventDefault()
+      const { contextualPrompt } = useChatStore.getState()
+      if (!contextualPrompt.trim() || isStreaming) return
+
+      generateContent(contextualPrompt, true)
+    },
+    [isStreaming, generateContent]
+  )
+
   const handleModifyQuery = () => {
-    resetGeneratedPrompt()
+    resetGeneratedPrompts()
   }
 
   const handleResetAll = () => {
@@ -63,24 +73,25 @@ export const PromptReviewer = ({ children }: PromptReviewerProps) => {
 
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              disabled={isStreaming || disabled}
-              className="inline-flex items-center gap-2 px-5"
-              onClick={generateContent}
-            >
-              {isStreaming ? (
-                <>
-                  <span className="icon-[fa7-solid--spinner] animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <span className="icon-[fa7-solid--brain]" />
-                  Generar Respuesta
-                </>
-              )}
-            </Button>
+            <form onSubmit={handleGenerateContentSubmit}>
+              <Button
+                type="submit"
+                disabled={isStreaming || disabled}
+                className="inline-flex items-center gap-2 px-5"
+              >
+                {isStreaming ? (
+                  <>
+                    <span className="icon-[fa7-solid--spinner] animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <span className="icon-[fa7-solid--brain]" />
+                    Generar Respuesta
+                  </>
+                )}
+              </Button>
+            </form>
 
             {isStreaming && (
               <Button

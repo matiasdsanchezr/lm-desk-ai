@@ -13,8 +13,8 @@ interface ChatHistoryListProps {
 export function ChatHistoryList({ savedChatsPromise }: ChatHistoryListProps) {
   const router = useRouter()
   const params = useParams()
-  const chatId = params?.chatId as string | undefined
   const savedChats = use(savedChatsPromise)
+  const activeChatId = params?.chatId as string | undefined
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -40,8 +40,8 @@ export function ChatHistoryList({ savedChatsPromise }: ChatHistoryListProps) {
         <ChatHistoryItem
           key={chat.id}
           chat={chat}
-          isActive={chatId === chat.id}
-          currentId={chatId}
+          isActive={activeChatId === chat.id}
+          currentId={activeChatId}
           onSelect={handleSelect}
         />
       ))}
