@@ -169,6 +169,7 @@ export async function POST(req: Request) {
 
                   messages[messages.length - 1] = {
                     ...responseMessage,
+                    id: generateId(),
                     parts: parts.map((p) =>
                       p.type === "text" ? { ...p, text: transformedText } : p
                     ),

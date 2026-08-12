@@ -24,7 +24,6 @@ interface ChatCompletionContextType {
   isStreaming: boolean
   setMessages: (messages: UIMessage[]) => void
   generateContent: (text: string, includeContext?: boolean) => void
-  generateFollowUpContent: (text: string) => void
   stop: () => void
 }
 
@@ -100,7 +99,6 @@ export function ChatCompletionProvider({
   const generateContent = useCallback(
     (text: string, includeContext = true) => {
       clearError()
-      setMessages([])
 
       if (!text.trim() || isStreaming) return
 
@@ -112,26 +110,17 @@ export function ChatCompletionProvider({
       const { imageFiles } = useFileExplorerStore.getState()
       const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
         type: "file",
-        mediaType: i.mimeType,
+        mediaType: "image",
         url: i.base64.startsWith("data:")
           ? i.base64
           : `data:${i.mimeType};base64,${i.base64}`,
       }))
 
       sendMessage({
-        text,
-        files: fileUIParts.length > 0 ? fileUIParts : undefined,
+        parts: [...fileUIParts, { type: "text", text }],
       })
     },
-    [clearError, setMessages, sendMessage, isStreaming]
-  )
-
-  const generateFollowUpContent = useCallback(
-    (text: string) => {
-      if (!text.trim() || isStreaming) return
-      sendMessage({ text })
-    },
-    [isStreaming, sendMessage]
+    [clearError, sendMessage, isStreaming]
   )
 
   const contextValue = useMemo<ChatCompletionContextType>(
@@ -142,7 +131,6 @@ export function ChatCompletionProvider({
       isStreaming,
       setMessages,
       generateContent,
-      generateFollowUpContent,
       stop,
     }),
     [
@@ -152,7 +140,6 @@ export function ChatCompletionProvider({
       isStreaming,
       setMessages,
       generateContent,
-      generateFollowUpContent,
       stop,
     ]
   )

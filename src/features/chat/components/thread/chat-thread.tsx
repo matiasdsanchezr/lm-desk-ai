@@ -23,7 +23,7 @@ export function ChatThread() {
   const [followUpText, setFollowUpText] = useState("")
   const includeReasoning = useChatStore((s) => s.includeReasoningHistory)
   const { setIncludeReasoningHistory: setIncludeReasoning } = useChatActions()
-  const { messages, error, isStreaming, generateFollowUpContent, setMessages } =
+  const { messages, error, isStreaming, generateContent, setMessages } =
     useChatCompletion()
 
   const latestMessagesRef = useRef(messages)
@@ -35,10 +35,10 @@ export function ChatThread() {
     (e: React.SubmitEvent | React.KeyboardEvent) => {
       e.preventDefault()
       if (!followUpText.trim() || isStreaming) return
-      generateFollowUpContent(followUpText)
+      generateContent(followUpText)
       setFollowUpText("")
     },
-    [followUpText, isStreaming, generateFollowUpContent]
+    [followUpText, isStreaming, generateContent]
   )
 
   const handleEditMessage = useCallback(
