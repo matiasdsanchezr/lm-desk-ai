@@ -29,7 +29,7 @@ export async function fetchFileContextAction(
   const parsed = fetchFileContextSchema.safeParse({
     filePaths: formData.getAll("filePath"),
     includeDependencies: formData.get("includeDependencies"),
-    imageUrls: formData.get("imageUrls"),
+    imageUrls: formData.get("imageUrls") ?? "",
   })
 
   if (!parsed.success || !parsed.data) {

@@ -1,8 +1,8 @@
 "use client"
 
 import {
-  useFileExplorerStore,
   type FileTreeNode,
+  useFileExplorerStore,
 } from "@/features/file-explorer"
 import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
 import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
@@ -20,6 +20,7 @@ import { useChatCompletion } from "../../providers/chat-completion-provider"
 import { useChatActions, useChatStore } from "../../store/chat-store"
 import { ImageUrlsDialog } from "../builder/image-urls-dialog"
 import { ChatComposerToolbar } from "./chat-composer-toolbar"
+import { ChatPastedImages } from "./chat-pasted-images"
 
 export const ChatComposer = () => {
   const [showImageDialog, setShowImageDialog] = useState(false)
@@ -36,35 +37,18 @@ export const ChatComposer = () => {
   const { setUserTask, setIncludeContext, setIncludeReasoningHistory } =
     useChatActions()
 
-  const {
-    selectedFilePaths,
-    imageUrls,
-    fileContents,
-    setSelectedFilePaths,
-    imageFiles,
-  } = useFileExplorerStore(
-    useShallow((s) => ({
-      selectedFilePaths: s.selectedFilePaths,
-      imageUrls: s.imageUrls,
-      fileContents: s.fileContents,
-      setSelectedFilePaths: s.setSelectedFilePaths,
-      imageFiles: s.imageFiles,
-    }))
-  )
+  const { selectedFilePaths, fileContents, setSelectedFilePaths, imageFiles } =
+    useFileExplorerStore(
+      useShallow((s) => ({
+        selectedFilePaths: s.selectedFilePaths,
+        fileContents: s.fileContents,
+        setSelectedFilePaths: s.setSelectedFilePaths,
+        imageFiles: s.imageFiles,
+      }))
+    )
 
   const selectedWebUrlsCount = useWebCrawlerStore((s) => s.selectedUrls.length)
-
-  const imageUrlCount = useMemo(() => {
-    return imageUrls
-      .split("\n")
-      .map((u) => u.trim())
-      .filter(Boolean).length
-  }, [imageUrls])
-
-  const totalImagesCount = useMemo(
-    () => imageUrlCount + imageFiles.length,
-    [imageUrlCount, imageFiles.length]
-  )
+  const totalImagesCount = imageFiles.length
 
   const fileErrors = useMemo(
     () =>
@@ -106,7 +90,8 @@ export const ChatComposer = () => {
 
   const handleSend = useCallback(async () => {
     const task = userTask.trim()
-    if (!task || isStreaming || isProcessingContext) return
+    if ((!task && totalImagesCount === 0) || isStreaming || isProcessingContext)
+      return
 
     if (includeContext && hasSelectedContext) {
       const { contextualPrompt, error } = await compileContext(task)
@@ -119,6 +104,7 @@ export const ChatComposer = () => {
     setUserTask("")
   }, [
     userTask,
+    totalImagesCount,
     isStreaming,
     isProcessingContext,
     includeContext,
@@ -182,6 +168,9 @@ export const ChatComposer = () => {
           </div>
         )}
 
+        {/* Sección de Miniaturas de Imágenes (Portapapeles y URLs) */}
+        <ChatPastedImages disabled={isStreaming} />
+
         <div className="relative flex min-h-16 flex-1 flex-col px-3 pt-3 pb-2">
           <TextEditor
             value={userTask}
@@ -205,7 +194,7 @@ export const ChatComposer = () => {
           includeContext={includeContext}
           includeReasoning={includeReasoning}
           hasMessages={messages.length > 0}
-          hasTask={Boolean(userTask.trim())}
+          hasTask={Boolean(userTask.trim()) || totalImagesCount > 0}
           totalImagesCount={totalImagesCount}
           estimatedTokens={estimatedTokens}
           onOpenImageDialog={() => setShowImageDialog(true)}

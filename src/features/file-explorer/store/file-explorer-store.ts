@@ -16,6 +16,9 @@ interface FileExplorerActions {
   setFileContents: (data: FileContent[]) => void
   setImageUrls: (urls: string) => void
   setImageFiles: (imageFiles: ImageFile[]) => void
+  addImageFiles: (newImages: ImageFile[]) => void
+  removeImageFile: (index: number) => void
+  clearImageFiles: () => void
   setIncludeDependencies: (val: boolean) => void
   resetState: () => void
 }
@@ -38,6 +41,17 @@ export const useFileExplorerStore = create<
       setFileContents: (data) => set({ fileContents: data }),
       setImageUrls: (urls) => set({ imageUrls: urls }),
       setImageFiles: (images) => set({ imageFiles: images }),
+      addImageFiles: (newImages) =>
+        set((state) => {
+          const existing = new Set(state.imageFiles.map((i) => i.base64))
+          const filtered = newImages.filter((img) => !existing.has(img.base64))
+          return { imageFiles: [...state.imageFiles, ...filtered] }
+        }),
+      removeImageFile: (indexToRemove) =>
+        set((state) => ({
+          imageFiles: state.imageFiles.filter((_, i) => i !== indexToRemove),
+        })),
+      clearImageFiles: () => set({ imageFiles: [], imageUrls: "" }),
       setIncludeDependencies: (val) => set({ includeDependencies: val }),
       resetState: () => set(initialState),
     }),
@@ -46,7 +60,6 @@ export const useFileExplorerStore = create<
       partialize: (state) => ({
         selectedFilePaths: state.selectedFilePaths,
         includeDependencies: state.includeDependencies,
-        imageUrls: state.imageUrls,
       }),
     }
   )

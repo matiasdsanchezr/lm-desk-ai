@@ -20,7 +20,7 @@ export function useContextProcessor() {
 
   /**
    * Compila el contexto de archivos, webs e imágenes junto con la tarea del usuario.
-   * Si no se provee un task explícito, utiliza el userTask actual del store.
+   * Preserva intactas las imágenes del store (pegadas o importadas por URL).
    */
   const compileContext = useCallback(
     async (customTask?: string): Promise<ProcessResult> => {
@@ -31,26 +31,21 @@ export function useContextProcessor() {
         const { userTask, includeContext, actions } = useChatStore.getState()
         const {
           selectedFilePaths,
-          imageUrls,
           includeDependencies,
-          setImageFiles,
           setFileContents,
+          addImageFiles,
         } = useFileExplorerStore.getState()
         const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
         const systemPrompt = useInferenceStore.getState().systemPrompt
 
         const taskToProcess = customTask !== undefined ? customTask : userTask
 
-        // Preparar FormData para la server action de lectura de archivos
         const formData = new FormData()
         formData.append("includeDependencies", String(includeDependencies))
         formData.append("systemPrompt", systemPrompt)
 
         if (includeContext) {
-          formData.append("imageUrls", imageUrls)
           selectedFilePaths.forEach((path) => formData.append("filePath", path))
-        } else {
-          formData.append("imageUrls", "")
         }
 
         const { data, error: actionError } = await fetchFileContextAction(
@@ -94,9 +89,12 @@ export function useContextProcessor() {
         const contextualPrompt = promptBuilder.buildContextAndTask()
         const exportablePrompt = promptBuilder.build()
 
-        // Actualizar almacenes
         setFileContents(includeContext ? (data.fileContents ?? []) : [])
-        setImageFiles(includeContext ? (data.imageFiles ?? []) : [])
+
+        if (includeContext && data.imageFiles && data.imageFiles.length > 0) {
+          addImageFiles(data.imageFiles)
+        }
+
         actions.setPrompts({
           contextualPrompt,
           exportablePrompt,
