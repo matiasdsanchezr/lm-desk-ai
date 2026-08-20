@@ -6,7 +6,6 @@ import {
   SidebarHeader,
   SidebarTrigger,
 } from "@/shared/components/ui/sidebar"
-import { cacheLife, cacheTag } from "next/cache"
 import type { ChatMeta } from "../../types"
 import { ChatHistoryList } from "./chat-history-list"
 import { NewChatButton } from "./new-chat-button"
@@ -15,13 +14,9 @@ interface ChatHistorySidebarProps {
   savedChatsPromise: Promise<ChatMeta[]>
 }
 
-export async function ChatHistorySidebar({
+export function ChatHistorySidebar({
   savedChatsPromise,
 }: ChatHistorySidebarProps) {
-  "use cache"
-  cacheTag("chat-list")
-  cacheLife("seconds")
-
   return (
     <Sidebar
       collapsible="icon"

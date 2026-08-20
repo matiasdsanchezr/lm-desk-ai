@@ -7,8 +7,7 @@ export const metadata: Metadata = {
     "Documentación completa para desplegar, configurar y utilizar LM Desk localmente con tus LLMs preferidos.",
 }
 
-export default async function AboutPage() {
-  "use cache"
+export default function AboutPage() {
   return (
     <main className="relative min-h-dvh bg-background font-sans text-foreground selection:bg-primary/10">
       <AboutView />

@@ -5,7 +5,6 @@ import { startTransition, useCallback } from "react"
 import { useChatActions } from "../../store/chat-store"
 
 export const NewChatButton = () => {
-  "use client"
   const router = useRouter()
   const { resetGeneratedPrompts } = useChatActions()
 

@@ -93,8 +93,8 @@ export async function POST(req: Request) {
         selectedFilePaths: selectedFilePaths || [],
         activeStreamId: streamId,
       })
-      revalidateTag("chat-list", "days")
-      revalidateTag(`chat-${chat.id}`, "days")
+      revalidateTag("chat-list", "minutes")
+      revalidatePath(`/chat`, "layout")
     }
 
     const validatedMessages = await safeValidateUIMessages({
@@ -111,6 +111,7 @@ export async function POST(req: Request) {
           messages: modelMessages,
           reasoning: "all",
         })
+
     const transformedMessages = await applyTransformScriptToModelMessages(
       prunedMessages,
       "pre-transform.js"
@@ -156,8 +157,7 @@ export async function POST(req: Request) {
 
                   if (!textContent) {
                     await updateChat(chat.id, { messages })
-                    revalidateTag("chat-list", "days")
-                    revalidateTag(`chat-${chat.id}`, "days")
+                    revalidateTag(`chat-${chat.id}`, "minutes")
                     revalidatePath(`/chat/${chat.id}`)
                     return
                   }
@@ -176,8 +176,7 @@ export async function POST(req: Request) {
                   }
 
                   await updateChat(chat.id, { messages })
-                  revalidateTag("chat-list", "days")
-                  revalidateTag(`chat-${chat.id}`, "days")
+                  revalidateTag(`chat-${chat.id}`, "minutes")
                   revalidatePath(`/chat/${chat.id}`)
                 } catch (err) {
                   console.error(

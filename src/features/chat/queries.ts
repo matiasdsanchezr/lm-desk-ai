@@ -18,6 +18,10 @@ export async function getChatList(): Promise<ChatMeta[]> {
 }
 
 export async function getChatById(id: string): Promise<Chat | null> {
+  "use cache"
+  cacheTag(`chat-${id}`)
+  cacheLife("days")
+
   if (!id) {
     return null
   }

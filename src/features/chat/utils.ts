@@ -1,5 +1,5 @@
 import { UIMessage } from "ai"
-import { ChatTurn } from "./types"
+import { ChatTurn, FormatOptions } from "./types"
 
 export function groupMessagesIntoTurns(messages: UIMessage[]): ChatTurn[] {
   const turns: ChatTurn[] = []
@@ -34,4 +34,40 @@ export function getMessagePart(
     .filter((p) => p.type === type)
     .map((p) => (p as { text: string }).text)
     .join(type === "text" ? " " : "\n")
+}
+
+function normalizeCodeBlocks(content: string): string {
+  const codeBlockCount = (content.match(/```/g) || []).length
+  if (codeBlockCount % 2 !== 0) {
+    return `${content.trimEnd()}\n\`\`\``
+  }
+  return content
+}
+
+export function formatConversationToMarkdown(
+  messages: UIMessage[],
+  options: FormatOptions = {}
+): string {
+  const {
+    userLabel = "**👤 Usuario:**",
+    assistantLabel = "**🤖 Asistente:**",
+    systemLabel = "**⚙️ Sistema:**",
+  } = options
+
+  const roleMap: Record<string, string> = {
+    user: userLabel,
+    assistant: assistantLabel,
+    system: systemLabel,
+  }
+
+  return messages
+    .filter((msg) => msg.parts.length > 0)
+    .map((msg) => {
+      const label = roleMap[msg.role] || `**${msg.role}:**`
+      const content = getMessagePart(msg, "text")
+      const safeContent = normalizeCodeBlocks(content.trim())
+
+      return `${label}\n\n${safeContent}`
+    })
+    .join("\n\n---\n\n")
 }

@@ -26,3 +26,19 @@ export interface ChatTurn {
   userMessage?: UIMessage
   assistantMessage?: UIMessage
 }
+
+export type MessageRole = "user" | "assistant" | "system"
+
+export interface ChatMessage {
+  id: string
+  role: MessageRole
+  content: string
+  createdAt?: string | Date
+}
+
+export interface FormatOptions {
+  includeTimestamps?: boolean
+  userLabel?: string
+  assistantLabel?: string
+  systemLabel?: string
+}

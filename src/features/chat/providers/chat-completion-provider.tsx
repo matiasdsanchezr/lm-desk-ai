@@ -18,7 +18,7 @@ import { useChatStore } from "../store/chat-store"
 import type { Chat } from "../types"
 
 interface ChatCompletionContextType {
-  initialChat?: Chat | null
+  chat?: Chat | null
   messages: UIMessage[]
   error: Error | undefined
   isStreaming: boolean
@@ -33,15 +33,15 @@ const ChatCompletionContext = createContext<ChatCompletionContextType | null>(
 
 interface ChatCompletionProviderProps {
   children: ReactNode
-  initialChatPromise?: Promise<Chat | null>
+  chatPromise?: Promise<Chat | null>
 }
 
 export function ChatCompletionProvider({
   children,
-  initialChatPromise,
+  chatPromise,
 }: ChatCompletionProviderProps) {
   const router = useRouter()
-  const initialChat = initialChatPromise ? use(initialChatPromise) : null
+  const chat = chatPromise ? use(chatPromise) : null
 
   const getInferenceConfig = useCallback(() => {
     const settings = useInferenceStore.getState()
@@ -63,8 +63,8 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: initialChat?.id || "new-chat",
-    messages: initialChat?.messages || [],
+    id: chat?.id || "new-chat",
+    messages: chat?.messages || [],
     resume: true,
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -91,8 +91,8 @@ export function ChatCompletionProvider({
   })
 
   useEffect(() => {
-    if (!initialChat) setMessages([])
-  }, [initialChat, setMessages])
+    if (!chat) setMessages([])
+  }, [chat, setMessages])
 
   const isStreaming = status === "streaming" || status === "submitted"
 
@@ -108,9 +108,10 @@ export function ChatCompletionProvider({
       }
 
       const { imageFiles } = useFileExplorerStore.getState()
+
       const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
         type: "file",
-        mediaType: "image",
+        mediaType: i.mimeType || "image",
         url: i.base64.startsWith("data:")
           ? i.base64
           : `data:${i.mimeType};base64,${i.base64}`,
@@ -125,7 +126,7 @@ export function ChatCompletionProvider({
 
   const contextValue = useMemo<ChatCompletionContextType>(
     () => ({
-      initialChat,
+      chat: chat,
       messages,
       error,
       isStreaming,
@@ -133,15 +134,7 @@ export function ChatCompletionProvider({
       generateContent,
       stop,
     }),
-    [
-      initialChat,
-      messages,
-      error,
-      isStreaming,
-      setMessages,
-      generateContent,
-      stop,
-    ]
+    [chat, messages, error, isStreaming, setMessages, generateContent, stop]
   )
 
   return (

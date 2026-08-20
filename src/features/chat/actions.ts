@@ -12,6 +12,7 @@ export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
     if (result.id) {
       updateTag(`chat-${result.id}`)
     }
+
     revalidatePath("/chat")
     return { data: result }
   } catch {
@@ -41,7 +42,8 @@ export const updateChat = async (
     updateTag(`chat-${id}`)
     revalidatePath(`/chat/${id}`)
     return {}
-  } catch {
+  } catch (error) {
+    console.error(error)
     return { error: "No se pudo actualizar la sesión" }
   }
 }

@@ -38,6 +38,7 @@ interface ChatTurnItemProps {
   isLast: boolean
   onEditMessage?: (messageId: string, newText: string) => void
   onDeleteTurn?: (userMsgId?: string, asstMsgId?: string) => void
+  onRegenerate?: () => void
 }
 
 const codePlugin = createCodePlugin({

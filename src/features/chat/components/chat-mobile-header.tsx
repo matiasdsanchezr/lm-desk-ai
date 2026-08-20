@@ -4,7 +4,7 @@ import { SidebarTrigger } from "@/shared/components/ui/sidebar"
 import { useChatCompletion } from "../providers/chat-completion-provider"
 
 export const ChatMobileHeader = () => {
-  const { initialChat } = useChatCompletion()
+  const { chat: initialChat } = useChatCompletion()
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-border/40 bg-card/60 px-3 py-2 shadow-xs backdrop-blur-xs md:hidden">

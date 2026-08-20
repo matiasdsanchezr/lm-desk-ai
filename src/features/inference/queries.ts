@@ -27,9 +27,9 @@ export async function getSystemPromptsList(): Promise<SystemPromptMeta[]> {
 export async function getSystemPrompt(
   promptId: string
 ): Promise<ActionResponse<string>> {
-  "use cache"
-  cacheTag(`system-prompt-${promptId}`)
-  cacheLife("days")
+  // "use cache"
+  // cacheTag(`system-prompt-${promptId}`)
+  // cacheLife("days")
 
   try {
     const template = await readFile(path.join(TEMPLATES_DIR, promptId), "utf-8")

@@ -25,7 +25,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   return (
     <Suspense fallback={<ChatWorkspaceSkeleton />}>
       <FileExplorerProvider fileTreePromise={treeStructurePromise}>
-        <ChatCompletionProvider initialChatPromise={initialChatPromise}>
+        <ChatCompletionProvider chatPromise={initialChatPromise}>
           <ChatWorkspace />
         </ChatCompletionProvider>
       </FileExplorerProvider>

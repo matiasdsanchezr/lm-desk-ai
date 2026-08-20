@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/sidebar"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
-import { memo, useCallback, useState, useTransition } from "react"
+import { memo, useCallback, useMemo, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../../actions"
 import type { ChatMeta } from "../../types"
 import { DateDisplay } from "./date"
@@ -38,6 +38,14 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   const [isEditing, setIsEditing] = useState(false)
   const [titleInput, setTitleInput] = useState(chat.title || "")
 
+  const validIsoDate = useMemo(() => {
+    if (!chat.createdAt) return undefined
+    const parsedDate = new Date(chat.createdAt)
+    return Number.isNaN(parsedDate.getTime())
+      ? undefined
+      : parsedDate.toISOString()
+  }, [chat.createdAt])
+
   const handleDelete = useCallback(() => {
     startTransition(async () => {
       const res = await deleteChat(chat.id)
@@ -58,6 +66,9 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
     startTransition(async () => {
       const res = await updateChat(chat.id, { title: trimmedTitle })
       if (!res.error) {
+        setIsEditing(false)
+      } else {
+        setTitleInput(chat.title || "")
         setIsEditing(false)
       }
     })
@@ -148,9 +159,13 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span className="icon-[lucide--calendar] size-3 shrink-0" />
-              <time dateTime={new Date(chat.createdAt).toISOString()}>
-                <DateDisplay dateValue={chat.createdAt || "0"} />
-              </time>
+              {validIsoDate ? (
+                <time dateTime={validIsoDate}>
+                  <DateDisplay dateValue={chat.createdAt} />
+                </time>
+              ) : (
+                <DateDisplay dateValue={chat.createdAt || ""} />
+              )}
             </div>
           </button>
         }
