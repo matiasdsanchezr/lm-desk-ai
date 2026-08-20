@@ -69,14 +69,13 @@ export function ChatCompletionProvider({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest(data) {
-        const { selectedFilePaths } = useFileExplorerStore.getState()
         const { includeReasoningHistory } = useChatStore.getState()
+
         return {
           body: {
             ...data,
             message: data.messages[data.messages.length - 1],
             ...getInferenceConfig(),
-            selectedFilePaths,
             includeReasoningHistory,
           },
         }

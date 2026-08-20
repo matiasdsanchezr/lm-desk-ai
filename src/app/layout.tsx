@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@/shared/components/ui/tooltip"
 import { cn } from "@/shared/lib/utils"
 import type { Metadata } from "next"
 import { Geist, Inter } from "next/font/google"
@@ -39,7 +40,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${geistSans.variable} dark antialiased`}>
-        {children}
+        <TooltipProvider>{children}</TooltipProvider>
       </body>
     </html>
   )

@@ -27,7 +27,6 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
     id,
     title,
     createdAt,
-    selectedFilePaths: data.selectedFilePaths,
     messages: data.messages,
     activeStreamId: data.activeStreamId,
   }

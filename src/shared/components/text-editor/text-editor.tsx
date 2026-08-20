@@ -47,6 +47,7 @@ interface TextEditorProps {
   onMentionSelect?: (id: string) => void
   placeholder?: string
   className?: string
+  containerClassName?: string
   disabled?: boolean
   maxSuggestions?: number
 }
@@ -92,6 +93,7 @@ export const TextEditor = ({
   onMentionSelect,
   placeholder,
   className,
+  containerClassName,
   disabled,
   maxSuggestions = 20,
 }: TextEditorProps) => {
@@ -112,7 +114,6 @@ export const TextEditor = ({
     [disabled]
   )
 
-  // Optimización: Limitar a maxSuggestions para evitar renders DOM masivos
   const filteredOptions = useMemo(() => {
     let results = mentionOptions
 
@@ -140,25 +141,40 @@ export const TextEditor = ({
     []
   )
 
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      // Enfoca el editor al hacer click en cualquier área vacía del contenedor
+      if (editorInstance && !disabled) {
+        const rootElement = editorInstance.getRootElement()
+        if (
+          rootElement &&
+          e.target !== rootElement &&
+          !rootElement.contains(e.target as Node)
+        ) {
+          editorInstance.focus()
+        }
+      }
+    },
+    [editorInstance, disabled]
+  )
+
   return (
     <div
+      onClick={handleContainerClick}
       className={cn(
-        "relative w-full rounded-md border border-input bg-background text-sm",
-        "ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-        "transition-colors",
-        disabled
-          ? "cursor-not-allowed border-dashed bg-muted/30 opacity-60"
-          : "hover:border-input/80"
+        "relative flex flex-1 flex-col w-full text-sm cursor-text",
+        disabled && "cursor-not-allowed opacity-60",
+        containerClassName
       )}
     >
       <LexicalComposer initialConfig={initialConfig}>
-        <div className="relative min-h-30 px-3 py-2">
+        <div className="relative flex flex-1 flex-col w-full">
           <RichTextPlugin
             contentEditable={
               <ContentEditable
                 onDragStart={handleDragStart}
                 className={cn(
-                  "min-h-30 resize-y wrap-break-word whitespace-pre-wrap outline-none",
+                  "flex-1 w-full min-h-16 outline-none wrap-break-word whitespace-pre-wrap",
                   disabled && "cursor-not-allowed",
                   className
                 )}
@@ -168,7 +184,7 @@ export const TextEditor = ({
               />
             }
             placeholder={
-              <div className="pointer-events-none absolute top-2 left-3 text-muted-foreground select-none">
+              <div className="pointer-events-none absolute top-0 left-0 text-muted-foreground select-none text-xs sm:text-sm">
                 {placeholder}
               </div>
             }
@@ -182,7 +198,6 @@ export const TextEditor = ({
               editorState.read(() => {
                 const plainText = $getRoot().getTextContent()
                 if (plainText !== value) {
-                  // Transición no bloqueante para mantener fluida la escritura
                   startTransition(() => {
                     onChange(plainText)
                   })
@@ -285,6 +300,8 @@ export const TextEditor = ({
                       aria-selected={idx === selectedIndex}
                       onMouseDown={(event) => {
                         event.preventDefault()
+                      }}
+                      onClick={() => {
                         selectOptionAndCleanUp(option)
                       }}
                       className={cn(
@@ -293,7 +310,7 @@ export const TextEditor = ({
                           "bg-accent text-accent-foreground"
                       )}
                     >
-                      <span className="mt-0.5 icon-[fa7-solid--file] shrink-0 text-muted-foreground" />
+                      <span className="mt-0.5 icon-[lucide--file-text] shrink-0 text-muted-foreground" />
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span className="truncate font-mono text-xs font-medium">
                           {option.name}
@@ -314,8 +331,6 @@ export const TextEditor = ({
     </div>
   )
 }
-
-// --- PLUGINS AUXILIARES OPTIMIZADOS ---
 
 function EditorCapturePlugin({
   onInit,

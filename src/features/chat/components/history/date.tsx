@@ -18,5 +18,6 @@ function formatChatDate(dateValue: Date | string) {
 
 export function DateDisplay({ dateValue }: { dateValue: Date | string }) {
   const isClient = useIsClient()
+
   return isClient ? formatChatDate(dateValue) : null
 }

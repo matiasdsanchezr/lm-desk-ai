@@ -33,7 +33,6 @@ const ChatRequestBodySchema = z.object({
   systemPrompt: z.string().default(""),
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
-  selectedFilePaths: z.array(z.string()).optional(),
   includeReasoningHistory: z.boolean().default(true),
 })
 
@@ -67,7 +66,6 @@ export async function POST(req: Request) {
       systemPrompt,
       temperature,
       topP,
-      selectedFilePaths,
       includeReasoningHistory,
     } = parsedBody.data
 
@@ -90,7 +88,6 @@ export async function POST(req: Request) {
     if (!chat) {
       chat = await createChat({
         messages: [],
-        selectedFilePaths: selectedFilePaths || [],
         activeStreamId: streamId,
       })
       revalidateTag("chat-list", "minutes")

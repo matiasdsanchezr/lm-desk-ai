@@ -4,7 +4,7 @@ export interface Chat {
   id: string
   createdAt: string
   title: string
-  selectedFilePaths: string[]
+  selectedFilePaths?: string[]
   messages: UIMessage[]
   activeStreamId?: string
 }
@@ -14,7 +14,7 @@ export type ChatMeta = Pick<Chat, "id" | "title" | "createdAt">
 export type CreateChatInput = {
   id?: string
   title?: string
-  selectedFilePaths: string[]
+  selectedFilePaths?: string[]
   messages: UIMessage[]
   activeStreamId?: string
 }

@@ -7,6 +7,7 @@ interface ChatState {
   userTask: string
   contextualPrompt: string
   exportablePrompt: string
+  includeContext: boolean
   includeReasoningHistory: boolean
 }
 
@@ -14,6 +15,7 @@ interface ChatActions {
   actions: {
     setChatId: (id: string) => void
     setUserTask: (query: string) => void
+    setIncludeContext: (include: boolean) => void
     setPrompts: (prompts: {
       contextualPrompt: string
       exportablePrompt: string
@@ -29,6 +31,7 @@ const createInitialState = () => ({
   userTask: "",
   contextualPrompt: "",
   exportablePrompt: "",
+  includeContext: true,
   includeReasoningHistory: true,
 })
 
@@ -39,6 +42,7 @@ export const useChatStore = create<ChatState & ChatActions>()(
       actions: {
         setChatId: (chatId) => set({ chatId }),
         setUserTask: (userTask) => set({ userTask }),
+        setIncludeContext: (includeContext) => set({ includeContext }),
         setPrompts: ({ contextualPrompt, exportablePrompt }) =>
           set({ contextualPrompt, exportablePrompt }),
         setIncludeReasoningHistory: (includeReasoningHistory) =>
@@ -55,7 +59,8 @@ export const useChatStore = create<ChatState & ChatActions>()(
       name: "chat-state",
       partialize: (state) => ({
         userTask: state.userTask,
-        includeReasoning: state.includeReasoningHistory,
+        includeContext: state.includeContext,
+        includeReasoningHistory: state.includeReasoningHistory,
       }),
     }
   )
