@@ -1,6 +1,5 @@
 "use client"
 
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { Button } from "@/shared/components/ui/button"
 import {
   Dialog,
@@ -14,7 +13,8 @@ import {
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip"
 import React, { useCallback, useState } from "react"
-import { useShallow } from "zustand/shallow"
+import { useChatActions, useChatStore } from "../../store/chat-store"
+import { toDataUri } from "../../utils"
 
 interface PreviewModalState {
   isOpen: boolean
@@ -22,13 +22,8 @@ interface PreviewModalState {
 }
 
 export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
-  const { imageFiles, removeImageFile, clearImageFiles } = useFileExplorerStore(
-    useShallow((s) => ({
-      imageFiles: s.imageFiles,
-      removeImageFile: s.removeImageFile,
-      clearImageFiles: s.clearImageFiles,
-    }))
-  )
+  const attachedImages = useChatStore((s) => s.attachedImages)
+  const { removeAttachedImage, clearAttachedImages } = useChatActions()
 
   const [previewModal, setPreviewModal] = useState<PreviewModalState>({
     isOpen: false,
@@ -38,18 +33,18 @@ export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
   const handleRemoveImage = useCallback(
     (indexToRemove: number, e?: React.MouseEvent) => {
       e?.stopPropagation()
-      removeImageFile(indexToRemove)
+      removeAttachedImage(indexToRemove)
       if (previewModal.selectedIndex === indexToRemove) {
         setPreviewModal({ isOpen: false, selectedIndex: null })
       }
     },
-    [removeImageFile, previewModal.selectedIndex]
+    [removeAttachedImage, previewModal.selectedIndex]
   )
 
   const handleClearAll = useCallback(() => {
-    clearImageFiles()
+    clearAttachedImages()
     setPreviewModal({ isOpen: false, selectedIndex: null })
-  }, [clearImageFiles])
+  }, [clearAttachedImages])
 
   const handleOpenPreview = useCallback((index: number) => {
     setPreviewModal({
@@ -58,11 +53,11 @@ export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
     })
   }, [])
 
-  if (imageFiles.length === 0) return null
+  if (attachedImages.length === 0) return null
 
   const activeImage =
     previewModal.selectedIndex !== null
-      ? imageFiles[previewModal.selectedIndex]
+      ? attachedImages[previewModal.selectedIndex]
       : null
 
   return (
@@ -72,12 +67,14 @@ export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
           <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
             <span className="icon-[lucide--images] size-3.5 text-primary" />
             <span>
-              {imageFiles.length}{" "}
-              {imageFiles.length === 1 ? "imagen adjunta" : "imágenes adjuntas"}
+              {attachedImages.length}{" "}
+              {attachedImages.length === 1
+                ? "imagen adjunta"
+                : "imágenes adjuntas"}
             </span>
           </span>
 
-          {!disabled && imageFiles.length > 1 && (
+          {!disabled && attachedImages.length > 1 && (
             <button
               type="button"
               onClick={handleClearAll}
@@ -89,11 +86,8 @@ export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          {imageFiles.map((img, index) => {
-            const imageSrc = img.base64.startsWith("data:")
-              ? img.base64
-              : `data:${img.mimeType || "image/png"};base64,${img.base64}`
-
+          {attachedImages.map((img, index) => {
+            const imageSrc = toDataUri(img)
             const formatLabel =
               img.mimeType?.split("/")[1]?.toUpperCase() || "IMG"
 
@@ -160,7 +154,7 @@ export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
                   {previewModal.selectedIndex !== null
                     ? previewModal.selectedIndex + 1
                     : 1}{" "}
-                  de {imageFiles.length}
+                  de {attachedImages.length}
                 </span>
               </DialogTitle>
 
@@ -185,11 +179,7 @@ export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
             <div className="flex max-h-[75dvh] items-center justify-center overflow-auto bg-zinc-950/60 p-4 backdrop-blur-md">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={
-                  activeImage.base64.startsWith("data:")
-                    ? activeImage.base64
-                    : `data:${activeImage.mimeType || "image/png"};base64,${activeImage.base64}`
-                }
+                src={toDataUri(activeImage)}
                 alt="Previsualización de captura"
                 className="max-h-[70dvh] w-auto max-w-full rounded-md object-contain shadow-2xl ring-1 ring-white/10"
               />

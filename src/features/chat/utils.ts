@@ -1,3 +1,4 @@
+import { ImageFile } from "@/shared/types/image-file"
 import { UIMessage } from "ai"
 import { ChatTurn, FormatOptions } from "./types"
 
@@ -70,4 +71,10 @@ export function formatConversationToMarkdown(
       return `${label}\n\n${safeContent}`
     })
     .join("\n\n---\n\n")
+}
+
+export function toDataUri(image: ImageFile): string {
+  return image.base64.startsWith("data:")
+    ? image.base64
+    : `data:${image.mimeType || "image/png"};base64,${image.base64}`
 }

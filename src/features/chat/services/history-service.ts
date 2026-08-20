@@ -7,16 +7,14 @@ import type { Chat, ChatMeta, CreateChatInput, UpdateChatInput } from "../types"
 
 const CHATS_STORAGE_DIR = path.join(config.STORAGE_PATH, "chats")
 
-/**
- * Asegura que el directorio para guardar los chats exista.
- */
+function getChatFilePath(id: string): string {
+  return path.join(CHATS_STORAGE_DIR, id.endsWith(".json") ? id : `${id}.json`)
+}
+
 async function ensureDirectoryExists(): Promise<void> {
   await mkdir(CHATS_STORAGE_DIR, { recursive: true })
 }
 
-/**
- * Guarda una nueva conversación o sobrescribe una existente.
- */
 export async function createChat(data: CreateChatInput): Promise<Chat> {
   await ensureDirectoryExists()
 
@@ -30,18 +28,14 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
     messages: data.messages,
     activeStreamId: data.activeStreamId,
   }
-  const filePath = path.join(CHATS_STORAGE_DIR, `${id}.json`)
+  const filePath = getChatFilePath(id)
   await writeFile(filePath, JSON.stringify(newChat, null, 2), "utf-8")
   return newChat
 }
 
-/**
- * Carga una conversación por su ID.
- */
 export async function getChatById(id: string): Promise<Chat | null> {
   try {
-    const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(CHATS_STORAGE_DIR, fileName)
+    const filePath = getChatFilePath(id)
     const savedChat = await readFile(filePath, "utf-8")
     return JSON.parse(savedChat) as Chat
   } catch (error: unknown) {
@@ -50,13 +44,10 @@ export async function getChatById(id: string): Promise<Chat | null> {
         return null
       }
     }
-    throw error
+    throw new Error("No se pudo obtener la conversación")
   }
 }
 
-/**
- * Actualiza parcialmente una conversación existente.
- */
 export async function updateChat(
   id: string,
   data: UpdateChatInput
@@ -72,18 +63,14 @@ export async function updateChat(
       ...data,
     }
 
-    const fileName = id.endsWith(".json") ? id : `${id}.json`
-    const filePath = path.join(CHATS_STORAGE_DIR, fileName)
+    const filePath = getChatFilePath(id)
     await writeFile(filePath, JSON.stringify(updatedChat, null, 2), "utf-8")
     return updatedChat
-  } catch (error) {
-    throw error
+  } catch {
+    throw new Error("No se pudo actualizar la conversación")
   }
 }
 
-/**
- * Lista todas las conversaciones ordenadas por fecha de creación descendente.
- */
 export async function listChats(): Promise<ChatMeta[]> {
   await ensureDirectoryExists()
   const files = await readdir(CHATS_STORAGE_DIR)
@@ -92,7 +79,7 @@ export async function listChats(): Promise<ChatMeta[]> {
   const chatsData = await Promise.all(
     jsonFiles.map(async (file) => {
       try {
-        const filePath = path.join(CHATS_STORAGE_DIR, file)
+        const filePath = getChatFilePath(file)
         const content = await readFile(filePath, "utf-8")
         const savedChat = JSON.parse(content) as Chat
         return {
@@ -100,9 +87,8 @@ export async function listChats(): Promise<ChatMeta[]> {
           title: savedChat.title,
           createdAt: savedChat.createdAt,
         } satisfies ChatMeta
-      } catch (err) {
-        console.error("Error al listar sesiones previas", err)
-        return null
+      } catch {
+        throw new Error("No se pudo obtener las conversaciones")
       }
     })
   )
@@ -114,11 +100,7 @@ export async function listChats(): Promise<ChatMeta[]> {
   )
 }
 
-/**
- * Elimina una conversación usando su ID.
- */
 export async function deleteChat(id: string): Promise<void> {
-  const fileName = id.endsWith(".json") ? id : `${id}.json`
-  const filePath = path.join(CHATS_STORAGE_DIR, fileName)
+  const filePath = getChatFilePath(id)
   await unlink(filePath)
 }

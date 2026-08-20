@@ -33,22 +33,22 @@ export const ChatComposer = () => {
   const userTask = useChatStore((s) => s.userTask)
   const includeContext = useChatStore((s) => s.includeContext)
   const includeReasoning = useChatStore((s) => s.includeReasoningHistory)
+  const attachedImages = useChatStore((s) => s.attachedImages)
 
   const { setUserTask, setIncludeContext, setIncludeReasoningHistory } =
     useChatActions()
 
-  const { selectedFilePaths, fileContents, setSelectedFilePaths, imageFiles } =
+  const { selectedFilePaths, fileContents, setSelectedFilePaths } =
     useFileExplorerStore(
       useShallow((s) => ({
         selectedFilePaths: s.selectedFilePaths,
         fileContents: s.fileContents,
         setSelectedFilePaths: s.setSelectedFilePaths,
-        imageFiles: s.imageFiles,
       }))
     )
 
   const selectedWebUrlsCount = useWebCrawlerStore((s) => s.selectedUrls.length)
-  const totalImagesCount = imageFiles.length
+  const totalImagesCount = attachedImages.length
 
   const fileErrors = useMemo(
     () =>
@@ -168,14 +168,14 @@ export const ChatComposer = () => {
           </div>
         )}
 
-        {/* Sección de Miniaturas de Imágenes (Portapapeles y URLs) */}
+        {/* Sección de Miniaturas de Imágenes */}
         <ChatPastedImages disabled={isStreaming} />
 
         <div className="relative flex min-h-16 flex-1 flex-col px-3 pt-3 pb-2">
           <TextEditor
             value={userTask}
             onChange={setUserTask}
-            placeholder="Pregunta sobre el código, genera refactors o usa @ para referenciar..."
+            placeholder="Haz tu pregunta o usa @ para referenciar archivos..."
             className="max-h-56 overflow-y-auto text-xs sm:text-sm"
             disabled={isStreaming || isProcessingContext}
             mentionOptions={mentionOptions}

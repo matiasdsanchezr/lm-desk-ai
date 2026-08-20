@@ -1,6 +1,7 @@
 "use client"
 
 import { useIsClient } from "@/shared/hooks/use-is-client"
+import { useMemo } from "react"
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   day: "2-digit",
@@ -19,5 +20,13 @@ function formatChatDate(dateValue: Date | string) {
 export function DateDisplay({ dateValue }: { dateValue: Date | string }) {
   const isClient = useIsClient()
 
-  return isClient ? formatChatDate(dateValue) : null
+  const validIsoDate = useMemo(() => {
+    if (!dateValue) return null
+    const parsedDate = new Date(dateValue)
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString()
+  }, [dateValue])
+
+  if (!validIsoDate) return ""
+
+  return isClient ? formatChatDate(validIsoDate) : ""
 }

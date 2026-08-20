@@ -1,7 +1,5 @@
 "use client"
 
-import { fetchRemoteImagesAction } from "@/features/file-explorer/actions/fetch-remote-images"
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
 import {
@@ -15,7 +13,8 @@ import {
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { useState, useTransition } from "react"
-import { useShallow } from "zustand/shallow"
+import { fetchRemoteImagesAction } from "../../actions/fetch-remote-images"
+import { useChatActions, useChatStore } from "../../store/chat-store"
 
 interface ImageUrlsDialogProps {
   open: boolean
@@ -32,12 +31,8 @@ export function ImageUrlsDialog({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const { addImageFiles, imageFilesCount } = useFileExplorerStore(
-    useShallow((s) => ({
-      addImageFiles: s.addImageFiles,
-      imageFilesCount: s.imageFiles.length,
-    }))
-  )
+  const attachedImagesCount = useChatStore((s) => s.attachedImages.length)
+  const { addAttachedImages } = useChatActions()
 
   const urlsToProcess = urlInput
     .split("\n")
@@ -64,7 +59,7 @@ export function ImageUrlsDialog({
       }
 
       if (response.data?.images && response.data.images.length > 0) {
-        addImageFiles(response.data.images)
+        addAttachedImages(response.data.images)
       }
 
       if (response.data?.failedUrls && response.data.failedUrls.length > 0) {
@@ -133,7 +128,7 @@ export function ImageUrlsDialog({
         <DialogFooter className="border-t border-border/40 pt-3">
           <div className="flex w-full items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">
-              {urlsToProcess.length} URL(s) detectada(s) · {imageFilesCount}{" "}
+              {urlsToProcess.length} URL(s) detectada(s) · {attachedImagesCount}{" "}
               adjunta(s)
             </span>
             <div className="flex items-center gap-2">

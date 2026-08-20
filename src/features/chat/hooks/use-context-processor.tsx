@@ -18,10 +18,6 @@ export function useContextProcessor() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  /**
-   * Compila el contexto de archivos, webs e imágenes junto con la tarea del usuario.
-   * Preserva intactas las imágenes del store (pegadas o importadas por URL).
-   */
   const compileContext = useCallback(
     async (customTask?: string): Promise<ProcessResult> => {
       setIsProcessing(true)
@@ -29,12 +25,8 @@ export function useContextProcessor() {
 
       try {
         const { userTask, includeContext, actions } = useChatStore.getState()
-        const {
-          selectedFilePaths,
-          includeDependencies,
-          setFileContents,
-          addImageFiles,
-        } = useFileExplorerStore.getState()
+        const { selectedFilePaths, includeDependencies, setFileContents } =
+          useFileExplorerStore.getState()
         const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
         const systemPrompt = useInferenceStore.getState().systemPrompt
 
@@ -90,10 +82,6 @@ export function useContextProcessor() {
         const exportablePrompt = promptBuilder.build()
 
         setFileContents(includeContext ? (data.fileContents ?? []) : [])
-
-        if (includeContext && data.imageFiles && data.imageFiles.length > 0) {
-          addImageFiles(data.imageFiles)
-        }
 
         actions.setPrompts({
           contextualPrompt,

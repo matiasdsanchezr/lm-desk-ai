@@ -168,13 +168,13 @@ export const TextEditor = ({
       )}
     >
       <LexicalComposer initialConfig={initialConfig}>
-        <div className="relative flex flex-1 flex-col w-full">
+        <div className="w-full">
           <RichTextPlugin
             contentEditable={
               <ContentEditable
                 onDragStart={handleDragStart}
                 className={cn(
-                  "flex-1 w-full min-h-16 outline-none wrap-break-word whitespace-pre-wrap",
+                  "w-full min-h-16 outline-none wrap-break-word whitespace-pre-wrap",
                   disabled && "cursor-not-allowed",
                   className
                 )}

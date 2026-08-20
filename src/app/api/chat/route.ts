@@ -83,22 +83,22 @@ export async function POST(req: Request) {
       )
     }
 
-    const streamId = generateId()
     let chat = await getChatById(id)
+    const streamId = generateId()
+    const validatedMessages = await safeValidateUIMessages({
+      messages: [...(chat?.messages ?? []), message],
+    })
+    if (!validatedMessages.success) {
+      throw new Error(validatedMessages.error.message)
+    }
+
     if (!chat) {
       chat = await createChat({
-        messages: [],
+        messages: validatedMessages.data,
         activeStreamId: streamId,
       })
       revalidateTag("chat-list", "minutes")
       revalidatePath(`/chat`, "layout")
-    }
-
-    const validatedMessages = await safeValidateUIMessages({
-      messages: [...chat.messages, message],
-    })
-    if (!validatedMessages.success) {
-      throw new Error(validatedMessages.error.message)
     }
 
     const modelMessages = await convertToModelMessages(validatedMessages.data)

@@ -1,6 +1,5 @@
 "use client"
 
-import { useFileExplorerStore } from "@/features/file-explorer/store/file-explorer-store"
 import { useInferenceStore } from "@/features/inference/store/inference-store"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
@@ -16,6 +15,7 @@ import {
 } from "react"
 import { useChatStore } from "../store/chat-store"
 import type { Chat } from "../types"
+import { toDataUri } from "../utils"
 
 interface ChatCompletionContextType {
   chat?: Chat | null
@@ -64,7 +64,7 @@ export function ChatCompletionProvider({
     stop,
   } = useChat({
     id: chat?.id || "new-chat",
-    messages: chat?.messages || [],
+    messages: chat?.messages ?? [],
     resume: true,
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -106,14 +106,12 @@ export function ChatCompletionProvider({
         return
       }
 
-      const { imageFiles } = useFileExplorerStore.getState()
+      const { attachedImages } = useChatStore.getState()
 
-      const fileUIParts: FileUIPart[] = imageFiles.map((i) => ({
+      const fileUIParts: FileUIPart[] = attachedImages.map((i) => ({
         type: "file",
         mediaType: i.mimeType || "image",
-        url: i.base64.startsWith("data:")
-          ? i.base64
-          : `data:${i.mimeType};base64,${i.base64}`,
+        url: toDataUri(i),
       }))
 
       sendMessage({

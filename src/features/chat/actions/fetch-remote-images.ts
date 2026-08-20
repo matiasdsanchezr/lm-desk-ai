@@ -3,7 +3,6 @@
 import { ActionResponse } from "@/shared/types/action-state"
 import { ImageFile } from "@/shared/types/image-file"
 import { z } from "zod"
-import { fetchRemoteImageAsBase64 } from "../utils"
 
 const remoteImagesSchema = z.object({
   urls: z
@@ -14,6 +13,23 @@ const remoteImagesSchema = z.object({
 export interface FetchRemoteImagesResult {
   images: ImageFile[]
   failedUrls: string[]
+}
+
+async function fetchRemoteImageAsBase64(src: string): Promise<ImageFile> {
+  const response = await fetch(src)
+  if (!response.ok) {
+    throw new Error(`Error al cargar la imagen con URL: ${src}`)
+  }
+
+  const mime = response.headers.get("content-type")
+  if (!mime || !mime.startsWith("image/")) {
+    throw new Error(`Error al cargar la imagen, MIME inválido. URL: ${src}`)
+  }
+
+  const imageArrayBuffer = await response.arrayBuffer()
+  const base64ImageData = Buffer.from(imageArrayBuffer).toString("base64")
+
+  return { mimeType: mime, base64: base64ImageData }
 }
 
 export async function fetchRemoteImagesAction(
@@ -31,11 +47,10 @@ export async function fetchRemoteImagesAction(
   const successfulImages: ImageFile[] = []
   const failedUrls: string[] = []
 
-  await Promise.allSettled(
+  await Promise.all(
     validation.data.urls.map(async (url) => {
       try {
-        const image = await fetchRemoteImageAsBase64(url)
-        successfulImages.push(image)
+        successfulImages.push(await fetchRemoteImageAsBase64(url))
       } catch (err) {
         console.error(`[fetchRemoteImagesAction] Error al cargar ${url}:`, err)
         failedUrls.push(url)

@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/sidebar"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
-import { memo, useCallback, useMemo, useState, useTransition } from "react"
+import { memo, useCallback, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../../actions"
 import type { ChatMeta } from "../../types"
 import { DateDisplay } from "./date"
@@ -37,14 +37,6 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   const [isConfirming, setIsConfirming] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [titleInput, setTitleInput] = useState(chat.title || "")
-
-  const validIsoDate = useMemo(() => {
-    if (!chat.createdAt) return undefined
-    const parsedDate = new Date(chat.createdAt)
-    return Number.isNaN(parsedDate.getTime())
-      ? undefined
-      : parsedDate.toISOString()
-  }, [chat.createdAt])
 
   const handleDelete = useCallback(() => {
     startTransition(async () => {
@@ -159,13 +151,7 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span className="icon-[lucide--calendar] size-3 shrink-0" />
-              {validIsoDate ? (
-                <time dateTime={validIsoDate}>
-                  <DateDisplay dateValue={chat.createdAt} />
-                </time>
-              ) : (
-                <DateDisplay dateValue={chat.createdAt || ""} />
-              )}
+              <DateDisplay dateValue={chat.createdAt} />
             </div>
           </button>
         }
