@@ -1,5 +1,5 @@
 import { getChatById } from "@/features/chat"
-import { streamContext } from "@/features/chat/lib/resumable-stream"
+import { streamContext } from "@/shared/lib/resumable-stream"
 import { UI_MESSAGE_STREAM_HEADERS } from "ai"
 
 export async function GET(

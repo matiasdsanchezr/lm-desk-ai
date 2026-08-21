@@ -13,7 +13,7 @@ import {
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { useState, useTransition } from "react"
-import { fetchRemoteImagesAction } from "../../actions/fetch-remote-images"
+import { fetchRemoteImagesAction } from "../../../../shared/actions/fetch-remote-images"
 import { useChatActions, useChatStore } from "../../store/chat-store"
 
 interface ImageUrlsDialogProps {

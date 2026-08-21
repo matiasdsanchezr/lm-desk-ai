@@ -1,9 +1,9 @@
-import { streamContext } from "@/features/chat/lib/resumable-stream"
-import { getChatById } from "@/features/chat/queries"
 import {
   createChat,
+  getChatById,
   updateChat,
 } from "@/features/chat/services/history-service"
+import { streamContext } from "@/shared/lib/resumable-stream"
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"

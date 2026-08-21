@@ -13,7 +13,7 @@ export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
       updateTag(`chat-${result.id}`)
     }
 
-    revalidatePath("/chat")
+    revalidatePath("/chat", "layout")
     return { data: result }
   } catch {
     return { error: "No se pudo guardar la sesión" }
@@ -25,7 +25,7 @@ export const deleteChat = async (id: string): ActionResponse<void> => {
     await historyService.deleteChat(id)
     updateTag("chat-list")
     updateTag(`chat-${id}`)
-    revalidatePath("/chat")
+    revalidatePath("/chat", "layout")
     return {}
   } catch {
     return { error: "No se pudo eliminar la sesión" }
@@ -40,7 +40,7 @@ export const updateChat = async (
     await historyService.updateChat(id, updates)
     updateTag("chat-list")
     updateTag(`chat-${id}`)
-    revalidatePath(`/chat/${id}`)
+    revalidatePath(`/chat/${id}`, "layout")
     return {}
   } catch (error) {
     console.error(error)

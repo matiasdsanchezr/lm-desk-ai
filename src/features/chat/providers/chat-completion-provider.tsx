@@ -1,6 +1,7 @@
 "use client"
 
 import { useInferenceStore } from "@/features/inference/store/inference-store"
+import { toDataUri } from "@/shared/utils/image-utils"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
 import { useRouter } from "next/navigation"
@@ -15,7 +16,6 @@ import {
 } from "react"
 import { useChatStore } from "../store/chat-store"
 import type { Chat } from "../types"
-import { toDataUri } from "../utils"
 
 interface ChatCompletionContextType {
   chat?: Chat | null

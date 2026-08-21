@@ -1,9 +1,10 @@
 "use client"
 
-import { toDataUri } from "@/features/chat/utils"
 import { ImageFile } from "@/shared/types/image-file"
+import { toDataUri } from "@/shared/utils/image-utils"
 import type { UIMessage } from "ai"
 import { memo } from "react"
+import { ChatImageThumbnail } from "../chat-image-thumbnail"
 
 interface UserMessageContentProps {
   text: string
@@ -29,29 +30,27 @@ export const UserMessageContent = memo(function UserMessageContent({
               base64: part.url,
             }
 
+            const imageSrc = toDataUri(imageFile)
+            const formatLabel = part.mediaType?.split("/")[1]?.toUpperCase()
+
             return (
-              <div
+              <ChatImageThumbnail
                 key={`${part.url}-${index}`}
-                className="group relative size-16 overflow-hidden rounded-lg border border-border/80 bg-background shadow-xs transition-transform hover:scale-105 sm:size-20"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={toDataUri(imageFile)}
-                  alt={`Adjunto ${index + 1}`}
-                  className="h-full w-full object-cover"
-                />
-                <span className="absolute bottom-0.5 left-0.5 rounded bg-black/60 px-1 font-mono text-[8px] text-white">
-                  {part.mediaType?.split("/")[1]?.toUpperCase()}
-                </span>
-              </div>
+                originalSrc={imageSrc}
+                alt={`Adjunto ${index + 1}`}
+                formatLabel={formatLabel}
+                className="size-16 sm:size-20"
+              />
             )
           })}
         </div>
       )}
 
-      <p className="wrap-break-word font-sans text-xs leading-relaxed whitespace-pre-wrap text-foreground/90 sm:text-sm">
-        {text}
-      </p>
+      {text && (
+        <p className="wrap-break-word font-sans text-xs leading-relaxed whitespace-pre-wrap text-foreground/90 sm:text-sm">
+          {text}
+        </p>
+      )}
     </div>
   )
 })

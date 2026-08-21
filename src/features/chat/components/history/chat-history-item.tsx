@@ -1,5 +1,6 @@
 "use client"
 
+import { DateDisplay } from "@/shared/components/date-display"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +17,6 @@ import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
 import { deleteChat, updateChat } from "../../actions"
 import type { ChatMeta } from "../../types"
-import { DateDisplay } from "./date"
 
 interface ChatHistoryItemProps {
   chat: ChatMeta
