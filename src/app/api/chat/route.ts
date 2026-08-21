@@ -128,6 +128,7 @@ export async function POST(req: Request) {
             experimental_transform: [
               createScriptTransformStream("post-transform.js"),
             ],
+            maxOutputTokens: 60000,
           })
 
           writer.write({
@@ -172,7 +173,10 @@ export async function POST(req: Request) {
                     ),
                   }
 
-                  await updateChat(chat.id, { messages })
+                  await updateChat(chat.id, {
+                    messages,
+                    activeStreamId: undefined,
+                  })
                   revalidateTag(`chat-${chat.id}`, "minutes")
                   revalidatePath(`/chat/${chat.id}`)
                 } catch (err) {

@@ -5,7 +5,6 @@ import {
   useFileExplorerStore,
 } from "@/features/file-explorer"
 import { useFileExplorerContext } from "@/features/file-explorer/context/file-explorer-context"
-import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
 import {
   MentionOption,
   TextEditor,
@@ -47,7 +46,6 @@ export const ChatComposer = () => {
       }))
     )
 
-  const selectedWebUrlsCount = useWebCrawlerStore((s) => s.selectedUrls.length)
   const totalImagesCount = attachedImages.length
 
   const fileErrors = useMemo(
@@ -74,11 +72,6 @@ export const ChatComposer = () => {
     return options
   }, [treeNodes])
 
-  const hasSelectedContext =
-    selectedFilePaths.length > 0 ||
-    totalImagesCount > 0 ||
-    selectedWebUrlsCount > 0
-
   const estimatedTokens = useMemo(() => {
     const taskChars = userTask.length
     const fileChars = fileContents.reduce(
@@ -93,7 +86,7 @@ export const ChatComposer = () => {
     if ((!task && totalImagesCount === 0) || isStreaming || isProcessingContext)
       return
 
-    if (includeContext && hasSelectedContext) {
+    if (includeContext) {
       const { contextualPrompt, error } = await compileContext(task)
       if (error || !contextualPrompt) return
       generateContent(contextualPrompt, true)
@@ -108,7 +101,6 @@ export const ChatComposer = () => {
     isStreaming,
     isProcessingContext,
     includeContext,
-    hasSelectedContext,
     compileContext,
     generateContent,
     setUserTask,
@@ -190,7 +182,6 @@ export const ChatComposer = () => {
         <ChatComposerToolbar
           isStreaming={isStreaming}
           isProcessingContext={isProcessingContext}
-          hasSelectedContext={hasSelectedContext}
           includeContext={includeContext}
           includeReasoning={includeReasoning}
           hasMessages={messages.length > 0}

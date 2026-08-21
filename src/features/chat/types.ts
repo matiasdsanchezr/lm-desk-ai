@@ -1,3 +1,4 @@
+import { FileContent } from "@/shared/services/file-service"
 import { UIMessage } from "ai"
 
 export interface Chat {
@@ -42,3 +43,10 @@ export interface FormatOptions {
   assistantLabel?: string
   systemLabel?: string
 }
+
+export type MyUIMessage = UIMessage<
+  never,
+  {
+    files: FileContent[]
+  }
+>

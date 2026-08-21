@@ -15,7 +15,6 @@ import { cn } from "@/shared/lib/utils"
 interface ChatComposerToolbarProps {
   isStreaming: boolean
   isProcessingContext: boolean
-  hasSelectedContext: boolean
   includeContext: boolean
   includeReasoning: boolean
   hasMessages: boolean
@@ -34,7 +33,6 @@ interface ChatComposerToolbarProps {
 export function ChatComposerToolbar({
   isStreaming,
   isProcessingContext,
-  hasSelectedContext,
   includeContext,
   includeReasoning,
   hasMessages,
@@ -116,19 +114,17 @@ export function ChatComposerToolbar({
             id="include-context"
             checked={includeContext}
             onCheckedChange={(val) => onToggleContext(Boolean(val))}
-            disabled={isStreaming || !hasSelectedContext}
+            disabled={isStreaming}
             className="size-3.5 rounded-sm"
           />
           <Label
             htmlFor="include-context"
             className={cn(
               "cursor-pointer select-none text-[11px] transition-colors",
-              !hasSelectedContext
-                ? "text-muted-foreground/40"
-                : "text-muted-foreground hover:text-foreground"
+              "text-muted-foreground hover:text-foreground"
             )}
           >
-            Incluir Contexto
+            Incluir inserciones
           </Label>
         </div>
 
