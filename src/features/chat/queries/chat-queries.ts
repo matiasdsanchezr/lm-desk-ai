@@ -1,8 +1,8 @@
 import "server-only"
 
 import { cacheLife, cacheTag } from "next/cache"
-import * as historyService from "./services/history-service"
-import type { Chat, ChatMeta } from "./types"
+import * as historyService from "../services/history-service"
+import type { Chat, ChatMeta } from "../types"
 
 export async function getChatList(): Promise<ChatMeta[]> {
   "use cache"

@@ -2,17 +2,14 @@
 
 import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
-import { useCallback, useState } from "react"
-import { updateChat } from "../../actions"
-import { useAutoScroll } from "../../../../shared/hooks/use-auto-scroll"
-import { useCopyToClipboard } from "../../../../shared/hooks/use-copy-to-clipboard"
+import { useAutoScroll } from "@/shared/hooks/use-auto-scroll"
+import { useCallback, useMemo, useState } from "react"
+import { updateChat } from "../../actions/chat-actions"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
-import { formatConversationToMarkdown } from "../../utils/utils"
 import { ChatMessageItem } from "./chat-message-item"
 import { ChatThreadHeader } from "./chat-thread-header"
 
 export function ChatThread() {
-  const { isCopied, copy } = useCopyToClipboard()
   const {
     messages,
     error,
@@ -64,24 +61,38 @@ export function ChatThread() {
     [messages, initialChat, setMessages]
   )
 
-  const handleExportMarkdown = useCallback(() => {
-    if (!messages.length) return
-    copy(formatConversationToMarkdown(messages))
-  }, [messages, copy])
-
   const handleToggleExpandAll = useCallback(() => {
     setAllExpanded((prev) => !prev)
   }, [])
 
-  if (!messages.length && !error) return null
+  // Estimación de tokens acumulados en la conversación
+  const totalTokens = useMemo(() => {
+    let chars = 0
+    for (const msg of messages) {
+      if (msg.parts) {
+        for (const part of msg.parts) {
+          if (part.type === "text" && part.text) {
+            chars += part.text.length
+          } else if (
+            part.type === "reasoning" &&
+            "text" in part &&
+            typeof part.text === "string"
+          ) {
+            chars += part.text.length
+          }
+        }
+      }
+    }
+    return Math.ceil(chars / 4)
+  }, [messages])
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/40 shadow-xs backdrop-blur-xs">
-      {/* Header moderno */}
+    <div className="relative flex h-full w-full flex-col overflow-hidden bg-transparent">
+      {/* Header pegado al borde superior de la pantalla */}
       <ChatThreadHeader
+        title={initialChat?.title || "Nueva Sesión"}
+        tokenCount={totalTokens}
         messageCount={messages.length}
-        isCopied={isCopied}
-        onExportMarkdown={handleExportMarkdown}
         onToggleExpandAll={handleToggleExpandAll}
         allExpanded={Boolean(allExpanded)}
       />
@@ -90,40 +101,42 @@ export function ChatThread() {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="relative flex-1 overflow-y-auto p-3 sm:p-4"
+        className="relative flex-1 overflow-y-auto"
       >
-        {messages.length > 0 && (
-          <div className="flex flex-col gap-2.5">
-            {messages.map((message, index) => (
-              <ChatMessageItem
-                key={message.id}
-                message={message}
-                isStreaming={isStreaming}
-                isLast={index === messages.length - 1}
-                forcedExpandState={allExpanded}
-                onEditMessage={handleEditMessage}
-                onDeleteMessage={handleDeleteMessage}
-              />
-            ))}
-            <div ref={endRef} className="h-px" />
-          </div>
-        )}
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-6">
+          {messages.length > 0 && (
+            <div className="flex flex-col gap-3">
+              {messages.map((message, index) => (
+                <ChatMessageItem
+                  key={message.id}
+                  message={message}
+                  isStreaming={isStreaming}
+                  isLast={index === messages.length - 1}
+                  forcedExpandState={allExpanded}
+                  onEditMessage={handleEditMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                />
+              ))}
+              <div ref={endRef} className="h-px" />
+            </div>
+          )}
 
-        {/* Error en tiempo de ejecución */}
-        {error && (
-          <div className="pt-2">
-            <Alert
-              variant="destructive"
-              className="flex items-center border-destructive/20 bg-destructive/10"
-            >
-              <span className="icon-[lucide--alert-triangle] size-4 text-destructive" />
-              <AlertDescription className="ml-2 font-medium text-xs">
-                {error.message ??
-                  "Ha ocurrido un error inesperado al procesar la respuesta."}
-              </AlertDescription>
-            </Alert>
-          </div>
-        )}
+          {/* Error en tiempo de ejecución */}
+          {error && (
+            <div className="pt-2">
+              <Alert
+                variant="destructive"
+                className="flex items-center border-destructive/20 bg-destructive/10"
+              >
+                <span className="icon-[lucide--alert-triangle] size-4 text-destructive" />
+                <AlertDescription className="ml-2 font-medium text-xs">
+                  {error.message ??
+                    "Ha ocurrido un error inesperado al procesar la respuesta."}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+        </div>
 
         {/* Botón flotante para regresar al fondo */}
         {!isAtBottom && messages.length > 0 && (
@@ -134,7 +147,7 @@ export function ChatThread() {
               setIsAtBottom(true)
               scrollToBottom(true)
             }}
-            className="absolute right-4 bottom-4 z-20 h-8 gap-1.5 rounded-full border-border/80 bg-background/90 px-3 text-xs shadow-lg backdrop-blur-md hover:bg-background"
+            className="absolute right-6 bottom-4 z-20 h-8 gap-1.5 rounded-full border-border/80 bg-background/90 px-3 text-xs shadow-lg backdrop-blur-md hover:bg-background"
           >
             <span className="icon-[lucide--arrow-down] size-3.5" />
             <span className="hidden sm:inline">Ir al final</span>

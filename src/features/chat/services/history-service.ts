@@ -26,6 +26,7 @@ export async function createChat(data: CreateChatInput): Promise<Chat> {
     title,
     createdAt,
     messages: data.messages,
+    selectedFilePaths: data.selectedFilePaths,
     activeStreamId: data.activeStreamId,
   }
   const filePath = getChatFilePath(id)
@@ -69,6 +70,22 @@ export async function updateChat(
   } catch {
     throw new Error("No se pudo actualizar la conversación")
   }
+}
+
+export async function duplicateChat(id: string): Promise<Chat> {
+  const originalChat = await getChatById(id)
+  if (!originalChat) {
+    throw new Error("Conversación no encontrada para duplicar")
+  }
+
+  const baseTitle = originalChat.title?.trim() || "Sesión sin título"
+  const duplicateTitle = `${baseTitle} (Copia)`
+
+  return await createChat({
+    title: duplicateTitle,
+    messages: originalChat.messages ?? [],
+    selectedFilePaths: originalChat.selectedFilePaths ?? [],
+  })
 }
 
 export async function listChats(): Promise<ChatMeta[]> {

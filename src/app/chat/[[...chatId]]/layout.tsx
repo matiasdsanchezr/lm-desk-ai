@@ -30,7 +30,7 @@ export default async function ChatLayout({
             <Suspense fallback={<ChatHistorySidebarSkeleton />}>
               <ChatHistorySidebar savedChatsPromise={chatListPromise} />
             </Suspense>
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-2 sm:p-4 md:p-6">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
               {children}
             </div>
           </div>

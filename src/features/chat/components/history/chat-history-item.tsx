@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu"
 import {
@@ -12,10 +13,16 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar"
+import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"
 import { useRouter } from "next/navigation"
 import { memo, useCallback, useState, useTransition } from "react"
-import { deleteChat, updateChat } from "../../actions"
+import {
+  deleteChat,
+  duplicateChat,
+  getChatMarkdown,
+  updateChat,
+} from "../../actions/chat-actions"
 import type { ChatMeta } from "../../types"
 
 interface ChatHistoryItemProps {
@@ -36,7 +43,11 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   const [isPending, startTransition] = useTransition()
   const [isConfirming, setIsConfirming] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isDuplicating, setIsDuplicating] = useState(false)
   const [titleInput, setTitleInput] = useState(chat.title || "")
+
+  const { isCopied, copy } = useCopyToClipboard()
 
   const handleDelete = useCallback(() => {
     startTransition(async () => {
@@ -70,6 +81,36 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
     setIsEditing(false)
     setTitleInput(chat.title || "")
   }, [chat.title])
+
+  const handleDuplicate = useCallback(() => {
+    setIsDuplicating(true)
+    startTransition(async () => {
+      try {
+        const res = await duplicateChat(chat.id)
+        if (res.data?.id) {
+          router.push(`/chat/${res.data.id}`)
+        }
+      } finally {
+        setIsDuplicating(false)
+      }
+    })
+  }, [chat.id, router])
+
+  const handleExportMarkdown = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault()
+      setIsExporting(true)
+      try {
+        const res = await getChatMarkdown(chat.id)
+        if (res.data) {
+          await copy(res.data)
+        }
+      } finally {
+        setIsExporting(false)
+      }
+    },
+    [chat.id, copy]
+  )
 
   if (isEditing) {
     return (
@@ -181,7 +222,53 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            disabled={isPending}
+            onClick={handleDuplicate}
+            disabled={isDuplicating || isPending}
+            className="cursor-pointer"
+          >
+            {isDuplicating ? (
+              <>
+                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
+                <span>Duplicando...</span>
+              </>
+            ) : (
+              <>
+                <span className="icon-[lucide--copy] size-3.5" />
+                <span>Duplicar sesión</span>
+              </>
+            )}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={handleExportMarkdown}
+            disabled={isExporting}
+            closeOnClick={false}
+            className="cursor-pointer"
+          >
+            {isExporting ? (
+              <>
+                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
+                <span>Exportando...</span>
+              </>
+            ) : isCopied ? (
+              <>
+                <span className="icon-[lucide--check] size-3.5 text-emerald-500" />
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  ¡Copiado al portapapeles!
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="icon-[lucide--file-text] size-3.5" />
+                <span>Exportar Markdown</span>
+              </>
+            )}
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            disabled={isPending || isDuplicating}
             className={cn(
               "cursor-pointer transition-colors",
               isConfirming

@@ -4,7 +4,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
-  SidebarTrigger,
 } from "@/shared/components/ui/sidebar"
 import type { ChatMeta } from "../../types"
 import { ChatHistoryList } from "./chat-history-list"
@@ -19,24 +18,21 @@ export function ChatHistorySidebar({
 }: ChatHistorySidebarProps) {
   return (
     <Sidebar
-      collapsible="icon"
+      collapsible="offcanvas"
       className="border-r border-border/40 bg-sidebar/50 backdrop-blur-xs transition-all duration-300"
     >
-      <SidebarHeader className="border-b border-border/40 p-2 group-data-[collapsible=icon]:border-b-0 group-data-[collapsible=icon]:p-2 md:px-3.5 md:py-3">
-        <div className="flex items-center justify-between group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-2">
-          <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
+      <SidebarHeader className="border-b border-border/40 p-2 sm:px-3.5 sm:py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
             <span className="icon-[lucide--history] size-4 shrink-0 text-primary" />
             <span>Historial</span>
           </div>
 
-          <div className="flex items-center gap-1.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2">
-            <NewChatButton />
-            <SidebarTrigger className="h-9 w-9 text-muted-foreground hover:text-foreground" />
-          </div>
+          <NewChatButton />
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-2 group-data-[collapsible=icon]:hidden">
+      <SidebarContent className="p-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <ChatHistoryList savedChatsPromise={savedChatsPromise} />
