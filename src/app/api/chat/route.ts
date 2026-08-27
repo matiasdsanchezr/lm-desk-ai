@@ -97,7 +97,7 @@ export async function POST(req: Request) {
         messages: validatedMessages.data,
         activeStreamId: streamId,
       })
-      revalidateTag("chat-list", "minutes")
+      revalidateTag("chat-list", "days")
       revalidatePath(`/chat`, "layout")
     }
 
@@ -155,7 +155,6 @@ export async function POST(req: Request) {
 
                   if (!textContent) {
                     await updateChat(chat.id, { messages })
-                    revalidateTag(`chat-${chat.id}`, "minutes")
                     revalidatePath(`/chat/${chat.id}`)
                     return
                   }
@@ -177,7 +176,6 @@ export async function POST(req: Request) {
                     messages,
                     activeStreamId: undefined,
                   })
-                  revalidateTag(`chat-${chat.id}`, "minutes")
                   revalidatePath(`/chat/${chat.id}`)
                 } catch (err) {
                   console.error(

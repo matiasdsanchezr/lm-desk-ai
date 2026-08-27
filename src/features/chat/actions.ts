@@ -40,6 +40,7 @@ export const updateChat = async (
     await historyService.updateChat(id, updates)
     updateTag("chat-list")
     updateTag(`chat-${id}`)
+
     revalidatePath(`/chat/${id}`, "layout")
     return {}
   } catch (error) {

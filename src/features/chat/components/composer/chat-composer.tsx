@@ -128,7 +128,7 @@ export const ChatComposer = () => {
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         className={cn(
-          "relative flex min-h-32 flex-col rounded-2xl border border-border/80 bg-card/90 shadow-md backdrop-blur-md transition-all duration-200 sm:min-h-36",
+          "relative flex flex-col rounded-2xl border border-border/80 bg-card/90 shadow-md backdrop-blur-md transition-all duration-200",
           "focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20",
           isStreaming && "opacity-95"
         )}
@@ -163,12 +163,13 @@ export const ChatComposer = () => {
         {/* Sección de Miniaturas de Imágenes */}
         <ChatPastedImages disabled={isStreaming} />
 
-        <div className="relative flex min-h-16 flex-1 flex-col px-3 pt-3 pb-2">
+        {/* Sección del editor con altura inicial de 1 sola línea */}
+        <div className="relative flex flex-1 flex-col px-3 pt-2.5 pb-1.5 sm:px-3.5">
           <TextEditor
             value={userTask}
             onChange={setUserTask}
             placeholder="Haz tu pregunta o usa @ para referenciar archivos..."
-            className="max-h-56 overflow-y-auto text-xs sm:text-sm"
+            className="min-h-6 max-h-56 overflow-y-auto text-xs sm:text-sm"
             disabled={isStreaming || isProcessingContext}
             mentionOptions={mentionOptions}
             onMentionSelect={(filePath) => {
