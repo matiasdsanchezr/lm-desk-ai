@@ -25,6 +25,7 @@ export type CompileContextInput = z.infer<typeof CompileContextInputSchema>
 export type CompileContextResult = {
   contextualPrompt: string
   exportablePrompt: string
+  files: FileContent[]
 }
 
 export async function compileContextAction(
@@ -74,6 +75,7 @@ export async function compileContextAction(
       data: {
         contextualPrompt: builder.buildContextAndTask(),
         exportablePrompt: builder.build(),
+        files: localFiles,
       },
     }
   } catch (error) {

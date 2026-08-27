@@ -7,10 +7,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible"
+import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"
 import type { UIMessage } from "ai"
-import { memo, useCallback, useEffect, useState } from "react"
-import { useCopyToClipboard } from "../../../../shared/hooks/use-copy-to-clipboard"
+import { memo, useCallback, useState } from "react"
 import { getMessagePart } from "../../utils/utils"
 import { AssistantMessageContent } from "./assistant-message-content"
 import { InlineMessageEditor } from "./inline-message-editor"
@@ -35,15 +35,11 @@ export const ChatMessageItem = memo(function ChatMessageItem({
 }: ChatMessageItemProps) {
   const isUser = message.role === "user"
 
-  const [isOpen, setIsOpen] = useState<boolean>(!isUser)
+  const [internalOpen, setInternalOpen] = useState<boolean>(!isUser)
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const { isCopied, copy } = useCopyToClipboard()
 
-  useEffect(() => {
-    if (forcedExpandState !== null && forcedExpandState !== undefined) {
-      setIsOpen(forcedExpandState)
-    }
-  }, [forcedExpandState])
+  const isOpen = forcedExpandState ?? internalOpen
 
   const textContent = getMessagePart(message, "text")
   const reasoningContent = !isUser ? getMessagePart(message, "reasoning") : ""
@@ -62,16 +58,14 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   const handleDelete = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
-      if (onDeleteMessage) {
-        onDeleteMessage(message.id)
-      }
+      onDeleteMessage?.(message.id)
     },
     [message.id, onDeleteMessage]
   )
 
   const handleStartEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    setIsOpen(true)
+    setInternalOpen(true)
     setIsEditing(true)
   }, [])
 
@@ -86,7 +80,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   return (
     <Collapsible
       open={isOpen || isEditing}
-      onOpenChange={setIsOpen}
+      onOpenChange={setInternalOpen}
       className={cn(
         "group relative rounded-xl border transition-all duration-200",
         isUser
@@ -122,7 +116,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
             </span>
           </div>
 
-          {/* Badges de soporte (adjuntos / razonamiento) */}
+          {/* Badges de soporte (adjuntos) */}
           {attachedFilesCount > 0 && (
             <Badge
               variant="outline"

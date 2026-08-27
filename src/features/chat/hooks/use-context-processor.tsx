@@ -16,7 +16,7 @@ export function useContextProcessor() {
     setError(null)
 
     try {
-      const { userTask, includeContext, actions } = useChatStore.getState()
+      const { userTask, includeContext, setPrompts } = useChatStore.getState()
       const { selectedFilePaths, includeDependencies } =
         useFileExplorerStore.getState()
       const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
@@ -49,17 +49,27 @@ export function useContextProcessor() {
         return {
           contextualPrompt: "",
           exportablePrompt: "",
+          files: [],
           error: result.error ?? "Error al compilar contexto",
         }
       }
 
-      actions.setPrompts(result.data)
+      // Sincronizamos los archivos leídos en el store de FileExplorer
+      const fileStore = useFileExplorerStore.getState()
+      fileStore.setFileContents(result.data.files ?? [])
+
+      setPrompts(result.data)
       return { ...result.data, error: null }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Error inesperado al compilar"
       setError(message)
-      return { contextualPrompt: "", exportablePrompt: "", error: message }
+      return {
+        contextualPrompt: "",
+        exportablePrompt: "",
+        files: [],
+        error: message,
+      }
     } finally {
       setIsProcessing(false)
     }

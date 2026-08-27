@@ -17,6 +17,7 @@ import { useContextProcessor } from "../../hooks/use-context-processor"
 import { useImagePaste } from "../../hooks/use-image-paste"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
 import { useChatStore } from "../../store/chat-store"
+import { estimateTokenCount } from "../../utils/utils"
 import { ImageUrlsDialog } from "../builder/image-urls-dialog"
 import { ChatComposerToolbar } from "./chat-composer-toolbar"
 import { ChatPastedImages } from "./chat-pasted-images"
@@ -29,14 +30,24 @@ export const ChatComposer = () => {
     useContextProcessor()
   const { handlePaste } = useImagePaste()
 
-  const userTask = useChatStore((s) => s.userTask)
-  const includeContext = useChatStore((s) => s.includeContext)
-  const includeReasoning = useChatStore((s) => s.includeReasoningHistory)
-  const attachedImages = useChatStore((s) => s.attachedImages)
-  const setUserTask = useChatStore((s) => s.setUserTask)
-  const setIncludeContext = useChatStore((s) => s.setIncludeContext)
-  const setIncludeReasoningHistory = useChatStore(
-    (s) => s.setIncludeReasoningHistory
+  const {
+    userTask,
+    includeContext,
+    includeReasoningHistory,
+    attachedImages,
+    setUserTask,
+    setIncludeContext,
+    setIncludeReasoningHistory,
+  } = useChatStore(
+    useShallow((s) => ({
+      userTask: s.userTask,
+      includeContext: s.includeContext,
+      includeReasoningHistory: s.includeReasoningHistory,
+      attachedImages: s.attachedImages,
+      setUserTask: s.setUserTask,
+      setIncludeContext: s.setIncludeContext,
+      setIncludeReasoningHistory: s.setIncludeReasoningHistory,
+    }))
   )
 
   const { selectedFilePaths, fileContents, setSelectedFilePaths } =
@@ -74,13 +85,12 @@ export const ChatComposer = () => {
     return options
   }, [treeNodes])
 
+  // Reutilización centralizada de estimateTokenCount
   const estimatedTokens = useMemo(() => {
-    const taskChars = userTask.length
-    const fileChars = fileContents.reduce(
-      (acc, f) => acc + (f.content?.length || 0),
-      0
-    )
-    return Math.ceil((taskChars + (includeContext ? fileChars : 0)) / 4)
+    const filesString = includeContext
+      ? fileContents.map((f) => f.content ?? "").join("")
+      : ""
+    return estimateTokenCount(userTask + filesString)
   }, [userTask, fileContents, includeContext])
 
   const handleSend = useCallback(async () => {
@@ -165,7 +175,7 @@ export const ChatComposer = () => {
         {/* Sección de Miniaturas de Imágenes */}
         <ChatPastedImages disabled={isStreaming} />
 
-        {/* Sección del editor con altura inicial de 1 sola línea */}
+        {/* Sección del editor */}
         <div className="relative flex flex-1 flex-col px-3 pt-2.5 pb-1.5 sm:px-3.5">
           <TextEditor
             value={userTask}
@@ -186,7 +196,7 @@ export const ChatComposer = () => {
           isStreaming={isStreaming}
           isProcessingContext={isProcessingContext}
           includeContext={includeContext}
-          includeReasoning={includeReasoning}
+          includeReasoning={includeReasoningHistory}
           hasMessages={messages.length > 0}
           hasTask={Boolean(userTask.trim()) || totalImagesCount > 0}
           totalImagesCount={totalImagesCount}

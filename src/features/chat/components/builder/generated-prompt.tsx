@@ -19,11 +19,14 @@ export const GeneratedPrompt = () => {
   const [isOpen, setIsOpen] = useState(true)
 
   const exportablePrompt = useChatStore((s) => s.exportablePrompt)
-  const resetGeneratedPrompts = useChatStore((s) => s.resetGeneratedPrompts)
   const fileContents = useFileExplorerStore((s) => s.fileContents)
+  const resetGeneratedPrompts = useChatStore((s) => s.resetGeneratedPrompts)
 
   const validFiles = useMemo(
-    () => fileContents.filter((f) => !f.error && f.content),
+    () =>
+      fileContents?.filter(
+        (f) => !f.error && f.content !== undefined && f.content !== null
+      ) ?? [],
     [fileContents]
   )
 

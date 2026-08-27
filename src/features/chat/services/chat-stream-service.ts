@@ -3,7 +3,6 @@ import { streamText } from "@/shared/services/inference-service/inference-servic
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
 import {
-  applyTransformScript,
   applyTransformScriptToModelMessages,
   createScriptTransformStream,
 } from "@/shared/services/inference-service/utils/script-transformer"
@@ -48,7 +47,6 @@ export async function handleChatRequest(body: ChatRequestBody) {
     includeReasoningHistory,
   } = body
 
-  // Validación de modelo
   const inferenceModelResult = InferenceModelSchema.safeParse({
     model,
     provider,
@@ -114,7 +112,6 @@ export async function handleChatRequest(body: ChatRequestBody) {
             originalMessages: validatedMessages.data,
             sendReasoning: true,
             onEnd: async ({ messages, responseMessage }) => {
-              // Lógica de persistencia final (igual que antes, extraída)
               await persistChatAfterStream(chat.id, messages, responseMessage)
             },
             onError: (error) => {
@@ -137,32 +134,9 @@ async function persistChatAfterStream(
   responseMessage: UIMessage<unknown, UIDataTypes, UITools>
 ) {
   try {
-    const parts = responseMessage.parts
-    let textContent = ""
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]
-      if (part.type === "text" && part.text) {
-        textContent += (textContent ? "\n\n" : "") + part.text
-      }
-    }
-
-    if (!textContent) {
-      await updateChat(id, { messages })
-      revalidatePath(`/chat/${id}`)
-      return
-    }
-
-    const transformedText = await applyTransformScript(
-      textContent,
-      "post-transform.js"
-    )
-
     messages[messages.length - 1] = {
       ...responseMessage,
       id: generateId(),
-      parts: parts.map((p) =>
-        p.type === "text" ? { ...p, text: transformedText } : p
-      ),
     }
 
     await updateChat(id, {
@@ -171,6 +145,6 @@ async function persistChatAfterStream(
     })
     revalidatePath(`/chat/${id}`)
   } catch (err) {
-    console.error("[/api/chat] Error al procesar o guardar la sesión:", err)
+    console.error("[/api/chat] Error al guardar la sesión:", err)
   }
 }
