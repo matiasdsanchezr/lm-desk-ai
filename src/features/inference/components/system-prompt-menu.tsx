@@ -2,6 +2,7 @@
 
 import {
   deleteSystemPrompt,
+  getSystemPrompt,
   saveSystemPrompt,
 } from "@/features/inference/actions"
 import {
@@ -27,134 +28,98 @@ import {
 import { Input } from "@/shared/components/ui/input"
 import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
+import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"
 import { use, useState, useTransition } from "react"
-import { getSystemPrompt } from "../actions"
 import { useInferenceStore } from "../store/inference-store"
 import { SystemPromptMeta } from "../types"
 
-interface Props {
+interface SystemPromptMenuProps {
   availablePromptsPromise: Promise<SystemPromptMeta[]>
 }
 
-export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
+export const SystemPromptMenu = ({
+  availablePromptsPromise,
+}: SystemPromptMenuProps) => {
   const availablePrompts = use(availablePromptsPromise)
-  const {
-    systemPrompt: systemPrompt,
-    setSystemPrompt: setSystemPrompt,
-    resetSystemPrompt: resetSystemPrompt,
-  } = useInferenceStore()
+
+  const { systemPrompt, setSystemPrompt, resetSystemPrompt } =
+    useInferenceStore()
+
   const [draft, setDraft] = useState(systemPrompt)
   const [isOpen, setIsOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
-  const [copied, setCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<"editor" | "templates">("editor")
-  const [promptsList, setPromptsList] =
-    useState<SystemPromptMeta[]>(availablePrompts)
   const [newTemplateName, setNewTemplateName] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
   const [templateToDelete, setTemplateToDelete] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [prevAvailablePrompts, setPrevAvailablePrompts] =
-    useState(availablePrompts)
 
-  if (availablePrompts !== prevAvailablePrompts) {
-    setPrevAvailablePrompts(availablePrompts)
-    setPromptsList(availablePrompts)
+  const [isPending, startTransition] = useTransition()
+  const { isCopied, copy } = useCopyToClipboard()
+
+  const handleOpenDialog = (open: boolean) => {
+    if (open) {
+      setDraft(systemPrompt)
+    }
+    setIsOpen(open)
   }
 
   const handleSelectTemplate = (promptId: string) => {
     startTransition(async () => {
-      try {
-        const result = await getSystemPrompt(promptId)
-        if (result.data) {
-          setDraft(result.data)
-          setActiveTab("editor")
-        }
-      } catch (error) {
-        console.error("Error al cargar la plantilla:", error)
+      const result = await getSystemPrompt(promptId)
+      if (result.data) {
+        setDraft(result.data)
+        setActiveTab("editor")
       }
     })
   }
 
-  const handleSaveTemplate = async () => {
+  const handleSaveTemplate = () => {
     if (!newTemplateName.trim() || !draft.trim()) return
-    setIsSaving(true)
-    try {
+
+    startTransition(async () => {
       const cleanName = newTemplateName.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
       const result = await saveSystemPrompt(cleanName, draft)
-
-      if (result.error) {
-        return
+      if (!result.error) {
+        setNewTemplateName("")
       }
-
-      if (result.data && !promptsList.some((p) => p.id === result.data?.id)) {
-        setPromptsList((prev) => [...prev, result.data!])
-      }
-
-      setNewTemplateName("")
-    } catch (error) {
-      console.error("Error al guardar la plantilla:", error)
-    } finally {
-      setIsSaving(false)
-    }
+    })
   }
 
-  const handleDeleteClick = (promptId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setTemplateToDelete(promptId)
-  }
-
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!templateToDelete) return
-    setIsDeleting(true)
-    try {
-      const result = await deleteSystemPrompt(templateToDelete)
-      if (result.error) {
-        alert(result.error)
-        return
-      }
-      setPromptsList((prev) => prev.filter((p) => p.id !== templateToDelete))
-    } catch (error) {
-      console.error("Error al eliminar la plantilla:", error)
-    } finally {
-      setIsDeleting(false)
+
+    startTransition(async () => {
+      await deleteSystemPrompt(templateToDelete)
       setTemplateToDelete(null)
-    }
+    })
   }
 
-  const handleSave = () => {
+  const handleApplyChanges = () => {
     setSystemPrompt(draft)
     setIsOpen(false)
-  }
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(systemPrompt)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <span className="icon-[fa6-solid--terminal] h-3.5 w-3.5" />
+          <span className="icon-[fa6-solid--terminal] size-3.5" />
           Instrucciones del sistema
         </label>
         {systemPrompt && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={handleCopy}
+            className="size-7 text-muted-foreground hover:text-foreground"
+            onClick={() => copy(systemPrompt)}
             title="Copiar instrucciones"
           >
             <span
-              className={
-                copied
-                  ? "icon-[fa6-solid--circle-check] h-3.5 w-3.5 text-foreground"
-                  : "icon-[fa6-solid--copy] h-3.5 w-3.5"
-              }
+              className={cn(
+                "size-3.5",
+                isCopied
+                  ? "icon-[fa6-solid--circle-check] text-emerald-500"
+                  : "icon-[fa6-solid--copy]"
+              )}
             />
           </Button>
         )}
@@ -166,16 +131,15 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
         </p>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleOpenDialog}>
         <DialogTrigger
           render={
             <Button
               variant="outline"
               size="sm"
-              disabled={isPending}
               className="h-10 w-full justify-center border-dashed border-border/50 text-xs text-muted-foreground hover:text-foreground sm:h-9"
             >
-              <span className="mr-2 icon-[fa6-solid--pen-to-square] h-3.5 w-3.5" />
+              <span className="mr-2 icon-[fa6-solid--pen-to-square] size-3.5" />
               Editar Instrucciones
             </Button>
           }
@@ -183,7 +147,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
         <DialogContent className="flex h-[92dvh] w-[95vw] max-w-full flex-col border-border/40 bg-background p-4 sm:h-[85vh] sm:max-w-5xl sm:p-6">
           <DialogHeader className="shrink-0 text-left">
             <DialogTitle className="flex items-center gap-2 text-sm font-semibold tracking-tight sm:text-base">
-              <span className="icon-[fa6-solid--sliders] h-4 w-4 text-muted-foreground" />
+              <span className="icon-[fa6-solid--sliders] size-4 text-muted-foreground" />
               Comportamiento del Sistema
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
@@ -192,7 +156,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
             </DialogDescription>
           </DialogHeader>
 
-          {/* Selector de Pestañas táctil para Móviles */}
+          {/* Selector móvil */}
           <div className="mt-3 flex shrink-0 rounded-lg bg-muted/60 p-1 md:hidden">
             <Button
               type="button"
@@ -206,7 +170,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <span className="mr-1.5 icon-[fa6-solid--pen-to-square] h-3.5 w-3.5" />
+              <span className="mr-1.5 icon-[fa6-solid--pen-to-square] size-3.5" />
               Editor
             </Button>
             <Button
@@ -221,12 +185,11 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <span className="mr-1.5 icon-[fa6-solid--file-lines] h-3.5 w-3.5" />
-              Plantillas ({promptsList.length})
+              <span className="mr-1.5 icon-[fa6-solid--file-lines] size-3.5" />
+              Plantillas ({availablePrompts.length})
             </Button>
           </div>
 
-          {/* Contenedor adaptativo de dos paneles */}
           <div className="mt-3 flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row">
             {/* Panel de plantillas */}
             <div
@@ -240,12 +203,12 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                   Plantillas disponibles
                 </Label>
                 <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
-                  {promptsList.length === 0 ? (
+                  {availablePrompts.length === 0 ? (
                     <p className="py-4 text-center text-[11px] italic text-muted-foreground">
                       No hay plantillas guardadas.
                     </p>
                   ) : (
-                    promptsList.map((p) => (
+                    availablePrompts.map((p) => (
                       <div
                         key={p.id}
                         className="group flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2 text-xs transition-colors hover:bg-muted/50"
@@ -255,7 +218,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                           className="mr-2 flex flex-1 items-center truncate text-left font-medium text-muted-foreground hover:text-foreground"
                           onClick={() => handleSelectTemplate(p.id)}
                         >
-                          <span className="mr-2 icon-[fa6-solid--file-lines] h-3.5 w-3.5 shrink-0 opacity-70" />
+                          <span className="mr-2 icon-[fa6-solid--file-lines] size-3.5 shrink-0 opacity-70" />
                           <span className="truncate">
                             {p.id.replace(".md", "")}
                           </span>
@@ -263,11 +226,14 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => handleDeleteClick(p.id, e)}
-                          className="h-7 w-7 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setTemplateToDelete(p.id)
+                          }}
+                          className="size-7 text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive"
                           title="Eliminar plantilla"
                         >
-                          <span className="icon-[fa6-solid--trash-can] h-3.5 w-3.5" />
+                          <span className="icon-[fa6-solid--trash-can] size-3.5" />
                         </Button>
                       </div>
                     ))
@@ -275,7 +241,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                 </div>
               </div>
 
-              <div className="space-y-2 border-t border-border/40 pt-3 shrink-0">
+              <div className="shrink-0 space-y-2 border-t border-border/40 pt-3">
                 <Label
                   htmlFor="template-name"
                   className="text-xs font-medium text-muted-foreground"
@@ -289,17 +255,18 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                     value={newTemplateName}
                     onChange={(e) => setNewTemplateName(e.target.value)}
                     className="h-9 bg-muted/20 text-xs"
+                    disabled={isPending}
                   />
                   <Button
                     size="sm"
                     onClick={handleSaveTemplate}
                     disabled={
-                      isSaving || !newTemplateName.trim() || !draft.trim()
+                      isPending || !newTemplateName.trim() || !draft.trim()
                     }
                     className="h-9 shrink-0 px-3 text-xs"
                     variant="secondary"
                   >
-                    <span className="mr-1 icon-[fa6-solid--floppy-disk] h-3 w-3" />
+                    <span className="mr-1 icon-[fa6-solid--floppy-disk] size-3" />
                     Guardar
                   </Button>
                 </div>
@@ -343,7 +310,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
             </Button>
             <Button
               size="sm"
-              onClick={handleSave}
+              onClick={handleApplyChanges}
               className="h-9 w-full px-6 text-xs font-medium sm:w-auto"
             >
               Aplicar cambios
@@ -352,11 +319,11 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirmación para eliminación */}
+      {/* Modal de confirmación para eliminación */}
       <AlertDialog
         open={templateToDelete !== null}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) setTemplateToDelete(null)
+          if (!open && !isPending) setTemplateToDelete(null)
         }}
       >
         <AlertDialogContent className="w-[90vw] max-w-md rounded-xl">
@@ -373,7 +340,7 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-0">
-            <AlertDialogCancel disabled={isDeleting} className="h-9 text-xs">
+            <AlertDialogCancel disabled={isPending} className="h-9 text-xs">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
@@ -381,10 +348,10 @@ export const SystemPromptMenu = ({ availablePromptsPromise }: Props) => {
                 e.preventDefault()
                 handleConfirmDelete()
               }}
-              disabled={isDeleting}
-              className="h-9 text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isPending}
+              className="h-9 bg-destructive text-xs text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Eliminando..." : "Eliminar"}
+              {isPending ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

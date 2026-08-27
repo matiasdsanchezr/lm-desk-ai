@@ -4,52 +4,41 @@ import { ImageFile } from "@/shared/types/image-file"
 import { useCallback } from "react"
 import { useChatActions } from "../store/chat-store"
 
+const fileToDataUrl = (file: File): Promise<ImageFile> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () =>
+      resolve({
+        mimeType: file.type || "image/png",
+        base64: reader.result as string,
+      })
+    reader.onerror = () =>
+      reject(new Error(`Error al leer imagen: ${file.name}`))
+    reader.readAsDataURL(file)
+  })
+}
+
 export function useImagePaste() {
   const { addAttachedImages } = useChatActions()
 
   const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      const items = e.clipboardData?.items
-      if (!items) return
+    async (e: React.ClipboardEvent) => {
+      const items = Array.from(e.clipboardData?.items || [])
+      const imageFiles = items
+        .filter((item) => item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter((file): file is File => file !== null)
 
-      const imageItems: File[] = []
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith("image/")) {
-          const file = items[i].getAsFile()
-          if (file) imageItems.push(file)
-        }
-      }
-
-      if (imageItems.length === 0) return
+      if (imageFiles.length === 0) return
 
       e.preventDefault()
 
-      const readFileAsDataUrl = (file: File): Promise<ImageFile> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = (event) => {
-            const result = event.target?.result as string
-            if (result) {
-              resolve({
-                mimeType: file.type || "image/png",
-                base64: result,
-              })
-            } else {
-              reject(new Error("No se pudo leer el archivo de imagen"))
-            }
-          }
-          reader.onerror = reject
-          reader.readAsDataURL(file)
-        })
+      try {
+        const loadedImages = await Promise.all(imageFiles.map(fileToDataUrl))
+        addAttachedImages(loadedImages)
+      } catch (err) {
+        console.error("[useImagePaste] Error al procesar imágenes:", err)
       }
-
-      Promise.all(imageItems.map(readFileAsDataUrl))
-        .then((newImages) => {
-          addAttachedImages(newImages)
-        })
-        .catch((err) => {
-          console.error("Error al procesar las imágenes del portapapeles:", err)
-        })
     },
     [addAttachedImages]
   )

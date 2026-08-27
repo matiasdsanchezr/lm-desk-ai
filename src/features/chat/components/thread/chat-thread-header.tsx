@@ -41,7 +41,7 @@ export function ChatThreadHeader({
 
           {tokenCount > 0 && (
             <span className="shrink-0 text-[11px] text-muted-foreground/80 sm:text-xs">
-              {tokenCount.toLocaleString()} tokens
+              ~{tokenCount} tokens
             </span>
           )}
         </div>

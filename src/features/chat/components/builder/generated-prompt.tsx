@@ -12,6 +12,7 @@ import { Textarea } from "@/shared/components/ui/textarea"
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
 import { useChatActions, useChatStore } from "../../store/chat-store"
+import { estimateTokenCount } from "../../utils/utils"
 
 export const GeneratedPrompt = () => {
   const [copied, setCopied] = useState(false)
@@ -122,7 +123,7 @@ export const GeneratedPrompt = () => {
           <span>Listo para copiar y pegar en cualquier LLM.</span>
           <span>
             {exportablePrompt.length.toLocaleString()} caracteres · ~
-            {Math.ceil(exportablePrompt.length / 4).toLocaleString()} tokens
+            {estimateTokenCount(exportablePrompt)} tokens
           </span>
         </div>
       </CollapsibleContent>

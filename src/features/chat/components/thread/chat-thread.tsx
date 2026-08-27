@@ -6,6 +6,7 @@ import { useAutoScroll } from "@/shared/hooks/use-auto-scroll"
 import { useCallback, useMemo, useState } from "react"
 import { updateChat } from "../../actions/chat-actions"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
+import { estimateTokenCount } from "../../utils/utils"
 import { ChatMessageItem } from "./chat-message-item"
 import { ChatThreadHeader } from "./chat-thread-header"
 
@@ -65,25 +66,8 @@ export function ChatThread() {
     setAllExpanded((prev) => !prev)
   }, [])
 
-  // Estimación de tokens acumulados en la conversación
   const totalTokens = useMemo(() => {
-    let chars = 0
-    for (const msg of messages) {
-      if (msg.parts) {
-        for (const part of msg.parts) {
-          if (part.type === "text" && part.text) {
-            chars += part.text.length
-          } else if (
-            part.type === "reasoning" &&
-            "text" in part &&
-            typeof part.text === "string"
-          ) {
-            chars += part.text.length
-          }
-        }
-      }
-    }
-    return Math.ceil(chars / 4)
+    return estimateTokenCount(messages)
   }, [messages])
 
   return (
