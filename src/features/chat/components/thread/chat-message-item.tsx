@@ -10,7 +10,7 @@ import {
 import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"
 import type { UIMessage } from "ai"
-import { memo, useCallback, useState } from "react"
+import { memo, useCallback, useEffect, useState } from "react"
 import { getMessagePart } from "../../utils/utils"
 import { AssistantMessageContent } from "./assistant-message-content"
 import { InlineMessageEditor } from "./inline-message-editor"
@@ -39,7 +39,13 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const { isCopied, copy } = useCopyToClipboard()
 
-  const isOpen = forcedExpandState ?? internalOpen
+  useEffect(() => {
+    if (forcedExpandState !== null && forcedExpandState !== undefined) {
+      setInternalOpen(forcedExpandState)
+    }
+  }, [forcedExpandState])
+
+  const isOpen = isEditing || internalOpen
 
   const textContent = getMessagePart(message, "text")
   const reasoningContent = !isUser ? getMessagePart(message, "reasoning") : ""
@@ -79,7 +85,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
 
   return (
     <Collapsible
-      open={isOpen || isEditing}
+      open={isOpen}
       onOpenChange={setInternalOpen}
       className={cn(
         "group relative rounded-xl border transition-all duration-200",
@@ -97,7 +103,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
           <span
             className={cn(
               "icon-[lucide--chevron-down] size-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
-              (isOpen || isEditing) && "rotate-180"
+              isOpen && "rotate-180"
             )}
           />
 
