@@ -44,11 +44,7 @@ export const deleteSystemPrompt = async (promptId: string): ActionResponse => {
   }
 }
 
-export const getSystemPrompt = async (
-  promptId: string
-): Promise<ActionResponse<string>> => {
-  return inferenceQueries.getSystemPrompt(promptId)
-}
+export const getSystemPrompt = inferenceQueries.getSystemPrompt
 
 export async function refreshSystemPromptsList(): Promise<void> {
   updateTag("system-prompts-list")

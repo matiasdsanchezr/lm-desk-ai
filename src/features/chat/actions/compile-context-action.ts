@@ -1,7 +1,10 @@
 "use server"
 
-import { fetchFileContextAction } from "@/features/file-explorer/actions/fetch-file-context"
-import { FileContent } from "@/shared/services/file-service"
+import {
+  buildProjectDependencyGraph,
+  FileContent,
+  isImageFile,
+} from "@/shared/services/file-service"
 import { ActionResponse } from "@/shared/types/action-state"
 import { PromptBuilder } from "@/shared/utils/prompt-builder"
 import { z } from "zod"
@@ -49,19 +52,11 @@ export async function compileContextAction(
     let localFiles: FileContent[] = []
 
     if (includeContext && selectedFilePaths.length > 0) {
-      const formData = new FormData()
-      selectedFilePaths.forEach((path) => formData.append("filePath", path))
-      formData.append("includeDependencies", String(includeDependencies))
-      formData.append("systemPrompt", systemPrompt)
-
-      const result = await fetchFileContextAction({}, formData)
-      if (result.error || !result.data) {
-        return {
-          error:
-            result.error ?? "No se pudieron leer los archivos seleccionados",
-        }
-      }
-      localFiles = result.data.fileContents ?? []
+      const textFilePaths = selectedFilePaths.filter((p) => !isImageFile(p))
+      localFiles = await buildProjectDependencyGraph(
+        textFilePaths,
+        includeDependencies
+      )
     }
 
     const combinedContext = includeContext ? [...localFiles, ...webSources] : []

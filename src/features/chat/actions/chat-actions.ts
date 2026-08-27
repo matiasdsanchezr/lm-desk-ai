@@ -1,6 +1,6 @@
 "use server"
 
-import { ActionResponse } from "@/shared/types/action-state"
+import type { ActionResponse } from "@/shared/types/action-state"
 import { updateTag } from "next/cache"
 import * as historyService from "../services/history-service"
 import type { Chat, CreateChatInput, UpdateChatInput } from "../types"
@@ -38,7 +38,7 @@ export const updateChat = async (
     updateTag(`chat-${id}`)
     return {}
   } catch (error) {
-    console.error(error)
+    console.error("[updateChat] Error:", error)
     return { error: "No se pudo actualizar la sesión" }
   }
 }
@@ -50,7 +50,7 @@ export const duplicateChat = async (id: string): ActionResponse<Chat> => {
     if (result.id) updateTag(`chat-${result.id}`)
     return { data: result }
   } catch (error) {
-    console.error("[duplicateChat] Error al duplicar:", error)
+    console.error("[duplicateChat] Error:", error)
     return { error: "No se pudo duplicar la sesión" }
   }
 }
@@ -64,7 +64,7 @@ export const getChatMarkdown = async (id: string): ActionResponse<string> => {
     const markdown = formatConversationToMarkdown(chat.messages ?? [])
     return { data: markdown }
   } catch (error) {
-    console.error("[getChatMarkdown] Error al obtener markdown:", error)
+    console.error("[getChatMarkdown] Error:", error)
     return { error: "No se pudo exportar el contenido de la sesión" }
   }
 }

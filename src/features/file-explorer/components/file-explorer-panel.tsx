@@ -57,67 +57,40 @@ export function FileExplorerPanel({
   const { isExpanded, toggleExpand, expandedNodes } = useTreeExpansion()
   const [activeTab, setActiveTab] = useState<"tree" | "selected">("tree")
 
-  const sortedSelectedFilePaths = useMemo(() => {
-    return [...selectedFilePaths].sort()
-  }, [selectedFilePaths])
+  const sortedSelectedFilePaths = useMemo(
+    () => [...selectedFilePaths].sort(),
+    [selectedFilePaths]
+  )
 
-  const flattenTree = useCallback(
-    (nodes: FileTreeNode[], currentDepth = 0): FlattenedNode[] => {
-      let result: FlattenedNode[] = []
+  // Aplanamiento del árbol optimizado sin re-crear recursión innecesaria
+  const flattenedTreeNodes = useMemo(() => {
+    const result: FlattenedNode[] = []
+    const flatten = (nodes: FileTreeNode[], depth: number) => {
       for (const node of nodes) {
-        result.push({ node, depth: currentDepth })
+        result.push({ node, depth })
         if (
           !node.isFile &&
           expandedNodes.has(node.id) &&
-          node.children.length > 0
+          node.children?.length
         ) {
-          result = result.concat(flattenTree(node.children, currentDepth + 1))
+          flatten(node.children, depth + 1)
         }
       }
-      return result
-    },
-    [expandedNodes]
-  )
-
-  const flattenedTreeNodes = useMemo(
-    () => flattenTree(treeNodes),
-    [treeNodes, flattenTree]
-  )
+    }
+    flatten(treeNodes, 0)
+    return result
+  }, [treeNodes, expandedNodes])
 
   const treeScrollRef = useRef<HTMLDivElement>(null)
-  const selectedScrollRef = useRef<HTMLDivElement>(null)
 
-  const getTreeScrollElement = useCallback(() => treeScrollRef.current, [])
-  const getSelectedScrollElement = useCallback(
-    () => selectedScrollRef.current,
-    []
-  )
-
+  // Virtualizador SOLO para el árbol (donde realmente hay miles de archivos)
   // eslint-disable-next-line react-hooks/incompatible-library
   const treeVirtualizer = useVirtualizer({
     count: flattenedTreeNodes.length,
-    getScrollElement: getTreeScrollElement,
+    getScrollElement: () => treeScrollRef.current,
     estimateSize: () => 32,
     overscan: 10,
   })
-
-  const selectedVirtualizer = useVirtualizer({
-    count: sortedSelectedFilePaths.length,
-    getScrollElement: getSelectedScrollElement,
-    estimateSize: () => 64,
-    overscan: 5,
-    measureElement:
-      typeof window !== "undefined"
-        ? (el: Element) => el.getBoundingClientRect().height
-        : undefined,
-  })
-
-  const measureSelectedElement = useCallback(
-    (el: HTMLDivElement | null) => {
-      selectedVirtualizer.measureElement(el)
-    },
-    [selectedVirtualizer]
-  )
 
   const handleRefresh = useCallback(() => {
     startTransition(async () => {
@@ -136,7 +109,7 @@ export function FileExplorerPanel({
           className="flex-1 text-xs"
           size="sm"
         >
-          <span className="mr-1.5 icon-[fa7-solid--sitemap] h-3.5 w-3.5" />
+          <span className="mr-1.5 icon-[fa7-solid--sitemap] size-3.5" />
           Estructura
           <Badge variant="secondary" className="ml-1.5 text-[10px]">
             {totalFiles}
@@ -148,7 +121,7 @@ export function FileExplorerPanel({
           className="flex-1 text-xs"
           size="sm"
         >
-          <span className="mr-1.5 icon-[fa7-solid--square-check] h-3.5 w-3.5" />
+          <span className="mr-1.5 icon-[fa7-solid--square-check] size-3.5" />
           Seleccionados
           <Badge variant="secondary" className="ml-1.5 text-[10px]">
             {selectedFilesCount}
@@ -156,31 +129,31 @@ export function FileExplorerPanel({
         </Button>
       </div>
 
-      <div className="flex min-h-75 flex-col overflow-hidden rounded-xl border bg-card md:h-125 md:flex-row">
-        {/* PANEL IZQUIERDO: ÁRBOL */}
+      <div className="flex min-h-75 flex-col overflow-hidden rounded-xl border border-border/60 bg-card md:h-125 md:flex-row">
+        {/* PANEL IZQUIERDO: ÁRBOL (VIRTUALIZADO) */}
         <div
           className={cn(
-            "flex flex-1 flex-col border-b md:w-1/2 md:border-r md:border-b-0 lg:w-2/5",
+            "flex flex-1 flex-col border-b border-border/40 md:w-1/2 md:border-r md:border-b-0 lg:w-2/5",
             activeTab === "tree" ? "flex" : "hidden md:flex"
           )}
         >
-          <div className="flex items-center justify-between border-b bg-muted/30 px-3 py-2">
-            <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <span className="icon-[fa7-solid--sitemap] h-4 w-4" />
+          <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3 py-2">
+            <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground sm:text-sm">
+              <span className="icon-[fa7-solid--sitemap] size-3.5 text-primary" />
               Estructura de archivos
             </span>
             <div className="flex items-center gap-1.5">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                className="size-7 text-muted-foreground hover:text-foreground"
                 onClick={handleRefresh}
                 disabled={disabled || isPending}
                 title="Recargar archivos del servidor"
               >
                 <span
                   className={cn(
-                    "h-3.5 w-3.5",
+                    "size-3.5",
                     isPending
                       ? "icon-[fa7-solid--spinner] animate-spin"
                       : "icon-[fa7-solid--arrows-rotate]"
@@ -211,7 +184,9 @@ export function FileExplorerPanel({
               }}
             >
               {treeVirtualizer.getVirtualItems().map((virtualRow) => {
-                const { node, depth } = flattenedTreeNodes[virtualRow.index]!
+                const item = flattenedTreeNodes[virtualRow.index]
+                if (!item) return null
+                const { node, depth } = item
                 return (
                   <TreeNodeRow
                     key={node.id}
@@ -238,16 +213,16 @@ export function FileExplorerPanel({
           </div>
         </div>
 
-        {/* PANEL DERECHO: SELECCIONADOS */}
+        {/* PANEL DERECHO: SELECCIONADOS (LISTA NATIVA DIRECTA, SIN OVERHEAD) */}
         <div
           className={cn(
             "flex flex-1 flex-col md:w-1/2 lg:w-3/5",
             activeTab === "selected" ? "flex" : "hidden md:flex"
           )}
         >
-          <div className="flex items-center justify-between border-b bg-muted/30 px-3 py-2.5">
-            <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <span className="icon-[fa7-solid--square-check] h-4 w-4" />
+          <div className="flex items-center justify-between border-b border-border/40 bg-muted/30 px-3 py-2">
+            <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground sm:text-sm">
+              <span className="icon-[fa7-solid--square-check] size-3.5 text-primary" />
               Archivos seleccionados
             </span>
             <div className="flex items-center gap-2">
@@ -260,13 +235,11 @@ export function FileExplorerPanel({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 hover:text-destructive md:h-auto md:w-auto md:px-2"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
                         disabled={disabled}
                       >
-                        <span className="icon-[fa7-solid--trash] h-4 w-4 md:mr-1.5" />
-                        <span className="hidden text-xs md:inline">
-                          Limpiar
-                        </span>
+                        <span className="icon-[fa7-solid--trash] mr-1 size-3" />
+                        <span>Limpiar</span>
                       </Button>
                     }
                   />
@@ -274,8 +247,7 @@ export function FileExplorerPanel({
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Limpiar selección?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Se de-seleccionarán {selectedFilePaths.length} archivos.
-                        Esta acción no se puede deshacer.
+                        Se deseleccionarán {selectedFilePaths.length} archivos.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -293,25 +265,17 @@ export function FileExplorerPanel({
             </div>
           </div>
 
-          <div ref={selectedScrollRef} className="flex-1 overflow-y-auto px-3">
+          <div className="flex-1 overflow-y-auto p-3">
             {sortedSelectedFilePaths.length === 0 ? (
-              <div className="flex h-40 flex-col items-center justify-center gap-3 text-muted-foreground">
-                <span className="icon-[fa7-solid--arrow-pointer] h-8 w-8 opacity-50" />
-                <p className="px-4 text-center text-sm">
+              <div className="flex h-40 flex-col items-center justify-center gap-2 text-muted-foreground">
+                <span className="icon-[fa7-solid--arrow-pointer] size-6 opacity-40" />
+                <p className="text-center text-xs">
                   Selecciona archivos o carpetas del explorador para comenzar
                 </p>
               </div>
             ) : (
-              <div
-                style={{
-                  height: `${selectedVirtualizer.getTotalSize()}px`,
-                  width: "100%",
-                  position: "relative",
-                  marginTop: "12px",
-                }}
-              >
-                {selectedVirtualizer.getVirtualItems().map((virtualRow) => {
-                  const file = sortedSelectedFilePaths[virtualRow.index]!
+              <div className="flex flex-col gap-1.5">
+                {sortedSelectedFilePaths.map((file) => {
                   const parts = file.split("/")
                   const fileName = parts.pop() ?? file
                   const folderPath = parts.join("/")
@@ -319,41 +283,14 @@ export function FileExplorerPanel({
                   return (
                     <div
                       key={file}
-                      ref={measureSelectedElement}
-                      data-index={virtualRow.index}
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        transform: `translateY(${virtualRow.start}px)`,
-                        paddingBottom: "6px",
-                      }}
+                      className="group flex items-center justify-between rounded-lg border border-border/40 bg-card/60 px-2.5 py-1.5 transition-colors hover:border-primary/30 hover:bg-muted/30"
                     >
-                      <div className="group relative flex flex-col justify-center gap-0.5 overflow-hidden rounded-md border bg-card p-2.5 transition-all hover:border-primary/20 hover:shadow-sm">
+                      <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex items-center gap-2">
-                          <span className="icon-[fa7-solid--file-code] h-3.5 w-3.5 shrink-0 text-primary" />
-                          <span className="flex-1 truncate text-[13px] font-medium">
+                          <span className="icon-[fa7-solid--file-code] size-3.5 shrink-0 text-primary" />
+                          <span className="truncate text-xs font-medium text-foreground">
                             {fileName}
                           </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                            onClick={() =>
-                              toggleNodeSelection({
-                                id: file,
-                                name: fileName,
-                                isFile: true,
-                                filePath: file,
-                                children: [],
-                              })
-                            }
-                            disabled={disabled}
-                            aria-label={`Eliminar ${fileName} de la selección`}
-                          >
-                            <span className="icon-[fa7-solid--xmark] h-3.5 w-3.5" />
-                          </Button>
                         </div>
                         {folderPath && (
                           <span
@@ -364,6 +301,25 @@ export function FileExplorerPanel({
                           </span>
                         )}
                       </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                        onClick={() =>
+                          toggleNodeSelection({
+                            id: file,
+                            name: fileName,
+                            isFile: true,
+                            filePath: file,
+                            children: [],
+                          })
+                        }
+                        disabled={disabled}
+                        aria-label={`Eliminar ${fileName} de la selección`}
+                      >
+                        <span className="icon-[fa7-solid--xmark] size-3.5" />
+                      </Button>
                     </div>
                   )
                 })}

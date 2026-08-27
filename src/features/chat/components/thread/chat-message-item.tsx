@@ -46,7 +46,6 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   }, [forcedExpandState])
 
   const isOpen = isEditing || internalOpen
-
   const textContent = getMessagePart(message, "text")
   const reasoningContent = !isUser ? getMessagePart(message, "reasoning") : ""
   const attachedFilesCount =
