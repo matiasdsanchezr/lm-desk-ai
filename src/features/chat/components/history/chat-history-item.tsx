@@ -32,6 +32,13 @@ interface ChatHistoryItemProps {
   onSelect: (id: string) => void
 }
 
+type ItemStatus =
+  | "idle"
+  | "editing"
+  | "confirming-delete"
+  | "duplicating"
+  | "exporting"
+
 export const ChatHistoryItem = memo(function ChatHistoryItem({
   chat,
   isActive,
@@ -39,14 +46,9 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   onSelect,
 }: ChatHistoryItemProps) {
   const router = useRouter()
-
   const [isPending, startTransition] = useTransition()
-  const [isConfirming, setIsConfirming] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
-  const [isDuplicating, setIsDuplicating] = useState(false)
+  const [status, setStatus] = useState<ItemStatus>("idle")
   const [titleInput, setTitleInput] = useState(chat.title || "")
-
   const { isCopied, copy } = useCopyToClipboard()
 
   const handleDelete = useCallback(() => {
@@ -55,43 +57,37 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
       if (!res.error && currentId === chat.id) {
         router.push("/chat")
       }
+      setStatus("idle")
     })
   }, [chat.id, currentId, router])
 
   const handleSaveTitle = useCallback(() => {
     const trimmedTitle = titleInput.trim()
     if (!trimmedTitle || trimmedTitle === chat.title) {
-      setIsEditing(false)
+      setStatus("idle")
       setTitleInput(chat.title || "")
       return
     }
 
     startTransition(async () => {
-      const res = await updateChat(chat.id, { title: trimmedTitle })
-      if (!res.error) {
-        setIsEditing(false)
-      } else {
-        setTitleInput(chat.title || "")
-        setIsEditing(false)
-      }
+      await updateChat(chat.id, { title: trimmedTitle })
+      setStatus("idle")
     })
   }, [chat.id, chat.title, titleInput])
 
   const handleCancelEdit = useCallback(() => {
-    setIsEditing(false)
+    setStatus("idle")
     setTitleInput(chat.title || "")
   }, [chat.title])
 
   const handleDuplicate = useCallback(() => {
-    setIsDuplicating(true)
+    setStatus("duplicating")
     startTransition(async () => {
       try {
         const res = await duplicateChat(chat.id)
-        if (res.data?.id) {
-          router.push(`/chat/${res.data.id}`)
-        }
+        if (res.data?.id) router.push(`/chat/${res.data.id}`)
       } finally {
-        setIsDuplicating(false)
+        setStatus("idle")
       }
     })
   }, [chat.id, router])
@@ -99,20 +95,18 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   const handleExportMarkdown = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault()
-      setIsExporting(true)
+      setStatus("exporting")
       try {
         const res = await getChatMarkdown(chat.id)
-        if (res.data) {
-          await copy(res.data)
-        }
+        if (res.data) await copy(res.data)
       } finally {
-        setIsExporting(false)
+        setStatus("idle")
       }
     },
     [chat.id, copy]
   )
 
-  if (isEditing) {
+  if (status === "editing") {
     return (
       <SidebarMenuItem className="w-full min-w-0 px-1 py-0.5">
         <form
@@ -120,47 +114,40 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
             e.preventDefault()
             handleSaveTitle()
           }}
-          className="flex w-full min-w-0 items-center gap-1 rounded-md border border-primary/40 bg-background p-1 shadow-2xs ring-offset-background focus-within:ring-1 focus-within:ring-primary"
+          className="flex w-full min-w-0 items-center gap-1 rounded-md border border-primary/40 bg-background p-1 shadow-2xs focus-within:ring-1 focus-within:ring-primary"
         >
           <input
             type="text"
             value={titleInput}
             onChange={(e) => setTitleInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault()
-                handleCancelEdit()
-              }
-            }}
+            onKeyDown={(e) => e.key === "Escape" && handleCancelEdit()}
             disabled={isPending}
             autoFocus
             className="h-7 min-w-0 flex-1 bg-transparent px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
             placeholder="Título de la sesión..."
           />
-
           <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="submit"
               disabled={isPending || !titleInput.trim()}
-              title="Guardar título"
-              className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-emerald-500 transition-colors hover:bg-emerald-500/15 hover:text-emerald-600 disabled:opacity-40"
+              title="Guardar"
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-xs text-emerald-500 hover:bg-emerald-500/15 disabled:opacity-40"
             >
               <span
                 className={cn(
+                  "size-3.5",
                   isPending
                     ? "icon-[lucide--loader-2] animate-spin"
-                    : "icon-[lucide--check]",
-                  "size-3.5"
+                    : "icon-[lucide--check]"
                 )}
               />
             </button>
-
             <button
               type="button"
               onClick={handleCancelEdit}
               disabled={isPending}
               title="Cancelar"
-              className="inline-flex size-6 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-xs text-muted-foreground hover:bg-muted"
             >
               <span className="icon-[lucide--x] size-3.5" />
             </button>
@@ -184,12 +171,11 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
           <button
             type="button"
             onClick={() => onSelect(chat.id)}
-            className="flex w-full flex-col items-start gap-1 p-2.5 disabled:opacity-60"
+            className="flex w-full flex-col items-start gap-1 p-2.5"
           >
             <span className="line-clamp-2 w-full text-xs font-medium text-foreground">
               {chat.title || "Sesión sin título"}
             </span>
-
             <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <span className="icon-[lucide--calendar] size-3 shrink-0" />
               <DateDisplay dateValue={chat.createdAt} />
@@ -198,23 +184,19 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
         }
       />
 
-      <DropdownMenu
-        onOpenChange={(open) => {
-          if (!open) setIsConfirming(false)
-        }}
-      >
+      <DropdownMenu onOpenChange={(open) => !open && setStatus("idle")}>
         <DropdownMenuTrigger
           className="mr-1"
           render={
             <SidebarMenuAction showOnHover>
               <span className="icon-[lucide--more-horizontal] size-4" />
-              <span className="sr-only">Menú de opciones</span>
+              <span className="sr-only">Opciones</span>
             </SidebarMenuAction>
           }
         />
         <DropdownMenuContent className="w-52">
           <DropdownMenuItem
-            onClick={() => setIsEditing(true)}
+            onClick={() => setStatus("editing")}
             className="cursor-pointer"
           >
             <span className="icon-[lucide--edit] size-3.5" />
@@ -223,84 +205,84 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
           <DropdownMenuItem
             onClick={handleDuplicate}
-            disabled={isDuplicating || isPending}
+            disabled={status === "duplicating" || isPending}
             className="cursor-pointer"
           >
-            {isDuplicating ? (
-              <>
-                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
-                <span>Duplicando...</span>
-              </>
-            ) : (
-              <>
-                <span className="icon-[lucide--copy] size-3.5" />
-                <span>Duplicar sesión</span>
-              </>
-            )}
+            <span
+              className={cn(
+                "size-3.5",
+                status === "duplicating"
+                  ? "icon-[lucide--loader-2] animate-spin"
+                  : "icon-[lucide--copy]"
+              )}
+            />
+            <span>
+              {status === "duplicating" ? "Duplicando..." : "Duplicar sesión"}
+            </span>
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={handleExportMarkdown}
-            disabled={isExporting}
+            disabled={status === "exporting"}
             closeOnClick={false}
             className="cursor-pointer"
           >
-            {isExporting ? (
-              <>
-                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
-                <span>Exportando...</span>
-              </>
-            ) : isCopied ? (
-              <>
-                <span className="icon-[lucide--check] size-3.5 text-emerald-500" />
-                <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                  ¡Copiado al portapapeles!
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="icon-[lucide--file-text] size-3.5" />
-                <span>Exportar Markdown</span>
-              </>
-            )}
+            <span
+              className={cn(
+                "size-3.5",
+                status === "exporting"
+                  ? "icon-[lucide--loader-2] animate-spin"
+                  : isCopied
+                    ? "icon-[lucide--check] text-emerald-500"
+                    : "icon-[lucide--file-text]"
+              )}
+            />
+            <span>
+              {status === "exporting"
+                ? "Exportando..."
+                : isCopied
+                  ? "¡Copiado al portapapeles!"
+                  : "Exportar Markdown"}
+            </span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
-            disabled={isPending || isDuplicating}
+            disabled={isPending}
             className={cn(
               "cursor-pointer transition-colors",
-              isConfirming
+              status === "confirming-delete"
                 ? "bg-destructive/10 font-medium text-destructive focus:bg-destructive focus:text-destructive-foreground"
                 : "text-destructive focus:bg-destructive/10 focus:text-destructive"
             )}
             closeOnClick={false}
             onClick={(e) => {
-              if (!isConfirming) {
+              if (status !== "confirming-delete") {
                 e.preventDefault()
-                setIsConfirming(true)
+                setStatus("confirming-delete")
               } else {
                 handleDelete()
               }
             }}
           >
-            {isPending ? (
-              <>
-                <span className="icon-[lucide--loader-2] size-3.5 animate-spin" />
-                <span>Eliminando...</span>
-              </>
-            ) : isConfirming ? (
-              <>
-                <span className="icon-[lucide--alert-triangle] size-3.5" />
-                <span>¿Confirmar eliminación?</span>
-              </>
-            ) : (
-              <>
-                <span className="icon-[lucide--trash-2] size-3.5" />
-                <span>Eliminar Sesión</span>
-              </>
-            )}
+            <span
+              className={cn(
+                "size-3.5",
+                isPending
+                  ? "icon-[lucide--loader-2] animate-spin"
+                  : status === "confirming-delete"
+                    ? "icon-[lucide--alert-triangle]"
+                    : "icon-[lucide--trash-2]"
+              )}
+            />
+            <span>
+              {isPending
+                ? "Eliminando..."
+                : status === "confirming-delete"
+                  ? "¿Confirmar eliminación?"
+                  : "Eliminar Sesión"}
+            </span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

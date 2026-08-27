@@ -14,7 +14,7 @@ import { Label } from "@/shared/components/ui/label"
 import { Textarea } from "@/shared/components/ui/textarea"
 import { useState, useTransition } from "react"
 import { fetchRemoteImagesAction } from "../../../../shared/actions/fetch-remote-images"
-import { useChatActions, useChatStore } from "../../store/chat-store"
+import { useChatStore } from "../../store/chat-store"
 
 interface ImageUrlsDialogProps {
   open: boolean
@@ -32,7 +32,7 @@ export function ImageUrlsDialog({
   const [isPending, startTransition] = useTransition()
 
   const attachedImagesCount = useChatStore((s) => s.attachedImages.length)
-  const { addAttachedImages } = useChatActions()
+  const addAttachedImages = useChatStore((s) => s.addAttachedImages)
 
   const urlsToProcess = urlInput
     .split("\n")

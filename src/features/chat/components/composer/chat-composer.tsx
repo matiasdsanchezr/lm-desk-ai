@@ -16,7 +16,7 @@ import { useShallow } from "zustand/shallow"
 import { useContextProcessor } from "../../hooks/use-context-processor"
 import { useImagePaste } from "../../hooks/use-image-paste"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
-import { useChatActions, useChatStore } from "../../store/chat-store"
+import { useChatStore } from "../../store/chat-store"
 import { ImageUrlsDialog } from "../builder/image-urls-dialog"
 import { ChatComposerToolbar } from "./chat-composer-toolbar"
 import { ChatPastedImages } from "./chat-pasted-images"
@@ -33,9 +33,11 @@ export const ChatComposer = () => {
   const includeContext = useChatStore((s) => s.includeContext)
   const includeReasoning = useChatStore((s) => s.includeReasoningHistory)
   const attachedImages = useChatStore((s) => s.attachedImages)
-
-  const { setUserTask, setIncludeContext, setIncludeReasoningHistory } =
-    useChatActions()
+  const setUserTask = useChatStore((s) => s.setUserTask)
+  const setIncludeContext = useChatStore((s) => s.setIncludeContext)
+  const setIncludeReasoningHistory = useChatStore(
+    (s) => s.setIncludeReasoningHistory
+  )
 
   const { selectedFilePaths, fileContents, setSelectedFilePaths } =
     useFileExplorerStore(

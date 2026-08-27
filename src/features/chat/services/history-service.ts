@@ -15,61 +15,54 @@ async function ensureDirectoryExists(): Promise<void> {
   await mkdir(CHATS_STORAGE_DIR, { recursive: true })
 }
 
+async function readJsonFile<T>(filePath: string): Promise<T | null> {
+  try {
+    const raw = await readFile(filePath, "utf-8")
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
 export async function createChat(data: CreateChatInput): Promise<Chat> {
   await ensureDirectoryExists()
 
-  const id = data.id || `session-${Date.now()}`
-  const title = data.title || "Sesión sin título"
-  const createdAt = new Date().toISOString()
   const newChat: Chat = {
-    id,
-    title,
-    createdAt,
+    id: data.id || `session-${Date.now()}`,
+    title: data.title || "Sesión sin título",
+    createdAt: new Date().toISOString(),
     messages: data.messages,
     selectedFilePaths: data.selectedFilePaths,
     activeStreamId: data.activeStreamId,
   }
-  const filePath = getChatFilePath(id)
-  await writeFile(filePath, JSON.stringify(newChat, null, 2), "utf-8")
+
+  await writeFile(
+    getChatFilePath(newChat.id),
+    JSON.stringify(newChat, null, 2),
+    "utf-8"
+  )
   return newChat
 }
 
 export async function getChatById(id: string): Promise<Chat | null> {
-  try {
-    const filePath = getChatFilePath(id)
-    const savedChat = await readFile(filePath, "utf-8")
-    return JSON.parse(savedChat) as Chat
-  } catch (error: unknown) {
-    if (typeof error === "object" && error !== null && "code" in error) {
-      if ((error as { code: string }).code === "ENOENT") {
-        return null
-      }
-    }
-    throw new Error("No se pudo obtener la conversación")
-  }
+  if (!id) return null
+  return await readJsonFile<Chat>(getChatFilePath(id))
 }
 
 export async function updateChat(
   id: string,
   data: UpdateChatInput
 ): Promise<Chat> {
-  try {
-    const savedChat = await getChatById(id)
-    if (!savedChat) {
-      throw new Error("Chat no encontrado")
-    }
+  const savedChat = await getChatById(id)
+  if (!savedChat) throw new Error("Chat no encontrado")
 
-    const updatedChat: Chat = {
-      ...savedChat,
-      ...data,
-    }
-
-    const filePath = getChatFilePath(id)
-    await writeFile(filePath, JSON.stringify(updatedChat, null, 2), "utf-8")
-    return updatedChat
-  } catch {
-    throw new Error("No se pudo actualizar la conversación")
-  }
+  const updatedChat: Chat = { ...savedChat, ...data }
+  await writeFile(
+    getChatFilePath(id),
+    JSON.stringify(updatedChat, null, 2),
+    "utf-8"
+  )
+  return updatedChat
 }
 
 export async function duplicateChat(id: string): Promise<Chat> {
@@ -79,10 +72,8 @@ export async function duplicateChat(id: string): Promise<Chat> {
   }
 
   const baseTitle = originalChat.title?.trim() || "Sesión sin título"
-  const duplicateTitle = `${baseTitle} (Copia)`
-
   return await createChat({
-    title: duplicateTitle,
+    title: `${baseTitle} (Copia)`,
     messages: originalChat.messages ?? [],
     selectedFilePaths: originalChat.selectedFilePaths ?? [],
   })
@@ -91,33 +82,27 @@ export async function duplicateChat(id: string): Promise<Chat> {
 export async function listChats(): Promise<ChatMeta[]> {
   await ensureDirectoryExists()
   const files = await readdir(CHATS_STORAGE_DIR)
-  const jsonFiles = files.filter((file) => file.endsWith(".json"))
-
-  const chatsData = await Promise.all(
+  const jsonFiles = files.filter((f) => f.endsWith(".json"))
+  const chats = await Promise.all(
     jsonFiles.map(async (file) => {
-      try {
-        const filePath = getChatFilePath(file)
-        const content = await readFile(filePath, "utf-8")
-        const savedChat = JSON.parse(content) as Chat
-        return {
-          id: savedChat.id,
-          title: savedChat.title,
-          createdAt: savedChat.createdAt,
-        } satisfies ChatMeta
-      } catch {
-        throw new Error("No se pudo obtener las conversaciones")
-      }
+      const data = await readJsonFile<Chat>(getChatFilePath(file))
+      if (!data) return null
+      return {
+        id: data.id,
+        title: data.title,
+        createdAt: data.createdAt,
+      } satisfies ChatMeta
     })
   )
 
-  const validChats = chatsData.filter((chat): chat is ChatMeta => chat !== null)
-
-  return validChats.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  )
+  return chats
+    .filter((c): c is ChatMeta => c !== null)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
 }
 
 export async function deleteChat(id: string): Promise<void> {
-  const filePath = getChatFilePath(id)
-  await unlink(filePath)
+  await unlink(getChatFilePath(id)).catch(() => {})
 }

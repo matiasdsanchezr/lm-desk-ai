@@ -2,11 +2,11 @@
 
 import { useRouter } from "next/navigation"
 import { startTransition, useCallback } from "react"
-import { useChatActions } from "../../store/chat-store"
+import { useChatStore } from "../../store/chat-store"
 
 export const NewChatButton = () => {
   const router = useRouter()
-  const { resetGeneratedPrompts } = useChatActions()
+  const resetGeneratedPrompts = useChatStore((s) => s.resetGeneratedPrompts)
 
   const handleNewChat = useCallback(() => {
     resetGeneratedPrompts()

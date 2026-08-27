@@ -2,12 +2,13 @@
 
 import { toDataUri } from "@/shared/utils/image-utils"
 import { useCallback } from "react"
-import { useChatActions, useChatStore } from "../../store/chat-store"
+import { useChatStore } from "../../store/chat-store"
 import { ChatImageThumbnail } from "../chat-image-thumbnail"
 
 export function ChatPastedImages({ disabled }: { disabled?: boolean }) {
   const attachedImages = useChatStore((s) => s.attachedImages)
-  const { removeAttachedImage, clearAttachedImages } = useChatActions()
+  const removeAttachedImage = useChatStore((s) => s.removeAttachedImage)
+  const clearAttachedImages = useChatStore((s) => s.clearAttachedImages)
 
   const handleRemoveImage = useCallback(
     (indexToRemove: number) => {

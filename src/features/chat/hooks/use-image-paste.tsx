@@ -2,10 +2,10 @@
 
 import { ImageFile } from "@/shared/types/image-file"
 import { useCallback } from "react"
-import { useChatActions } from "../store/chat-store"
+import { useChatStore } from "../store/chat-store"
 
-const fileToDataUrl = (file: File): Promise<ImageFile> => {
-  return new Promise((resolve, reject) => {
+const fileToDataUrl = (file: File): Promise<ImageFile> =>
+  new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () =>
       resolve({
@@ -16,10 +16,9 @@ const fileToDataUrl = (file: File): Promise<ImageFile> => {
       reject(new Error(`Error al leer imagen: ${file.name}`))
     reader.readAsDataURL(file)
   })
-}
 
 export function useImagePaste() {
-  const { addAttachedImages } = useChatActions()
+  const addAttachedImages = useChatStore((s) => s.addAttachedImages)
 
   const handlePaste = useCallback(
     async (e: React.ClipboardEvent) => {
@@ -30,7 +29,6 @@ export function useImagePaste() {
         .filter((file): file is File => file !== null)
 
       if (imageFiles.length === 0) return
-
       e.preventDefault()
 
       try {

@@ -4,7 +4,3 @@ export type SystemPromptTemplate = {
 }
 
 export type SystemPromptMeta = Omit<SystemPromptTemplate, "content">
-
-export type SystemPromptsList = {
-  prompts: SystemPromptMeta
-}

@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/shared/components/ui/textarea"
 import { cn } from "@/shared/lib/utils"
 import { useMemo, useState } from "react"
-import { useChatActions, useChatStore } from "../../store/chat-store"
+import { useChatStore } from "../../store/chat-store"
 import { estimateTokenCount } from "../../utils/utils"
 
 export const GeneratedPrompt = () => {
@@ -19,7 +19,7 @@ export const GeneratedPrompt = () => {
   const [isOpen, setIsOpen] = useState(true)
 
   const exportablePrompt = useChatStore((s) => s.exportablePrompt)
-  const { resetGeneratedPrompts } = useChatActions()
+  const resetGeneratedPrompts = useChatStore((s) => s.resetGeneratedPrompts)
   const fileContents = useFileExplorerStore((s) => s.fileContents)
 
   const validFiles = useMemo(
