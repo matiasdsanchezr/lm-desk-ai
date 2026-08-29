@@ -4,7 +4,7 @@ import type { ActionResponse } from "@/shared/types/action-state"
 import { updateTag } from "next/cache"
 import * as historyService from "../services/history-service"
 import type { Chat, CreateChatInput, UpdateChatInput } from "../types"
-import { formatConversationToMarkdown } from "../utils/utils"
+import { formatConversationToMarkdown } from "../utils/chat-utils"
 
 export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
   try {

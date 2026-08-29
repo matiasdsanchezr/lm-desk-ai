@@ -1,5 +1,5 @@
 import { UIMessage } from "ai"
-import { ChatTurn, FormatOptions } from "../types"
+import { FormatOptions } from "../types"
 
 export function getMessagePart(
   message: UIMessage | undefined,
@@ -10,14 +10,14 @@ export function getMessagePart(
   return message.parts
     .filter((p) => p.type === type)
     .map((p) => (p as { text: string }).text)
-    .join(type === "text" ? " " : "\n")
+    .join(type === "text" ? "" : "\n")
 }
 
-export function estimateTokenCount(input: string | UIMessage[]): number {
-  if (typeof input === "string") {
-    return Math.ceil(input.length / 4)
-  }
+export function estimateTokenCountFromText(input: string): number {
+  return Math.ceil(input.length / 4)
+}
 
+export function estimateTokenCountFromUIMessage(input: UIMessage[]): number {
   let totalChars = 0
   for (const msg of input) {
     if (!msg.parts) continue
@@ -31,29 +31,6 @@ export function estimateTokenCount(input: string | UIMessage[]): number {
   return Math.ceil(totalChars / 4)
 }
 
-export function groupMessagesIntoTurns(messages: UIMessage[]): ChatTurn[] {
-  const turns: ChatTurn[] = []
-  let currentTurn: ChatTurn | null = null
-
-  for (const msg of messages) {
-    if (msg.role === "user") {
-      if (currentTurn) turns.push(currentTurn)
-      currentTurn = { id: msg.id, userMessage: msg }
-    } else if (msg.role === "assistant") {
-      if (!currentTurn) {
-        currentTurn = { id: msg.id, assistantMessage: msg }
-      } else {
-        currentTurn.assistantMessage = msg
-      }
-      turns.push(currentTurn)
-      currentTurn = null
-    }
-  }
-  if (currentTurn) turns.push(currentTurn)
-
-  return turns
-}
-
 function normalizeCodeBlocks(content: string): string {
   const codeBlockCount = (content.match(/```/g) || []).length
   return codeBlockCount % 2 !== 0 ? `${content.trimEnd()}\n\`\`\`` : content
@@ -64,9 +41,9 @@ export function formatConversationToMarkdown(
   options: FormatOptions = {}
 ): string {
   const {
-    userLabel = "**👤 Usuario:**",
-    assistantLabel = "**🤖 Asistente:**",
-    systemLabel = "**⚙️ Sistema:**",
+    userLabel = "**Usuario:**",
+    assistantLabel = "**Asistente:**",
+    systemLabel = "**Sistema:**",
   } = options
 
   const roleMap: Record<string, string> = {

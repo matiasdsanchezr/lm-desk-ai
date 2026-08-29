@@ -17,10 +17,10 @@ import { useContextProcessor } from "../../hooks/use-context-processor"
 import { useImagePaste } from "../../hooks/use-image-paste"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
 import { useChatStore } from "../../store/chat-store"
-import { estimateTokenCount } from "../../utils/utils"
-import { ImageUrlsDialog } from "../builder/image-urls-dialog"
+import { estimateTokenCountFromText } from "../../utils/chat-utils"
 import { ChatComposerToolbar } from "./chat-composer-toolbar"
 import { ChatPastedImages } from "./chat-pasted-images"
+import { ImageUrlsDialog } from "./image-urls-dialog"
 
 export const ChatComposer = () => {
   const [showImageDialog, setShowImageDialog] = useState(false)
@@ -61,14 +61,6 @@ export const ChatComposer = () => {
 
   const totalImagesCount = attachedImages.length
 
-  const fileErrors = useMemo(
-    () =>
-      fileContents
-        .filter((file) => file.error)
-        .map((file) => `${file.path}: ${file.error}`),
-    [fileContents]
-  )
-
   const mentionOptions = useMemo(() => {
     const options: MentionOption[] = []
     const traverse = (node: FileTreeNode) => {
@@ -85,38 +77,21 @@ export const ChatComposer = () => {
     return options
   }, [treeNodes])
 
-  // Reutilización centralizada de estimateTokenCount
   const estimatedTokens = useMemo(() => {
     const filesString = includeContext
       ? fileContents.map((f) => f.content ?? "").join("")
       : ""
-    return estimateTokenCount(userTask + filesString)
+    return estimateTokenCountFromText(userTask + filesString)
   }, [userTask, fileContents, includeContext])
 
-  const handleSend = useCallback(async () => {
+  // Envío directo: 1 sola llamada sin intermediarios
+  const handleSend = useCallback(() => {
     const task = userTask.trim()
-    if ((!task && totalImagesCount === 0) || isStreaming || isProcessingContext)
-      return
+    if ((!task && totalImagesCount === 0) || isStreaming) return
 
-    if (includeContext) {
-      const { contextualPrompt, error } = await compileContext(task)
-      if (error || !contextualPrompt) return
-      generateContent(contextualPrompt, true)
-    } else {
-      generateContent(task, false)
-    }
-
+    generateContent(task)
     setUserTask("")
-  }, [
-    userTask,
-    totalImagesCount,
-    isStreaming,
-    isProcessingContext,
-    includeContext,
-    compileContext,
-    generateContent,
-    setUserTask,
-  ])
+  }, [userTask, totalImagesCount, isStreaming, generateContent, setUserTask])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -128,6 +103,7 @@ export const ChatComposer = () => {
     [handleSend]
   )
 
+  // Compilación manual exclusiva para el botón "Compilar prompt"
   const handleBuildPromptOnly = useCallback(async () => {
     const task = userTask.trim()
     if (!task || isProcessingContext || isStreaming) return
@@ -145,44 +121,29 @@ export const ChatComposer = () => {
           isStreaming && "opacity-95"
         )}
       >
-        {(fileErrors.length > 0 || contextProcessError) && (
+        {contextProcessError && (
           <div className="space-y-1.5 px-3 pt-2">
-            {fileErrors.length > 0 && (
-              <Alert
-                variant="destructive"
-                className="border-destructive/30 bg-destructive/10 py-1 text-xs"
-              >
-                <span className="icon-[lucide--alert-circle] size-3.5" />
-                <AlertDescription className="text-xs">
-                  Error al leer {fileErrors.length} archivo(s): {fileErrors[0]}
-                </AlertDescription>
-              </Alert>
-            )}
-            {contextProcessError && (
-              <Alert
-                variant="destructive"
-                className="border-destructive/30 bg-destructive/10 py-1 text-xs"
-              >
-                <span className="icon-[lucide--alert-triangle] size-3.5" />
-                <AlertDescription className="text-xs">
-                  {contextProcessError}
-                </AlertDescription>
-              </Alert>
-            )}
+            <Alert
+              variant="destructive"
+              className="border-destructive/30 bg-destructive/10 py-1 text-xs"
+            >
+              <span className="icon-[lucide--alert-triangle] size-3.5" />
+              <AlertDescription className="text-xs">
+                {contextProcessError}
+              </AlertDescription>
+            </Alert>
           </div>
         )}
 
-        {/* Sección de Miniaturas de Imágenes */}
         <ChatPastedImages disabled={isStreaming} />
 
-        {/* Sección del editor */}
         <div className="relative flex flex-1 flex-col px-3 pt-2.5 pb-1.5 sm:px-3.5">
           <TextEditor
             value={userTask}
             onChange={setUserTask}
             placeholder="Haz tu pregunta o usa @ para referenciar archivos..."
             className="min-h-6 max-h-56 overflow-y-auto text-xs sm:text-sm"
-            disabled={isStreaming || isProcessingContext}
+            disabled={isStreaming}
             mentionOptions={mentionOptions}
             onMentionSelect={(filePath) => {
               if (!selectedFilePaths.includes(filePath)) {

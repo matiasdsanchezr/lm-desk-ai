@@ -6,7 +6,7 @@ import { useAutoScroll } from "@/shared/hooks/use-auto-scroll"
 import { useCallback, useMemo, useState } from "react"
 import { updateChat } from "../../actions/chat-actions"
 import { useChatCompletion } from "../../providers/chat-completion-provider"
-import { estimateTokenCount } from "../../utils/utils"
+import { estimateTokenCountFromUIMessage } from "../../utils/chat-utils"
 import { ChatMessageItem } from "./chat-message-item"
 import { ChatThreadHeader } from "./chat-thread-header"
 
@@ -67,7 +67,7 @@ export function ChatThread() {
   }, [])
 
   const totalTokens = useMemo(() => {
-    return estimateTokenCount(messages)
+    return estimateTokenCountFromUIMessage(messages)
   }, [messages])
 
   return (

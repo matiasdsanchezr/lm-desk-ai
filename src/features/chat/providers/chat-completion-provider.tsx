@@ -1,6 +1,9 @@
 "use client"
 
+import { useFileExplorerStore } from "@/features/file-explorer"
 import { useInferenceStore } from "@/features/inference/store/inference-store"
+import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
+import type { FileContent } from "@/shared/services/file-service"
 import { toDataUri } from "@/shared/utils/image-utils"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
@@ -23,7 +26,7 @@ interface ChatCompletionContextType {
   error: Error | undefined
   isStreaming: boolean
   setMessages: (messages: UIMessage[]) => void
-  generateContent: (text: string, includeContext?: boolean) => void
+  generateContent: (text: string) => void
   stop: () => void
 }
 
@@ -69,7 +72,20 @@ export function ChatCompletionProvider({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest(data) {
-        const { includeReasoningHistory } = useChatStore.getState()
+        const { includeReasoningHistory, includeContext } =
+          useChatStore.getState()
+        const { selectedFilePaths, includeDependencies } =
+          useFileExplorerStore.getState()
+        const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
+
+        const webSources = includeContext
+          ? crawledPages
+              .filter((page) => selectedUrls.includes(page.url) && page.content)
+              .map((page) => ({
+                path: `[Web] ${page.title || page.url} (${page.url})`,
+                content: page.content ?? "",
+              }))
+          : []
 
         return {
           body: {
@@ -77,14 +93,31 @@ export function ChatCompletionProvider({
             message: data.messages[data.messages.length - 1],
             ...getInferenceConfig(),
             includeReasoningHistory,
+            includeContext,
+            selectedFilePaths: includeContext ? selectedFilePaths : [],
+            includeDependencies,
+            webSources,
           },
         }
       },
     }),
     onData: ({ data, type }: { type: string; data: unknown }) => {
-      if (type == "data-chat-id") {
+      if (type === "data-chat-id") {
         const newChatId = (data as { id: string }).id
         router.push(`/chat/${newChatId}`)
+      }
+      if (type === "data-exportable-prompt") {
+        const payload = data as {
+          exportablePrompt: string
+          files: FileContent[]
+        }
+        useChatStore.getState().setPrompts({
+          contextualPrompt: "",
+          exportablePrompt: payload.exportablePrompt,
+        })
+        if (payload.files?.length) {
+          useFileExplorerStore.getState().setFileContents(payload.files)
+        }
       }
     },
   })
@@ -96,15 +129,9 @@ export function ChatCompletionProvider({
   const isStreaming = status === "streaming" || status === "submitted"
 
   const generateContent = useCallback(
-    (text: string, includeContext = true) => {
+    (text: string) => {
       clearError()
-
       if (!text.trim() || isStreaming) return
-
-      if (!includeContext) {
-        sendMessage({ text })
-        return
-      }
 
       const { attachedImages } = useChatStore.getState()
 
@@ -123,7 +150,7 @@ export function ChatCompletionProvider({
 
   const contextValue = useMemo<ChatCompletionContextType>(
     () => ({
-      chat: chat,
+      chat,
       messages,
       error,
       isStreaming,

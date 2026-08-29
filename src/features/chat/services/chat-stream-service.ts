@@ -1,4 +1,5 @@
 import { streamContext } from "@/shared/lib/resumable-stream"
+import { FileContent } from "@/shared/services/file-service"
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
@@ -10,9 +11,12 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  FilePart,
   generateId,
+  ImagePart,
   pruneMessages,
   safeValidateUIMessages,
+  TextPart,
   toUIMessageStream,
   UIDataTypes,
   UIMessage,
@@ -20,6 +24,7 @@ import {
 } from "ai"
 import { revalidatePath, revalidateTag } from "next/cache"
 import z from "zod"
+import { buildChatContext } from "../utils/chat-context-builder"
 import { createChat, getChatById, updateChat } from "./history-service"
 
 export const ChatRequestBodySchema = z.object({
@@ -31,6 +36,12 @@ export const ChatRequestBodySchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   includeReasoningHistory: z.boolean().default(true),
+  includeContext: z.boolean().default(false),
+  selectedFilePaths: z.array(z.string()).default([]),
+  includeDependencies: z.boolean().default(false),
+  webSources: z
+    .array(z.object({ path: z.string(), content: z.string() }))
+    .default([]),
 })
 
 export type ChatRequestBody = z.infer<typeof ChatRequestBodySchema>
@@ -45,6 +56,10 @@ export async function handleChatRequest(body: ChatRequestBody) {
     temperature,
     topP,
     includeReasoningHistory,
+    includeContext,
+    selectedFilePaths,
+    includeDependencies,
+    webSources,
   } = body
 
   const inferenceModelResult = InferenceModelSchema.safeParse({
@@ -71,12 +86,60 @@ export async function handleChatRequest(body: ChatRequestBody) {
     })
     revalidateTag("chat-list", "days")
     revalidatePath(`/chat`, "layout")
+  } else {
+    await updateChat(chat.id, { activeStreamId: streamId })
+  }
+
+  let localFiles: FileContent[] = []
+  let exportablePrompt = ""
+  let contextualPromptContent: string | null = null
+
+  if (
+    includeContext &&
+    (selectedFilePaths.length > 0 || webSources.length > 0)
+  ) {
+    const lastUserMsg =
+      validatedMessages.data[validatedMessages.data.length - 1]
+    const userQuery =
+      lastUserMsg?.parts
+        ?.filter((p) => p.type === "text")
+        .map((p) => (p as { text: string }).text)
+        .join("\n") ?? ""
+
+    const contextResult = await buildChatContext({
+      systemPrompt,
+      task: userQuery,
+      selectedFilePaths,
+      includeDependencies,
+      webSources,
+    })
+
+    localFiles = contextResult.files
+    exportablePrompt = contextResult.exportablePrompt
+    contextualPromptContent = contextResult.contextualPrompt
   }
 
   const modelMessages = await convertToModelMessages(validatedMessages.data)
   const prunedMessages = includeReasoningHistory
     ? modelMessages
     : pruneMessages({ messages: modelMessages, reasoning: "all" })
+
+  if (contextualPromptContent && prunedMessages.length > 0) {
+    const lastMessage = prunedMessages[prunedMessages.length - 1]
+    const content = lastMessage.content as
+      | string
+      | (TextPart | ImagePart | FilePart)[]
+
+    if (typeof content === "string") {
+      lastMessage.content = contextualPromptContent
+    } else if (Array.isArray(content)) {
+      const nonTextParts = content.filter((part) => part.type !== "text")
+      lastMessage.content = [
+        ...nonTextParts,
+        { type: "text", text: contextualPromptContent },
+      ]
+    }
+  }
 
   const transformedMessages = await applyTransformScriptToModelMessages(
     prunedMessages,
@@ -88,6 +151,23 @@ export async function handleChatRequest(body: ChatRequestBody) {
     statusText: "OK",
     stream: createUIMessageStream({
       execute({ writer }) {
+        writer.write({
+          type: "data-chat-id",
+          data: { id: chat.id },
+          transient: true,
+        })
+
+        if (exportablePrompt) {
+          writer.write({
+            type: "data-exportable-prompt",
+            data: {
+              exportablePrompt,
+              files: localFiles,
+            },
+            transient: true,
+          })
+        }
+
         const result = streamText({
           inferenceModel: inferenceModelResult.data,
           instructions: systemPrompt,
@@ -98,12 +178,6 @@ export async function handleChatRequest(body: ChatRequestBody) {
             createScriptTransformStream("post-transform.js"),
           ],
           maxOutputTokens: 60000,
-        })
-
-        writer.write({
-          type: "data-chat-id",
-          data: { id: chat.id },
-          transient: true,
         })
 
         writer.merge(
