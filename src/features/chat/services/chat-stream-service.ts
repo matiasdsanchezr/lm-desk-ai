@@ -22,7 +22,7 @@ import {
 } from "ai"
 import { revalidatePath, revalidateTag } from "next/cache"
 import z from "zod"
-import { dataSchemas, MyUIMessage } from "../types"
+import { dataSchemas, MyUIMessage, WebSourceItem } from "../types"
 import { buildChatContext } from "../utils/chat-context-builder"
 import { createChat, getChatById, updateChat } from "./history-service"
 
@@ -79,57 +79,54 @@ export async function handleChatRequest(body: ChatRequestBody) {
   const lastMessage = uiMessages[uiMessages.length - 1]
 
   if (lastMessage && lastMessage.role === "user") {
+    // 1. Extraemos archivos locales
     const contextFilesPart = lastMessage.parts?.find(
       (p) => p.type === "data-contextFiles"
-    )
-
+    ) as { type: string; data: FileContent[] } | undefined
     const initialFiles = contextFilesPart?.data ?? []
 
-    if (initialFiles.length > 0) {
+    // 2. Extraemos fuentes web
+    const webSourcesPart = lastMessage.parts?.find(
+      (p) => p.type === "data-webSources"
+    ) as { type: string; data: WebSourceItem[] } | undefined
+    const initialWebSources = webSourcesPart?.data ?? []
+
+    const selectedFilePaths = initialFiles.map((f) => f.path)
+    const formattedWebSources = initialWebSources.map((w) => ({
+      path: `[Web] ${w.title || w.url} (${w.url})`,
+      content: w.content,
+    }))
+
+    if (selectedFilePaths.length > 0 || formattedWebSources.length > 0) {
       const userQuery =
         lastMessage.parts
           ?.filter((p) => p.type === "text")
-          .map((p) => p.text)
+          .map((p) => (p as { text: string }).text)
           .join("\n") ?? ""
 
-      // Separamos archivos locales de fuentes web
-      const selectedFilePaths = initialFiles
-        .filter((f) => !f.path.startsWith("[Web]"))
-        .map((f) => f.path)
-
-      const webSources = initialFiles
-        .filter((f) => f.path.startsWith("[Web]"))
-        .map((f) => ({
-          path: f.path,
-          content: f.content ?? "",
-        }))
-
-      // Compilamos y leemos el contenido real de los archivos en el servidor
+      // Compilación y lectura de archivos en el backend
       const context = await buildChatContext({
         systemPrompt,
         task: userQuery,
         selectedFilePaths,
         includeDependencies,
-        webSources,
+        webSources: formattedWebSources,
       })
 
       localFiles = context.files
       exportablePrompt = context.exportablePrompt
 
-      // Enriquecemos la parte de datos del mensaje con los contenidos resueltos
-      const mergedEnrichedFiles: FileContent[] = [
-        ...context.files,
-        ...webSources,
-      ]
-
-      lastMessage.parts = lastMessage.parts.map((p) =>
-        p.type === "data-contextFiles"
-          ? { type: "data-contextFiles", data: mergedEnrichedFiles }
-          : p
-      ) as MyUIMessage["parts"]
+      // Enriquecemos la parte 'data-contextFiles' con el contenido real de los archivos
+      lastMessage.parts = lastMessage.parts.map((p) => {
+        if (p.type === "data-contextFiles") {
+          return { type: "data-contextFiles", data: context.files }
+        }
+        return p
+      }) as MyUIMessage["parts"]
     }
   }
 
+  // Crear o actualizar la sesión activa
   if (!chat) {
     chat = await createChat({
       messages: uiMessages,
@@ -144,9 +141,10 @@ export async function handleChatRequest(body: ChatRequestBody) {
     })
   }
 
+  // Convertir mensajes UI a mensajes de modelo base
   const modelMessages = await convertToModelMessages(uiMessages)
 
-  // Reconstruir el contenido contextual para cada turno de usuario que posea snapshot de archivos
+  // Reconstruir el contenido contextual para cada turno de usuario
   for (let i = 0; i < uiMessages.length; i++) {
     const uiMsg = uiMessages[i]
     const modelMsg = modelMessages[i]
@@ -157,7 +155,17 @@ export async function handleChatRequest(body: ChatRequestBody) {
       ) as { type: string; data: FileContent[] } | undefined
       const turnFiles = filesPart?.data ?? []
 
-      if (turnFiles.length > 0) {
+      const webPart = uiMsg.parts?.find((p) => p.type === "data-webSources") as
+        | { type: string; data: WebSourceItem[] }
+        | undefined
+      const turnWebSources = (webPart?.data ?? []).map((w) => ({
+        path: `[Web] ${w.title || w.url} (${w.url})`,
+        content: w.content,
+      }))
+
+      const allTurnSources: FileContent[] = [...turnFiles, ...turnWebSources]
+
+      if (allTurnSources.length > 0) {
         const rawText =
           uiMsg.parts
             ?.filter((p) => p.type === "text")
@@ -165,7 +173,7 @@ export async function handleChatRequest(body: ChatRequestBody) {
             .join("\n") ?? ""
 
         const contextualPrompt = new PromptBuilder()
-          .addContext(turnFiles)
+          .addContext(allTurnSources)
           .addTask(rawText)
           .buildContextAndTask()
 

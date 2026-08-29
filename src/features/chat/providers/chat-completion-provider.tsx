@@ -18,7 +18,7 @@ import {
   useMemo,
 } from "react"
 import { useChatStore } from "../store/chat-store"
-import type { Chat, MyUIMessage } from "../types"
+import type { Chat, MyUIMessage, WebSourceItem } from "../types"
 
 interface ChatCompletionContextType {
   chat?: Chat | null
@@ -122,43 +122,48 @@ export function ChatCompletionProvider({
       const { selectedFilePaths } = useFileExplorerStore.getState()
       const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
 
-      // 1. Imágenes adjuntas
       const fileUIParts: FileUIPart[] = attachedImages.map((i) => ({
         type: "file",
         mediaType: i.mimeType || "image",
         url: toDataUri(i),
       }))
 
-      // 2. Archivos y URLs de contexto adjuntos directamente a la UI part del mensaje
-      const contextFiles: FileContent[] = []
+      // 2. Archivos locales seleccionados
+      const contextFiles: FileContent[] = includeContext
+        ? selectedFilePaths.map((path) => ({ path }))
+        : []
 
-      if (includeContext) {
-        selectedFilePaths.forEach((path) => {
-          contextFiles.push({ path })
+      // 3. Páginas web seleccionadas
+      const webSources: WebSourceItem[] = includeContext
+        ? crawledPages
+            .filter((p) => selectedUrls.includes(p.url) && p.content)
+            .map((p) => ({
+              url: p.url,
+              title: p.title || p.url,
+              content: p.content ?? "",
+            }))
+        : []
+
+      const dataParts: unknown[] = []
+
+      if (contextFiles.length > 0) {
+        dataParts.push({
+          type: "data-contextFiles",
+          data: contextFiles,
         })
+      }
 
-        const selectedWebPages = crawledPages.filter(
-          (page) => selectedUrls.includes(page.url) && page.content
-        )
-        selectedWebPages.forEach((page) => {
-          contextFiles.push({
-            path: `[Web] ${page.title || page.url} (${page.url})`,
-            content: page.content ?? "",
-          })
+      if (webSources.length > 0) {
+        dataParts.push({
+          type: "data-webSources",
+          data: webSources,
         })
       }
 
       sendMessage({
         parts: [
           ...fileUIParts,
-          ...(contextFiles.length > 0
-            ? [
-                {
-                  type: "data-contextFiles" as const,
-                  data: contextFiles,
-                },
-              ]
-            : []),
+          ...(dataParts as FileUIPart[]),
           { type: "text", text },
         ],
       })

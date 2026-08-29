@@ -13,19 +13,25 @@ export const fileContentSchema = z.object({
   language: z.string().optional(),
 })
 
-export type FileContent = z.infer<typeof fileContentSchema>
+export const webSourceSchema = z.object({
+  url: z.string(),
+  title: z.string().optional(),
+  content: z.string(),
+})
+
+export type WebSourceItem = z.infer<typeof webSourceSchema>
 
 export const dataPartSchema = z.object({
   contextFiles: z.array(fileContentSchema).optional(),
+  webSources: z.array(webSourceSchema).optional(),
 })
-
-export type DataPart = z.infer<typeof dataPartSchema>
 
 export const dataSchemas = {
   contextFiles: z.array(fileContentSchema),
+  webSources: z.array(webSourceSchema),
 }
 
-export type Data = z.infer<typeof dataSchemas>
+export type DataPart = z.infer<typeof dataPartSchema>
 
 export const tools = {} satisfies ToolSet
 
