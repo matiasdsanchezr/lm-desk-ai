@@ -6,11 +6,11 @@ import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-sto
 import type { FileContent } from "@/shared/services/file-service"
 import { toDataUri } from "@/shared/utils/image-utils"
 import { useChat } from "@ai-sdk/react"
-import { DefaultChatTransport, type FileUIPart, type UIMessage } from "ai"
+import { DefaultChatTransport, type FileUIPart } from "ai"
 import { useRouter } from "next/navigation"
 import {
   createContext,
-  ReactNode,
+  type ReactNode,
   use,
   useCallback,
   useContext,
@@ -18,14 +18,14 @@ import {
   useMemo,
 } from "react"
 import { useChatStore } from "../store/chat-store"
-import type { Chat } from "../types"
+import type { Chat, MyUIMessage } from "../types"
 
 interface ChatCompletionContextType {
   chat?: Chat | null
-  messages: UIMessage[]
+  messages: MyUIMessage[]
   error: Error | undefined
   isStreaming: boolean
-  setMessages: (messages: UIMessage[]) => void
+  setMessages: (messages: MyUIMessage[]) => void
   generateContent: (text: string) => void
   stop: () => void
 }
@@ -72,31 +72,16 @@ export function ChatCompletionProvider({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest(data) {
-        const { includeReasoningHistory, includeContext } =
-          useChatStore.getState()
-        const { selectedFilePaths, includeDependencies } =
-          useFileExplorerStore.getState()
-        const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
-
-        const webSources = includeContext
-          ? crawledPages
-              .filter((page) => selectedUrls.includes(page.url) && page.content)
-              .map((page) => ({
-                path: `[Web] ${page.title || page.url} (${page.url})`,
-                content: page.content ?? "",
-              }))
-          : []
+        const { includeReasoningHistory } = useChatStore.getState()
+        const { includeDependencies } = useFileExplorerStore.getState()
 
         return {
           body: {
             ...data,
-            message: data.messages[data.messages.length - 1],
             ...getInferenceConfig(),
+            message: data.messages[data.messages.length - 1],
             includeReasoningHistory,
-            includeContext,
-            selectedFilePaths: includeContext ? selectedFilePaths : [],
             includeDependencies,
-            webSources,
           },
         }
       },
@@ -133,16 +118,49 @@ export function ChatCompletionProvider({
       clearError()
       if (!text.trim() || isStreaming) return
 
-      const { attachedImages } = useChatStore.getState()
+      const { attachedImages, includeContext } = useChatStore.getState()
+      const { selectedFilePaths } = useFileExplorerStore.getState()
+      const { crawledPages, selectedUrls } = useWebCrawlerStore.getState()
 
+      // 1. Imágenes adjuntas
       const fileUIParts: FileUIPart[] = attachedImages.map((i) => ({
         type: "file",
         mediaType: i.mimeType || "image",
         url: toDataUri(i),
       }))
 
+      // 2. Archivos y URLs de contexto adjuntos directamente a la UI part del mensaje
+      const contextFiles: FileContent[] = []
+
+      if (includeContext) {
+        selectedFilePaths.forEach((path) => {
+          contextFiles.push({ path })
+        })
+
+        const selectedWebPages = crawledPages.filter(
+          (page) => selectedUrls.includes(page.url) && page.content
+        )
+        selectedWebPages.forEach((page) => {
+          contextFiles.push({
+            path: `[Web] ${page.title || page.url} (${page.url})`,
+            content: page.content ?? "",
+          })
+        })
+      }
+
       sendMessage({
-        parts: [...fileUIParts, { type: "text", text }],
+        parts: [
+          ...fileUIParts,
+          ...(contextFiles.length > 0
+            ? [
+                {
+                  type: "data-contextFiles" as const,
+                  data: contextFiles,
+                },
+              ]
+            : []),
+          { type: "text", text },
+        ],
       })
     },
     [clearError, sendMessage, isStreaming]

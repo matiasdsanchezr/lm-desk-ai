@@ -1,12 +1,44 @@
-import { FileContent } from "@/shared/services/file-service"
-import { UIMessage } from "ai"
+import { InferUITools, ToolSet, UIMessage } from "ai"
+import z from "zod"
+
+export const metadataSchema = z.object({})
+
+export type Metadata = z.infer<typeof metadataSchema>
+
+export const fileContentSchema = z.object({
+  path: z.string(),
+  content: z.string().optional(),
+  error: z.string().optional(),
+  dependencies: z.array(z.string()).optional(),
+  language: z.string().optional(),
+})
+
+export type FileContent = z.infer<typeof fileContentSchema>
+
+export const dataPartSchema = z.object({
+  contextFiles: z.array(fileContentSchema).optional(),
+})
+
+export type DataPart = z.infer<typeof dataPartSchema>
+
+export const dataSchemas = {
+  contextFiles: z.array(fileContentSchema),
+}
+
+export type Data = z.infer<typeof dataSchemas>
+
+export const tools = {} satisfies ToolSet
+
+export type Tools = InferUITools<typeof tools>
+
+export type MyUIMessage = UIMessage<Metadata, DataPart, Tools>
 
 export interface Chat {
   id: string
   createdAt: string
   title: string
   selectedFilePaths?: string[]
-  messages: UIMessage[]
+  messages: MyUIMessage[]
   activeStreamId?: string
 }
 
@@ -16,7 +48,7 @@ export type CreateChatInput = {
   id?: string
   title?: string
   selectedFilePaths?: string[]
-  messages: UIMessage[]
+  messages: MyUIMessage[]
   activeStreamId?: string
 }
 
@@ -24,8 +56,8 @@ export type UpdateChatInput = Partial<Omit<Chat, "id" | "createdAt">>
 
 export interface ChatTurn {
   id: string
-  userMessage?: UIMessage
-  assistantMessage?: UIMessage
+  userMessage?: MyUIMessage
+  assistantMessage?: MyUIMessage
 }
 
 export type MessageRole = "user" | "assistant" | "system"
@@ -43,10 +75,3 @@ export interface FormatOptions {
   assistantLabel?: string
   systemLabel?: string
 }
-
-export type MyUIMessage = UIMessage<
-  never,
-  {
-    files: FileContent[]
-  }
->

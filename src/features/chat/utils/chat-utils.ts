@@ -1,5 +1,6 @@
-import { UIMessage } from "ai"
-import { FormatOptions } from "../types"
+import type { FileContent } from "@/shared/services/file-service"
+import type { UIMessage } from "ai"
+import type { FormatOptions } from "../types"
 
 export function getMessagePart(
   message: UIMessage | undefined,
@@ -59,7 +60,19 @@ export function formatConversationToMarkdown(
       const content = getMessagePart(msg, "text")
       const safeContent = normalizeCodeBlocks(content.trim())
 
-      return `${label}\n\n${safeContent}`
+      const contextFilesPart = msg.parts?.find(
+        (p) => p.type === "data-contextFiles"
+      ) as { type: string; data: FileContent[] } | undefined
+      const contextFiles = contextFilesPart?.data ?? []
+
+      let contextSection = ""
+      if (contextFiles.length > 0) {
+        contextSection =
+          `\n\n> **Archivos de contexto adjuntos (${contextFiles.length}):**\n` +
+          contextFiles.map((f) => `> - \`${f.path}\``).join("\n")
+      }
+
+      return `${label}\n\n${safeContent}${contextSection}`
     })
     .join("\n\n---\n\n")
 }

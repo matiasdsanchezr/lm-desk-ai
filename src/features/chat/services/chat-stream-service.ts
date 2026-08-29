@@ -1,5 +1,5 @@
 import { streamContext } from "@/shared/lib/resumable-stream"
-import { FileContent } from "@/shared/services/file-service"
+import type { FileContent } from "@/shared/services/file-service"
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
@@ -7,6 +7,7 @@ import {
   applyTransformScriptToModelMessages,
   createScriptTransformStream,
 } from "@/shared/services/inference-service/utils/script-transformer"
+import { PromptBuilder } from "@/shared/utils/prompt-builder"
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -18,12 +19,10 @@ import {
   safeValidateUIMessages,
   TextPart,
   toUIMessageStream,
-  UIDataTypes,
-  UIMessage,
-  UITools,
 } from "ai"
 import { revalidatePath, revalidateTag } from "next/cache"
 import z from "zod"
+import { dataSchemas, MyUIMessage } from "../types"
 import { buildChatContext } from "../utils/chat-context-builder"
 import { createChat, getChatById, updateChat } from "./history-service"
 
@@ -36,12 +35,7 @@ export const ChatRequestBodySchema = z.object({
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   includeReasoningHistory: z.boolean().default(true),
-  includeContext: z.boolean().default(false),
-  selectedFilePaths: z.array(z.string()).default([]),
   includeDependencies: z.boolean().default(false),
-  webSources: z
-    .array(z.object({ path: z.string(), content: z.string() }))
-    .default([]),
 })
 
 export type ChatRequestBody = z.infer<typeof ChatRequestBodySchema>
@@ -56,10 +50,7 @@ export async function handleChatRequest(body: ChatRequestBody) {
     temperature,
     topP,
     includeReasoningHistory,
-    includeContext,
-    selectedFilePaths,
     includeDependencies,
-    webSources,
   } = body
 
   const inferenceModelResult = InferenceModelSchema.safeParse({
@@ -72,74 +63,132 @@ export async function handleChatRequest(body: ChatRequestBody) {
 
   let chat = await getChatById(id)
   const streamId = generateId()
-  const validatedMessages = await safeValidateUIMessages({
+  const validateUIMessagesResult = await safeValidateUIMessages({
     messages: [...(chat?.messages ?? []), message],
+    dataSchemas,
   })
-  if (!validatedMessages.success) {
-    throw new Error(validatedMessages.error.message)
+  if (!validateUIMessagesResult.success) {
+    throw new Error(validateUIMessagesResult.error.message)
+  }
+
+  const uiMessages = validateUIMessagesResult.data as MyUIMessage[]
+  let localFiles: FileContent[] = []
+  let exportablePrompt = ""
+
+  // Obtenemos el último mensaje enviado por el usuario
+  const lastMessage = uiMessages[uiMessages.length - 1]
+
+  if (lastMessage && lastMessage.role === "user") {
+    const contextFilesPart = lastMessage.parts?.find(
+      (p) => p.type === "data-contextFiles"
+    )
+
+    const initialFiles = contextFilesPart?.data ?? []
+
+    if (initialFiles.length > 0) {
+      const userQuery =
+        lastMessage.parts
+          ?.filter((p) => p.type === "text")
+          .map((p) => p.text)
+          .join("\n") ?? ""
+
+      // Separamos archivos locales de fuentes web
+      const selectedFilePaths = initialFiles
+        .filter((f) => !f.path.startsWith("[Web]"))
+        .map((f) => f.path)
+
+      const webSources = initialFiles
+        .filter((f) => f.path.startsWith("[Web]"))
+        .map((f) => ({
+          path: f.path,
+          content: f.content ?? "",
+        }))
+
+      // Compilamos y leemos el contenido real de los archivos en el servidor
+      const context = await buildChatContext({
+        systemPrompt,
+        task: userQuery,
+        selectedFilePaths,
+        includeDependencies,
+        webSources,
+      })
+
+      localFiles = context.files
+      exportablePrompt = context.exportablePrompt
+
+      // Enriquecemos la parte de datos del mensaje con los contenidos resueltos
+      const mergedEnrichedFiles: FileContent[] = [
+        ...context.files,
+        ...webSources,
+      ]
+
+      lastMessage.parts = lastMessage.parts.map((p) =>
+        p.type === "data-contextFiles"
+          ? { type: "data-contextFiles", data: mergedEnrichedFiles }
+          : p
+      ) as MyUIMessage["parts"]
+    }
   }
 
   if (!chat) {
     chat = await createChat({
-      messages: validatedMessages.data,
+      messages: uiMessages,
       activeStreamId: streamId,
     })
     revalidateTag("chat-list", "days")
     revalidatePath(`/chat`, "layout")
   } else {
-    await updateChat(chat.id, { activeStreamId: streamId })
-  }
-
-  let localFiles: FileContent[] = []
-  let exportablePrompt = ""
-  let contextualPromptContent: string | null = null
-
-  if (
-    includeContext &&
-    (selectedFilePaths.length > 0 || webSources.length > 0)
-  ) {
-    const lastUserMsg =
-      validatedMessages.data[validatedMessages.data.length - 1]
-    const userQuery =
-      lastUserMsg?.parts
-        ?.filter((p) => p.type === "text")
-        .map((p) => (p as { text: string }).text)
-        .join("\n") ?? ""
-
-    const contextResult = await buildChatContext({
-      systemPrompt,
-      task: userQuery,
-      selectedFilePaths,
-      includeDependencies,
-      webSources,
+    await updateChat(chat.id, {
+      messages: uiMessages,
+      activeStreamId: streamId,
     })
-
-    localFiles = contextResult.files
-    exportablePrompt = contextResult.exportablePrompt
-    contextualPromptContent = contextResult.contextualPrompt
   }
 
-  const modelMessages = await convertToModelMessages(validatedMessages.data)
+  const modelMessages = await convertToModelMessages(uiMessages)
+
+  // Reconstruir el contenido contextual para cada turno de usuario que posea snapshot de archivos
+  for (let i = 0; i < uiMessages.length; i++) {
+    const uiMsg = uiMessages[i]
+    const modelMsg = modelMessages[i]
+
+    if (uiMsg.role === "user" && modelMsg) {
+      const filesPart = uiMsg.parts?.find(
+        (p) => p.type === "data-contextFiles"
+      ) as { type: string; data: FileContent[] } | undefined
+      const turnFiles = filesPart?.data ?? []
+
+      if (turnFiles.length > 0) {
+        const rawText =
+          uiMsg.parts
+            ?.filter((p) => p.type === "text")
+            .map((p) => (p as { text: string }).text)
+            .join("\n") ?? ""
+
+        const contextualPrompt = new PromptBuilder()
+          .addContext(turnFiles)
+          .addTask(rawText)
+          .buildContextAndTask()
+
+        const content = modelMsg.content as
+          | string
+          | (TextPart | ImagePart | FilePart)[]
+
+        if (typeof content === "string") {
+          modelMsg.content = contextualPrompt
+        } else if (Array.isArray(content)) {
+          const nonTextParts = content.filter((part) => part.type !== "text")
+          modelMsg.content = [
+            ...nonTextParts,
+            { type: "text", text: contextualPrompt },
+          ]
+        }
+      }
+    }
+  }
+
   const prunedMessages = includeReasoningHistory
     ? modelMessages
     : pruneMessages({ messages: modelMessages, reasoning: "all" })
-
-  if (contextualPromptContent && prunedMessages.length > 0) {
-    const lastMessage = prunedMessages[prunedMessages.length - 1]
-    const content = lastMessage.content as
-      | string
-      | (TextPart | ImagePart | FilePart)[]
-
-    if (typeof content === "string") {
-      lastMessage.content = contextualPromptContent
-    } else if (Array.isArray(content)) {
-      const nonTextParts = content.filter((part) => part.type !== "text")
-      lastMessage.content = [
-        ...nonTextParts,
-        { type: "text", text: contextualPromptContent },
-      ]
-    }
-  }
 
   const transformedMessages = await applyTransformScriptToModelMessages(
     prunedMessages,
@@ -183,7 +232,7 @@ export async function handleChatRequest(body: ChatRequestBody) {
         writer.merge(
           toUIMessageStream({
             stream: result.stream,
-            originalMessages: validatedMessages.data,
+            originalMessages: uiMessages,
             sendReasoning: true,
             onEnd: async ({ messages, responseMessage }) => {
               await persistChatAfterStream(chat.id, messages, responseMessage)
@@ -204,8 +253,8 @@ export async function handleChatRequest(body: ChatRequestBody) {
 
 async function persistChatAfterStream(
   id: string,
-  messages: UIMessage<unknown, UIDataTypes, UITools>[],
-  responseMessage: UIMessage<unknown, UIDataTypes, UITools>
+  messages: MyUIMessage[],
+  responseMessage: MyUIMessage
 ) {
   try {
     messages[messages.length - 1] = {

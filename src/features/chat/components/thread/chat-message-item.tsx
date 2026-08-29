@@ -9,6 +9,7 @@ import {
 } from "@/shared/components/ui/collapsible"
 import { useCopyToClipboard } from "@/shared/hooks/use-copy-to-clipboard"
 import { cn } from "@/shared/lib/utils"
+import type { FileContent } from "@/shared/services/file-service"
 import type { UIMessage } from "ai"
 import { memo, useCallback, useEffect, useState } from "react"
 import { getMessagePart } from "../../utils/chat-utils"
@@ -50,6 +51,11 @@ export const ChatMessageItem = memo(function ChatMessageItem({
   const reasoningContent = !isUser ? getMessagePart(message, "reasoning") : ""
   const attachedFilesCount =
     message.parts?.filter((p) => p.type === "file").length ?? 0
+
+  const contextFilesPart = message.parts?.find(
+    (p) => p.type === "data-contextFiles"
+  ) as { type: string; data: FileContent[] } | undefined
+  const contextFilesCount = contextFilesPart?.data?.length ?? 0
 
   const handleSaveEdit = useCallback(
     (newText: string) => {
@@ -121,7 +127,7 @@ export const ChatMessageItem = memo(function ChatMessageItem({
             </span>
           </div>
 
-          {/* Badges de soporte (adjuntos) */}
+          {/* Badges de adjuntos de imagen */}
           {attachedFilesCount > 0 && (
             <Badge
               variant="outline"
@@ -129,6 +135,18 @@ export const ChatMessageItem = memo(function ChatMessageItem({
             >
               <span className="icon-[lucide--image] size-2.5" />
               {attachedFilesCount}
+            </Badge>
+          )}
+
+          {/* Badges de archivos de contexto adjuntos por turno */}
+          {contextFilesCount > 0 && (
+            <Badge
+              variant="outline"
+              className="h-4 gap-1 border-primary/30 bg-primary/5 px-1.5 font-mono text-[9px] text-primary"
+            >
+              <span className="icon-[lucide--file-code-2] size-2.5" />
+              {contextFilesCount}{" "}
+              {contextFilesCount === 1 ? "archivo" : "archivos"}
             </Badge>
           )}
 

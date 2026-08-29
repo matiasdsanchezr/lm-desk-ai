@@ -10,7 +10,7 @@ const DEFAULT_SYSTEM_PROMPT =
 const DEFAULT_TEMPERATURE = 1
 const DEFAULT_TOP_P = 0.9
 
-interface SettingsState {
+interface InferenceSettingsState {
   modelConfig: InferenceModel
   systemPrompt: string
   temperature: number
@@ -18,7 +18,7 @@ interface SettingsState {
   isDrawerOpen: boolean
 }
 
-interface SettingsActions {
+interface InferenceSettingsActions {
   setModelConfig: (config: InferenceModel) => void
   setSystemPrompt: (systemPrompt: string) => void
   setTemperature: (temp: number) => void
@@ -29,7 +29,7 @@ interface SettingsActions {
   toggleDrawer: () => void
 }
 
-const initialState: SettingsState = {
+const initialState: InferenceSettingsState = {
   modelConfig: { provider: DEFAULT_PROVIDER, model: DEFAULT_MODEL },
   systemPrompt: DEFAULT_SYSTEM_PROMPT,
   temperature: DEFAULT_TEMPERATURE,
@@ -37,14 +37,12 @@ const initialState: SettingsState = {
   isDrawerOpen: false,
 }
 
-export const useInferenceStore = create<SettingsState & SettingsActions>()(
+export const useInferenceStore = create<
+  InferenceSettingsState & InferenceSettingsActions
+>()(
   persist(
     (set) => ({
-      modelConfig: { provider: DEFAULT_PROVIDER, model: DEFAULT_MODEL },
-      systemPrompt: DEFAULT_SYSTEM_PROMPT,
-      temperature: DEFAULT_TEMPERATURE,
-      topP: DEFAULT_TOP_P,
-      isDrawerOpen: false,
+      ...initialState,
       setModelConfig: (modelConfig) => set({ modelConfig }),
       setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
       setTemperature: (temperature) => set({ temperature }),
@@ -55,6 +53,14 @@ export const useInferenceStore = create<SettingsState & SettingsActions>()(
       toggleDrawer: () =>
         set((state) => ({ isDrawerOpen: !state.isDrawerOpen })),
     }),
-    { name: "inference-settings" }
+    {
+      name: "inference-settings",
+      partialize: (state) => ({
+        modelConfig: state.modelConfig,
+        systemPrompt: state.systemPrompt,
+        temperature: state.temperature,
+        topP: state.topP,
+      }),
+    }
   )
 )

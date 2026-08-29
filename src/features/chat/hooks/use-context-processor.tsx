@@ -54,7 +54,6 @@ export function useContextProcessor() {
         }
       }
 
-      // Sincronizamos los archivos leídos en el store de FileExplorer
       const fileStore = useFileExplorerStore.getState()
       fileStore.setFileContents(result.data.files ?? [])
 
