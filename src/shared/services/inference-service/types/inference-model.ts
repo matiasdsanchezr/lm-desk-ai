@@ -35,12 +35,14 @@ export const GeminiModelEnum = z.enum([
 export type GeminiModel = z.infer<typeof GeminiModelEnum>
 
 export const NvidiaNimModelEnum = z.enum([
-  "z-ai/glm-5.2",
-  "minimaxai/minimax-m2.7",
-  "minimaxai/minimax-m3",
-  "deepseek-ai/deepseek-v4-flash",
-  "deepseek-ai/deepseek-v4-pro",
+  "moonshotai/kimi-k3",
   "nvidia/nemotron-3-ultra-550b-a55b",
+  "deepseek-ai/deepseek-v4-flash",
+  "deepseek-ai/deepseek-v4-flash-0731",
+  "deepseek-ai/deepseek-v4-pro",
+  "deepseek-ai/deepseek-v4-pro-0813",
+  "minimaxai/minimax-m3",
+  "z-ai/glm-5.2",
   "mistralai/mistral-medium-3.5-128b",
   "mistralai/mistral-large-3-675b-instruct-2512",
   "stepfun-ai/step-3.7-flash",
