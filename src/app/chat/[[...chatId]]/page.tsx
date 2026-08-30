@@ -19,13 +19,13 @@ async function getInitialChat(params: Promise<{ chatId?: string[] }>) {
 }
 
 export default function ChatPage({ params }: ChatPageProps) {
-  const treeStructurePromise = getFileTree()
-  const initialChatPromise = getInitialChat(params)
+  const fileTreePromise = getFileTree()
+  const chatPromise = getInitialChat(params)
 
   return (
     <Suspense fallback={<ChatWorkspaceSkeleton />}>
-      <FileExplorerProvider fileTreePromise={treeStructurePromise}>
-        <ChatCompletionProvider chatPromise={initialChatPromise}>
+      <FileExplorerProvider fileTreePromise={fileTreePromise}>
+        <ChatCompletionProvider chatPromise={chatPromise}>
           <ChatWorkspace />
         </ChatCompletionProvider>
       </FileExplorerProvider>

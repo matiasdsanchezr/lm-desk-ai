@@ -1,8 +1,8 @@
 "use client"
 
 import { useChatStore } from "../store/chat-store"
-import { GeneratedPrompt } from "./generated-prompt"
 import { ChatComposer } from "./composer/chat-composer"
+import { GeneratedPrompt } from "./generated-prompt"
 import { ChatThread } from "./thread/chat-thread"
 
 export function ChatWorkspace() {

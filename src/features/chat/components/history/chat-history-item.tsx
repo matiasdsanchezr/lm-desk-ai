@@ -25,6 +25,86 @@ import {
 } from "../../actions/chat-actions"
 import type { ChatMeta } from "../../types"
 
+interface HistoryTitleEditorProps {
+  initialTitle: string
+  onSave: (newTitle: string) => Promise<void>
+  onCancel: () => void
+}
+
+function HistoryTitleEditor({
+  initialTitle,
+  onSave,
+  onCancel,
+}: HistoryTitleEditorProps) {
+  const [titleInput, setTitleInput] = useState(initialTitle)
+  const [isPending, startTransition] = useTransition()
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = titleInput.trim()
+    if (!trimmed || trimmed === initialTitle) {
+      onCancel()
+      return
+    }
+
+    startTransition(async () => {
+      await onSave(trimmed)
+      onCancel()
+    })
+  }
+
+  return (
+    <SidebarMenuItem className="w-full min-w-0 px-1 py-0.5">
+      <form
+        onSubmit={handleSubmit}
+        className="flex w-full min-w-0 items-center gap-1 rounded-md border border-primary/40 bg-background p-1 shadow-2xs focus-within:ring-1 focus-within:ring-primary"
+      >
+        <input
+          type="text"
+          value={titleInput}
+          onChange={(e) => setTitleInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.preventDefault()
+              onCancel()
+            }
+          }}
+          disabled={isPending}
+          autoFocus
+          className="h-7 min-w-0 flex-1 bg-transparent px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
+          placeholder="Título de la sesión..."
+        />
+        <div className="flex shrink-0 items-center gap-0.5">
+          <button
+            type="submit"
+            disabled={isPending || !titleInput.trim()}
+            title="Guardar"
+            className="inline-flex size-6 shrink-0 items-center justify-center rounded-xs text-emerald-500 hover:bg-emerald-500/15 disabled:opacity-40"
+          >
+            <span
+              className={cn(
+                "size-3.5",
+                isPending
+                  ? "icon-[lucide--loader-2] animate-spin"
+                  : "icon-[lucide--check]"
+              )}
+            />
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isPending}
+            title="Cancelar"
+            className="inline-flex size-6 shrink-0 items-center justify-center rounded-xs text-muted-foreground hover:bg-muted"
+          >
+            <span className="icon-[lucide--x] size-3.5" />
+          </button>
+        </div>
+      </form>
+    </SidebarMenuItem>
+  )
+}
+
 interface ChatHistoryItemProps {
   chat: ChatMeta
   isActive: boolean
@@ -48,44 +128,40 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [status, setStatus] = useState<ItemStatus>("idle")
-  const [titleInput, setTitleInput] = useState(chat.title || "")
   const { isCopied, copy } = useCopyToClipboard()
 
   const handleDelete = useCallback(() => {
     startTransition(async () => {
       const res = await deleteChat(chat.id)
-      if (!res.error && currentId === chat.id) {
-        router.push("/chat")
+      if (!res.error) {
+        if (currentId === chat.id) {
+          router.push("/chat")
+        }
+        router.refresh()
       }
       setStatus("idle")
     })
   }, [chat.id, currentId, router])
 
-  const handleSaveTitle = useCallback(() => {
-    const trimmedTitle = titleInput.trim()
-    if (!trimmedTitle || trimmedTitle === chat.title) {
-      setStatus("idle")
-      setTitleInput(chat.title || "")
-      return
-    }
-
-    startTransition(async () => {
-      await updateChat(chat.id, { title: trimmedTitle })
-      setStatus("idle")
-    })
-  }, [chat.id, chat.title, titleInput])
-
-  const handleCancelEdit = useCallback(() => {
-    setStatus("idle")
-    setTitleInput(chat.title || "")
-  }, [chat.title])
+  const handleSaveTitle = useCallback(
+    async (trimmedTitle: string) => {
+      const res = await updateChat(chat.id, { title: trimmedTitle })
+      if (!res.error) {
+        router.refresh()
+      }
+    },
+    [chat.id, router]
+  )
 
   const handleDuplicate = useCallback(() => {
     setStatus("duplicating")
     startTransition(async () => {
       try {
         const res = await duplicateChat(chat.id)
-        if (res.data?.id) router.push(`/chat/${res.data.id}`)
+        if (res.data?.id) {
+          router.push(`/chat/${res.data.id}`)
+          router.refresh()
+        }
       } finally {
         setStatus("idle")
       }
@@ -108,52 +184,11 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
 
   if (status === "editing") {
     return (
-      <SidebarMenuItem className="w-full min-w-0 px-1 py-0.5">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            handleSaveTitle()
-          }}
-          className="flex w-full min-w-0 items-center gap-1 rounded-md border border-primary/40 bg-background p-1 shadow-2xs focus-within:ring-1 focus-within:ring-primary"
-        >
-          <input
-            type="text"
-            value={titleInput}
-            onChange={(e) => setTitleInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Escape" && handleCancelEdit()}
-            disabled={isPending}
-            autoFocus
-            className="h-7 min-w-0 flex-1 bg-transparent px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
-            placeholder="Título de la sesión..."
-          />
-          <div className="flex shrink-0 items-center gap-0.5">
-            <button
-              type="submit"
-              disabled={isPending || !titleInput.trim()}
-              title="Guardar"
-              className="inline-flex size-6 shrink-0 items-center justify-center rounded-xs text-emerald-500 hover:bg-emerald-500/15 disabled:opacity-40"
-            >
-              <span
-                className={cn(
-                  "size-3.5",
-                  isPending
-                    ? "icon-[lucide--loader-2] animate-spin"
-                    : "icon-[lucide--check]"
-                )}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={handleCancelEdit}
-              disabled={isPending}
-              title="Cancelar"
-              className="inline-flex size-6 shrink-0 items-center justify-center rounded-xs text-muted-foreground hover:bg-muted"
-            >
-              <span className="icon-[lucide--x] size-3.5" />
-            </button>
-          </div>
-        </form>
-      </SidebarMenuItem>
+      <HistoryTitleEditor
+        initialTitle={chat.title || ""}
+        onSave={handleSaveTitle}
+        onCancel={() => setStatus("idle")}
+      />
     )
   }
 
@@ -184,7 +219,13 @@ export const ChatHistoryItem = memo(function ChatHistoryItem({
         }
       />
 
-      <DropdownMenu onOpenChange={(open) => !open && setStatus("idle")}>
+      <DropdownMenu
+        onOpenChange={(open) => {
+          if (!open && status === "confirming-delete") {
+            setStatus("idle")
+          }
+        }}
+      >
         <DropdownMenuTrigger
           className="mr-1"
           render={

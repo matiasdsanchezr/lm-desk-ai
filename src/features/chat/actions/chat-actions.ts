@@ -10,7 +10,6 @@ export const saveChat = async (data: CreateChatInput): ActionResponse<Chat> => {
   try {
     const result = await historyService.createChat(data)
     updateTag("chat-list")
-    if (result.id) updateTag(`chat-${result.id}`)
     return { data: result }
   } catch {
     return { error: "No se pudo guardar la sesión" }
@@ -21,7 +20,6 @@ export const deleteChat = async (id: string): ActionResponse<void> => {
   try {
     await historyService.deleteChat(id)
     updateTag("chat-list")
-    updateTag(`chat-${id}`)
     return {}
   } catch {
     return { error: "No se pudo eliminar la sesión" }
@@ -35,7 +33,6 @@ export const updateChat = async (
   try {
     await historyService.updateChat(id, updates)
     updateTag("chat-list")
-    updateTag(`chat-${id}`)
     return {}
   } catch (error) {
     console.error("[updateChat] Error:", error)
@@ -47,7 +44,6 @@ export const duplicateChat = async (id: string): ActionResponse<Chat> => {
   try {
     const result = await historyService.duplicateChat(id)
     updateTag("chat-list")
-    if (result.id) updateTag(`chat-${result.id}`)
     return { data: result }
   } catch (error) {
     console.error("[duplicateChat] Error:", error)
