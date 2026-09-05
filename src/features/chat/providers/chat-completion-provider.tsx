@@ -25,7 +25,9 @@ interface ChatCompletionContextType {
   messages: MyUIMessage[]
   error: Error | undefined
   isStreaming: boolean
-  setMessages: (messages: MyUIMessage[]) => void
+  setMessages: (
+    messages: MyUIMessage[] | ((messages: MyUIMessage[]) => MyUIMessage[])
+  ) => void
   generateContent: (text: string) => void
   stop: () => void
 }

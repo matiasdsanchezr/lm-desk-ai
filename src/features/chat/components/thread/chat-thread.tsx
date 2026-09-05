@@ -13,18 +13,13 @@ import { ChatThreadHeader } from "./chat-thread-header"
 
 export function ChatThread() {
   const router = useRouter()
-  const {
-    messages,
-    error,
-    isStreaming,
-    setMessages,
-    chat: initialChat,
-  } = useChatCompletion()
+  const { messages, error, isStreaming, setMessages, chat } =
+    useChatCompletion()
+  const chatId = chat?.id
 
-  const [allExpanded, setAllExpanded] = useState<boolean | null>(null)
-
+  const [allExpanded, setAllExpanded] = useState<boolean>(false)
   const [optimisticTitle, setOptimisticTitle] = useOptimistic(
-    initialChat?.title || "Nueva Sesión",
+    chat?.title,
     (_current, newTitle: string) => newTitle
   )
 
@@ -42,14 +37,14 @@ export function ChatThread() {
 
   const handleUpdateTitle = useCallback(
     async (newTitle: string) => {
-      if (!initialChat?.id) return
+      if (!chatId) return
       setOptimisticTitle(newTitle)
-      const res = await updateChat(initialChat.id, { title: newTitle })
+      const res = await updateChat(chatId, { title: newTitle })
       if (!res.error) {
         router.refresh()
       }
     },
-    [initialChat, router, setOptimisticTitle]
+    [chatId, router, setOptimisticTitle]
   )
 
   const handleEditMessage = useCallback(
@@ -63,22 +58,22 @@ export function ChatThread() {
       })
 
       setMessages(updated)
-      if (initialChat?.id) {
-        updateChat(initialChat.id, { messages: updated })
+      if (chatId) {
+        updateChat(chatId, { messages: updated })
       }
     },
-    [messages, setMessages, initialChat]
+    [messages, setMessages, chatId]
   )
 
   const handleDeleteMessage = useCallback(
     (messageId: string) => {
       const updated = messages.filter((msg) => msg.id !== messageId)
       setMessages(updated)
-      if (initialChat?.id) {
-        updateChat(initialChat.id, { messages: updated })
+      if (chatId) {
+        updateChat(chatId, { messages: updated })
       }
     },
-    [messages, initialChat, setMessages]
+    [messages, chatId, setMessages]
   )
 
   const handleToggleExpandAll = useCallback(() => {
@@ -97,9 +92,8 @@ export function ChatThread() {
         tokenCount={totalTokens}
         messageCount={messages.length}
         onToggleExpandAll={handleToggleExpandAll}
-        allExpanded={Boolean(allExpanded)}
-        onUpdateTitle={initialChat?.id ? handleUpdateTitle : undefined}
-        isEditable={Boolean(initialChat?.id)}
+        allExpanded={allExpanded}
+        onUpdateTitle={chatId ? handleUpdateTitle : undefined}
       />
 
       {/* Contenedor con Scroll de Mensajes */}

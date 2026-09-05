@@ -94,13 +94,12 @@ function HeaderTitleEditor({
 }
 
 interface ChatThreadHeaderProps {
-  title: string
+  title?: string
   tokenCount: number
   messageCount: number
   allExpanded?: boolean
   onToggleExpandAll?: () => void
   onUpdateTitle?: (newTitle: string) => Promise<void> | void
-  isEditable?: boolean
 }
 
 export function ChatThreadHeader({
@@ -110,7 +109,6 @@ export function ChatThreadHeader({
   allExpanded,
   onToggleExpandAll,
   onUpdateTitle,
-  isEditable = false,
 }: ChatThreadHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
 
@@ -122,6 +120,8 @@ export function ChatThreadHeader({
     setIsEditing(false)
   }, [])
 
+  const shownTitle = title || "Nueva sesión"
+
   return (
     <header className="sticky top-0 z-10 flex h-12 w-full shrink-0 items-center justify-between border-b border-border/40 bg-background/80 px-3 backdrop-blur-md sm:px-4">
       {/* Lado izquierdo: Menú lateral, Título de la sesión (o input editable) y Contador de Tokens */}
@@ -130,7 +130,7 @@ export function ChatThreadHeader({
 
         {isEditing && onUpdateTitle ? (
           <HeaderTitleEditor
-            initialTitle={title}
+            initialTitle={shownTitle}
             onSave={onUpdateTitle}
             onCancel={handleCancelEdit}
           />
@@ -138,12 +138,12 @@ export function ChatThreadHeader({
           <div className="group/header-title flex min-w-0 items-center gap-1.5 sm:gap-2">
             <h1
               className="truncate text-xs font-semibold text-foreground sm:text-sm"
-              title={title}
+              title={shownTitle}
             >
-              {title}
+              {shownTitle}
             </h1>
 
-            {isEditable && onUpdateTitle && (
+            {title && onUpdateTitle && (
               <Tooltip>
                 <TooltipTrigger
                   render={

@@ -60,6 +60,20 @@ export class AntigravityClient implements InferenceClient {
       tools,
       toolChoice: responseJsonSchema ? "required" : undefined,
       maxRetries: config.maxRetries ?? 0,
+      // providerOptions: {
+      //   cliProxyApi: {
+      //     generationConfig: {
+      //       thinkingConfig: {
+      //         thinkingBudget: 30000,
+      //         includeThoughts: true,
+      //       },
+      //     },
+      //     thinkingConfig: {
+      //       thinkingBudget: 30000,
+      //       includeThoughts: true,
+      //     },
+      //   },
+      // }
     })
 
     return result

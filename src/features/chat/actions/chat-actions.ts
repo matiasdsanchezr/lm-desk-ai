@@ -31,6 +31,10 @@ export const updateChat = async (
   updates: UpdateChatInput
 ): ActionResponse<void> => {
   try {
+    if (!id) {
+      return { error: "Se requiere un ID" }
+    }
+
     await historyService.updateChat(id, updates)
     updateTag("chat-list")
     return {}
@@ -42,6 +46,10 @@ export const updateChat = async (
 
 export const duplicateChat = async (id: string): ActionResponse<Chat> => {
   try {
+    if (!id) {
+      return { error: "Se requiere un ID" }
+    }
+
     const result = await historyService.duplicateChat(id)
     updateTag("chat-list")
     return { data: result }
@@ -53,6 +61,10 @@ export const duplicateChat = async (id: string): ActionResponse<Chat> => {
 
 export const getChatMarkdown = async (id: string): ActionResponse<string> => {
   try {
+    if (!id) {
+      return { error: "Se requiere un ID" }
+    }
+
     const chat = await historyService.getChatById(id)
     if (!chat) {
       return { error: "No se encontró la conversación" }
