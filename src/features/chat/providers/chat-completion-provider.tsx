@@ -3,7 +3,6 @@
 import { useFileExplorerStore } from "@/features/file-explorer"
 import { useInferenceStore } from "@/features/inference/store/inference-store"
 import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-store"
-import type { FileContent } from "@/shared/services/file-service"
 import { toDataUri } from "@/shared/utils/image-utils"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type FileUIPart } from "ai"
@@ -16,9 +15,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from "react"
 import { useChatStore } from "../store/chat-store"
-import type { Chat, MyUIMessage, WebSourceItem } from "../types"
+import type { Chat, ContextSource, FileSource, MyUIMessage } from "../types"
+import { buildContextSourcesPayload } from "../utils/chat-utils"
 
 interface ChatCompletionContextType {
   chat?: Chat | null
@@ -47,6 +48,7 @@ export function ChatCompletionProvider({
 }: ChatCompletionProviderProps) {
   const router = useRouter()
   const chat = chatPromise ? use(chatPromise) : null
+  const currentChatId = chat?.id
 
   const getInferenceConfig = useCallback(() => {
     const settings = useInferenceStore.getState()
@@ -68,7 +70,7 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: chat?.id || "new-chat",
+    id: currentChatId || "new-chat",
     messages: chat?.messages ?? [],
     resume: true,
     transport: new DefaultChatTransport({
@@ -96,22 +98,40 @@ export function ChatCompletionProvider({
       if (type === "data-exportable-prompt") {
         const payload = data as {
           exportablePrompt: string
-          files: FileContent[]
+          sources?: ContextSource[]
         }
+
         useChatStore.getState().setPrompts({
           contextualPrompt: "",
           exportablePrompt: payload.exportablePrompt,
         })
-        if (payload.files?.length) {
-          useFileExplorerStore.getState().setFileContents(payload.files)
+
+        const localFiles =
+          payload.sources
+            ?.filter((s): s is FileSource => s.type === "file")
+            .map((f) => ({
+              path: f.path,
+              content: f.content,
+              error: f.error,
+              dependencies: f.dependencies,
+              language: f.language,
+            })) ?? []
+
+        if (localFiles.length > 0) {
+          useFileExplorerStore.getState().setFileContents(localFiles)
         }
       }
     },
   })
 
+  const activeSessionRef = useRef<string | undefined>(currentChatId)
+
   useEffect(() => {
-    if (!chat) setMessages([])
-  }, [chat, setMessages])
+    if (activeSessionRef.current !== currentChatId) {
+      activeSessionRef.current = currentChatId
+      setMessages(chat?.messages ?? [])
+    }
+  }, [currentChatId, chat?.messages, setMessages])
 
   const isStreaming = status === "streaming" || status === "submitted"
 
@@ -130,44 +150,25 @@ export function ChatCompletionProvider({
         url: toDataUri(i),
       }))
 
-      // 2. Archivos locales seleccionados
-      const contextFiles: FileContent[] = includeContext
-        ? selectedFilePaths.map((path) => ({ path }))
-        : []
+      const contextSources = buildContextSourcesPayload({
+        includeContext,
+        selectedFilePaths,
+        crawledPages,
+        selectedUrls,
+      })
 
-      // 3. Páginas web seleccionadas
-      const webSources: WebSourceItem[] = includeContext
-        ? crawledPages
-            .filter((p) => selectedUrls.includes(p.url) && p.content)
-            .map((p) => ({
-              url: p.url,
-              title: p.title || p.url,
-              content: p.content ?? "",
-            }))
-        : []
-
-      const dataParts: unknown[] = []
-
-      if (contextFiles.length > 0) {
-        dataParts.push({
-          type: "data-contextFiles",
-          data: contextFiles,
-        })
-      }
-
-      if (webSources.length > 0) {
-        dataParts.push({
-          type: "data-webSources",
-          data: webSources,
-        })
-      }
+      const dataParts =
+        contextSources.length > 0
+          ? [
+              {
+                type: "data-contextSources" as const,
+                data: contextSources,
+              },
+            ]
+          : []
 
       sendMessage({
-        parts: [
-          ...fileUIParts,
-          ...(dataParts as FileUIPart[]),
-          { type: "text", text },
-        ],
+        parts: [...fileUIParts, ...dataParts, { type: "text", text }],
       })
     },
     [clearError, sendMessage, isStreaming]

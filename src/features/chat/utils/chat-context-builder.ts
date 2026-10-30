@@ -1,45 +1,65 @@
 import {
   buildProjectDependencyGraph,
-  FileContent,
   isImageFile,
 } from "@/shared/services/file-service"
 import { PromptBuilder } from "@/shared/utils/prompt-builder"
+import type { ContextSource, FileSource, WebSource } from "../types"
 
-export type WebSource = { path: string; content: string }
-
-export async function buildChatContext(params: {
+interface BuildChatContextParams {
   systemPrompt: string
   task: string
-  selectedFilePaths: string[]
+  sources: ContextSource[]
   includeDependencies: boolean
-  webSources: WebSource[]
-}): Promise<{
+}
+
+export async function buildChatContext({
+  systemPrompt,
+  task,
+  sources,
+  includeDependencies,
+}: BuildChatContextParams): Promise<{
   contextualPrompt: string
   exportablePrompt: string
-  files: FileContent[]
+  sources: ContextSource[]
 }> {
-  const {
-    systemPrompt,
-    task,
-    selectedFilePaths,
-    includeDependencies,
-    webSources,
-  } = params
+  const fileSources = sources.filter((s): s is FileSource => s.type === "file")
+  const webSources = sources.filter((s): s is WebSource => s.type === "web")
 
-  const textFilePaths = selectedFilePaths.filter((p) => !isImageFile(p))
+  const textFilePaths = fileSources
+    .map((s) => s.path)
+    .filter((path) => !isImageFile(path))
+
   const localFiles = textFilePaths.length
     ? await buildProjectDependencyGraph(textFilePaths, includeDependencies)
     : []
 
-  const combinedContext = [...localFiles, ...webSources]
+  const normalizedFileSources: FileSource[] = localFiles.map((file) => ({
+    type: "file",
+    path: file.path,
+    content: file.content,
+    error: file.error,
+    dependencies: file.dependencies,
+    language: file.language,
+  }))
+
+  const allSources: ContextSource[] = [...normalizedFileSources, ...webSources]
+
+  const promptContextItems = allSources.map((source) => ({
+    path:
+      source.type === "file"
+        ? source.path
+        : `[Web] ${source.title || source.url} (${source.url})`,
+    content: source.content ?? "",
+  }))
+
   const builder = new PromptBuilder()
     .addSystem(systemPrompt)
-    .addContext(combinedContext)
+    .addContext(promptContextItems)
     .addTask(task)
 
   return {
     contextualPrompt: builder.buildContextAndTask(),
     exportablePrompt: builder.build(),
-    files: localFiles,
+    sources: allSources,
   }
 }

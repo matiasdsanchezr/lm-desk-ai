@@ -23,7 +23,7 @@ const getTools = (responseJsonSchema?: ZodType) =>
     ? ({
         finalOutput: tool({
           description:
-            "Esta herramienta debe ser llamada para entregar la respuesta final en formato JSON; siempre entrega la respuesta a través de esta herramienta",
+            "Debe ser llamada para entregar la respuesta final en formato JSON; siempre entrega la respuesta a través de esta herramienta",
           inputSchema: responseJsonSchema,
           strict: true,
         }),

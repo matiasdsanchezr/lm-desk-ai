@@ -29,14 +29,11 @@ const { values } = parseArgs({
   allowPositionals: true,
 })
 
-// 3. Evaluar la ruta objetivo
-const targetPath =
-  values.target || process.env.TARGET_PROJECT_PATH || projectDir
-
+// 3. Cargar directorio de trabajo
 if (!values.target && !process.env.TARGET_PROJECT_PATH) {
   console.log(
     "\x1b[33m%s\x1b[0m",
-    `TARGET_PROJECT_PATH no especificado. Usando directorio actual: ${targetPath}`
+    `TARGET_PROJECT_PATH y -t no especificados. Usando directorio de la aplicación: ${projectDir}`
   )
 }
 
@@ -44,7 +41,8 @@ if (!values.target && !process.env.TARGET_PROJECT_PATH) {
 const nextCommand = values.dev ? "dev" : "start"
 const env = {
   ...process.env,
-  TARGET_PROJECT_PATH: targetPath,
+  TARGET_PROJECT_PATH:
+    values.target || process.env.TARGET_PROJECT_PATH || projectDir,
   HOST: values.host,
 }
 

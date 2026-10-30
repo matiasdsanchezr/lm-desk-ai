@@ -3,39 +3,6 @@ import { ImageFile } from "../types/image-file"
 const thumbnailCache = new Map<string, string>()
 const MAX_CACHE_SIZE = 100
 
-/**
- * Genera una miniatura ultra ligera en formato WebP a partir de un Data URI o Blob
- */
-export async function getOrCreateThumbnail(
-  src: string,
-  maxDimension = 160,
-  quality = 0.75
-): Promise<string> {
-  if (!src) return ""
-
-  if (thumbnailCache.has(src)) {
-    return thumbnailCache.get(src)!
-  }
-
-  try {
-    const thumbnail = await generateThumbnail(src, maxDimension, quality)
-
-    if (thumbnailCache.size >= MAX_CACHE_SIZE) {
-      const firstKey = thumbnailCache.keys().next().value
-      if (firstKey) thumbnailCache.delete(firstKey)
-    }
-
-    thumbnailCache.set(src, thumbnail)
-    return thumbnail
-  } catch (error) {
-    console.warn(
-      "[Thumbnail] Falló la generación de miniatura, usando fuente original:",
-      error
-    )
-    return src
-  }
-}
-
 function generateThumbnail(
   src: string,
   maxDimension: number,
@@ -92,6 +59,39 @@ function generateThumbnail(
       reject(new Error("No se pudo cargar la imagen para redimensionar"))
     img.src = src
   })
+}
+
+/**
+ * Genera una miniatura ultra ligera en formato WebP a partir de un Data URI o Blob
+ */
+export async function getOrCreateThumbnail(
+  src: string,
+  maxDimension = 160,
+  quality = 0.75
+): Promise<string> {
+  if (!src) return ""
+
+  if (thumbnailCache.has(src)) {
+    return thumbnailCache.get(src)!
+  }
+
+  try {
+    const thumbnail = await generateThumbnail(src, maxDimension, quality)
+
+    if (thumbnailCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = thumbnailCache.keys().next().value
+      if (firstKey) thumbnailCache.delete(firstKey)
+    }
+
+    thumbnailCache.set(src, thumbnail)
+    return thumbnail
+  } catch (error) {
+    console.warn(
+      "[Thumbnail] Falló la generación de miniatura, usando fuente original:",
+      error
+    )
+    return src
+  }
 }
 
 export function toDataUri(image: ImageFile): string {

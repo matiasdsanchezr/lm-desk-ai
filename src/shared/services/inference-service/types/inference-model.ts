@@ -5,19 +5,11 @@ import {
 } from "../schemas/provider-schema"
 
 export const AntigravityModelEnum = z.enum([
-  "gemini-3.1-pro-low",
-  "gemini-pro-agent",
-  "gemini-3-flash-agent",
+  "gemini-3.1-flash-image",
   "gemini-3.1-flash-lite",
-  "gemini-3-flash",
-  "gemini-3.6-flash-high",
-  "gemini-3.6-flash-high(high)",
-  "gemini-3.7-flash-high",
-  "gemini-3.7-flash-high(high)",
+  "gemini-3.5-flash-lite",
   "gemini-3.8-flash-high",
-  "gemini-3.8-flash-high(high)",
-  "claude-opus-4-6-thinking",
-  "claude-sonnet-4-6",
+  "gemini-3-flash",
 ])
 export type AntigravityModel = z.infer<typeof AntigravityModelEnum>
 
@@ -37,21 +29,12 @@ export const GeminiModelEnum = z.enum([
 export type GeminiModel = z.infer<typeof GeminiModelEnum>
 
 export const NvidiaNimModelEnum = z.enum([
-  "moonshotai/kimi-k3",
   "nvidia/nemotron-3-ultra-550b-a55b",
-  "deepseek-ai/deepseek-v4-flash",
-  "deepseek-ai/deepseek-v4-flash-0731",
-  "deepseek-ai/deepseek-v4-pro",
-  "deepseek-ai/deepseek-v4-pro-0813",
-  "minimaxai/minimax-m3",
-  "z-ai/glm-5.2",
-  "mistralai/mistral-medium-3.5-128b",
-  "mistralai/mistral-large-3-675b-instruct-2512",
-  "stepfun-ai/step-3.7-flash",
-  "qwen/qwen3.5-122b-a10b",
-  "qwen/qwen3.5-397b-a17b",
-  "openai/gpt-oss-120b",
-  "google/diffusiongemma-26b-a4b-it",
+  "deepseek-ai/deepseek-v4.1-flash",
+  "z-ai/glm-5-3",
+  "z-ai/glm-5-3-flash",
+  "moonshotai/kimi-k3",
+  "google/gemma-4-31b-it",
 ])
 export type NvidiaNimModel = z.infer<typeof NvidiaNimModelEnum>
 

@@ -6,6 +6,7 @@ import { useWebCrawlerStore } from "@/features/web-crawler/store/web-crawler-sto
 import { useCallback, useState } from "react"
 import { compileContextAction } from "../actions/compile-context-action"
 import { useChatStore } from "../store/chat-store"
+import { buildContextSourcesPayload } from "../utils/chat-utils"
 
 export function useContextProcessor() {
   const [isProcessing, setIsProcessing] = useState(false)
@@ -24,24 +25,19 @@ export function useContextProcessor() {
 
       const task = customTask ?? userTask
 
-      const selectedWebPages = includeContext
-        ? crawledPages.filter(
-            (page) => selectedUrls.includes(page.url) && page.content
-          )
-        : []
-
-      const webSources = selectedWebPages.map((page) => ({
-        path: `[Web] ${page.title || page.url} (${page.url})`,
-        content: page.content ?? "",
-      }))
+      const sources = buildContextSourcesPayload({
+        includeContext,
+        selectedFilePaths,
+        crawledPages,
+        selectedUrls,
+      })
 
       const result = await compileContextAction({
         task,
         systemPrompt,
         includeContext,
         includeDependencies,
-        selectedFilePaths: includeContext ? selectedFilePaths : [],
-        webSources,
+        sources,
       })
 
       if (result.error || !result.data) {

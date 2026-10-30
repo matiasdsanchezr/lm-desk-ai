@@ -1,5 +1,4 @@
 import { streamContext } from "@/shared/lib/resumable-stream"
-import type { FileContent } from "@/shared/services/file-service"
 import { streamText } from "@/shared/services/inference-service/inference-service"
 import { InferenceProviderEnum } from "@/shared/services/inference-service/schemas/provider-schema"
 import { InferenceModelSchema } from "@/shared/services/inference-service/types/inference-model"
@@ -14,7 +13,6 @@ import {
   createUIMessageStreamResponse,
   FilePart,
   generateId,
-  ImagePart,
   pruneMessages,
   safeValidateUIMessages,
   TextPart,
@@ -22,7 +20,7 @@ import {
 } from "ai"
 import { revalidatePath, revalidateTag } from "next/cache"
 import z from "zod"
-import { dataSchemas, MyUIMessage, WebSourceItem } from "../types"
+import { ContextSource, dataSchemas, MyUIMessage } from "../types"
 import { buildChatContext } from "../utils/chat-context-builder"
 import { createChat, getChatById, updateChat } from "./history-service"
 
@@ -72,61 +70,45 @@ export async function handleChatRequest(body: ChatRequestBody) {
   }
 
   const uiMessages = validateUIMessagesResult.data as MyUIMessage[]
-  let localFiles: FileContent[] = []
+  let compiledSources: ContextSource[] = []
   let exportablePrompt = ""
 
-  // Obtenemos el último mensaje enviado por el usuario
   const lastMessage = uiMessages[uiMessages.length - 1]
 
   if (lastMessage && lastMessage.role === "user") {
-    // 1. Extraemos archivos locales
-    const contextFilesPart = lastMessage.parts?.find(
-      (p) => p.type === "data-contextFiles"
-    ) as { type: string; data: FileContent[] } | undefined
-    const initialFiles = contextFilesPart?.data ?? []
+    const sourcesPart = lastMessage.parts?.find(
+      (p) => p.type === "data-contextSources"
+    ) as { type: string; data: ContextSource[] } | undefined
 
-    // 2. Extraemos fuentes web
-    const webSourcesPart = lastMessage.parts?.find(
-      (p) => p.type === "data-webSources"
-    ) as { type: string; data: WebSourceItem[] } | undefined
-    const initialWebSources = webSourcesPart?.data ?? []
+    const initialSources = sourcesPart?.data ?? []
 
-    const selectedFilePaths = initialFiles.map((f) => f.path)
-    const formattedWebSources = initialWebSources.map((w) => ({
-      path: `[Web] ${w.title || w.url} (${w.url})`,
-      content: w.content,
-    }))
-
-    if (selectedFilePaths.length > 0 || formattedWebSources.length > 0) {
+    if (initialSources.length > 0) {
       const userQuery =
         lastMessage.parts
           ?.filter((p) => p.type === "text")
           .map((p) => (p as { text: string }).text)
           .join("\n") ?? ""
 
-      // Compilación y lectura de archivos en el backend
-      const context = await buildChatContext({
+      const contextResult = await buildChatContext({
         systemPrompt,
         task: userQuery,
-        selectedFilePaths,
+        sources: initialSources,
         includeDependencies,
-        webSources: formattedWebSources,
       })
 
-      localFiles = context.files
-      exportablePrompt = context.exportablePrompt
+      compiledSources = contextResult.sources
+      exportablePrompt = contextResult.exportablePrompt
 
-      // Enriquecemos la parte 'data-contextFiles' con el contenido real de los archivos
       lastMessage.parts = lastMessage.parts.map((p) => {
-        if (p.type === "data-contextFiles") {
-          return { type: "data-contextFiles", data: context.files }
+        if (p.type === "data-contextSources") {
+          return { type: "data-contextSources", data: compiledSources }
         }
         return p
       }) as MyUIMessage["parts"]
     }
   }
 
-  // Crear o actualizar la sesión activa
+  // Guardar estado inicial del chat
   if (!chat) {
     chat = await createChat({
       messages: uiMessages,
@@ -141,45 +123,41 @@ export async function handleChatRequest(body: ChatRequestBody) {
     })
   }
 
-  // Convertir mensajes UI a mensajes de modelo base
   const modelMessages = await convertToModelMessages(uiMessages)
 
-  // Reconstruir el contenido contextual para cada turno de usuario
+  // Inyectar el contexto compilado en los mensajes del modelo
   for (let i = 0; i < uiMessages.length; i++) {
     const uiMsg = uiMessages[i]
     const modelMsg = modelMessages[i]
 
     if (uiMsg.role === "user" && modelMsg) {
-      const filesPart = uiMsg.parts?.find(
-        (p) => p.type === "data-contextFiles"
-      ) as { type: string; data: FileContent[] } | undefined
-      const turnFiles = filesPart?.data ?? []
+      const sourcesPart = uiMsg.parts?.find(
+        (p) => p.type === "data-contextSources"
+      ) as { type: string; data: ContextSource[] } | undefined
 
-      const webPart = uiMsg.parts?.find((p) => p.type === "data-webSources") as
-        | { type: string; data: WebSourceItem[] }
-        | undefined
-      const turnWebSources = (webPart?.data ?? []).map((w) => ({
-        path: `[Web] ${w.title || w.url} (${w.url})`,
-        content: w.content,
-      }))
+      const turnSources = sourcesPart?.data ?? []
 
-      const allTurnSources: FileContent[] = [...turnFiles, ...turnWebSources]
-
-      if (allTurnSources.length > 0) {
+      if (turnSources.length > 0) {
         const rawText =
           uiMsg.parts
             ?.filter((p) => p.type === "text")
             .map((p) => (p as { text: string }).text)
             .join("\n") ?? ""
 
+        const promptContextItems = turnSources.map((source) => ({
+          path:
+            source.type === "file"
+              ? source.path
+              : `[Web] ${source.title || source.url} (${source.url})`,
+          content: source.content ?? "",
+        }))
+
         const contextualPrompt = new PromptBuilder()
-          .addContext(allTurnSources)
+          .addContext(promptContextItems)
           .addTask(rawText)
           .buildContextAndTask()
 
-        const content = modelMsg.content as
-          | string
-          | (TextPart | ImagePart | FilePart)[]
+        const content = modelMsg.content as string | (TextPart | FilePart)[]
 
         if (typeof content === "string") {
           modelMsg.content = contextualPrompt
@@ -219,7 +197,7 @@ export async function handleChatRequest(body: ChatRequestBody) {
             type: "data-exportable-prompt",
             data: {
               exportablePrompt,
-              files: localFiles,
+              sources: compiledSources,
             },
             transient: true,
           })
