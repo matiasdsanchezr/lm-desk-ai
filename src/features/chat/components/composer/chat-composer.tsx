@@ -38,6 +38,7 @@ export const ChatComposer = () => {
     setUserTask,
     setIncludeContext,
     setIncludeReasoningHistory,
+    clearAttachedImages,
   } = useChatStore(
     useShallow((s) => ({
       userTask: s.userTask,
@@ -47,6 +48,7 @@ export const ChatComposer = () => {
       setUserTask: s.setUserTask,
       setIncludeContext: s.setIncludeContext,
       setIncludeReasoningHistory: s.setIncludeReasoningHistory,
+      clearAttachedImages: s.clearAttachedImages,
     }))
   )
 
@@ -84,14 +86,21 @@ export const ChatComposer = () => {
     return estimateTokenCountFromText(userTask + filesString)
   }, [userTask, fileContents, includeContext])
 
-  // Envío directo: 1 sola llamada sin intermediarios
   const handleSend = useCallback(() => {
     const task = userTask.trim()
     if ((!task && totalImagesCount === 0) || isStreaming) return
 
     generateContent(task)
     setUserTask("")
-  }, [userTask, totalImagesCount, isStreaming, generateContent, setUserTask])
+    clearAttachedImages()
+  }, [
+    userTask,
+    totalImagesCount,
+    isStreaming,
+    generateContent,
+    setUserTask,
+    clearAttachedImages,
+  ])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -103,7 +112,6 @@ export const ChatComposer = () => {
     [handleSend]
   )
 
-  // Compilación manual exclusiva para el botón "Compilar prompt"
   const handleBuildPromptOnly = useCallback(async () => {
     const task = userTask.trim()
     if (!task || isProcessingContext || isStreaming) return

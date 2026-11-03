@@ -87,16 +87,16 @@ export async function scrapeUrlsWithPlaywright(
             "[role='navigation']",
           ]
 
-          selectorsToRemove.forEach((selector) => {
-            document.querySelectorAll(selector).forEach((el) => el.remove())
-          })
+          // selectorsToRemove.forEach((selector) => {
+          //   document.querySelectorAll(selector).forEach((el) => el.remove())
+          // })
 
           const mainContent =
             document.querySelector("main") ||
             document.querySelector("article") ||
             document.body
 
-          return (mainContent?.innerText || "")
+          return (document?.body.innerHTML || "")
             .replace(/\n\s*\n/g, "\n\n")
             .trim()
         })

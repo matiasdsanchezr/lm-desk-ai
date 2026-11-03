@@ -56,7 +56,6 @@ export function WebCrawlerPanel({
     }))
   )
 
-  // Hook de Server Action con Playwright
   const { handleStartCrawl, isLoading } = useCrawlAction()
 
   const [activeTab, setActiveTab] = useState<"input" | "crawled">("input")
@@ -75,6 +74,7 @@ export function WebCrawlerPanel({
     []
   )
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedVirtualizer = useVirtualizer({
     count: crawledPages.length,
     getScrollElement: getSelectedScrollElement,

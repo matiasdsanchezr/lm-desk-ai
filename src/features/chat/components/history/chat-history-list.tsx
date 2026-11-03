@@ -12,9 +12,10 @@ interface ChatHistoryListProps {
 
 export function ChatHistoryList({ savedChatsPromise }: ChatHistoryListProps) {
   const router = useRouter()
-  const params = useParams()
+  const params = useParams<{ chatId?: string }>()
   const savedChats = use(savedChatsPromise)
-  const activeChatId = params?.chatId as string | undefined
+
+  const activeChatId = params?.chatId
 
   const handleSelect = useCallback(
     (id: string) => {

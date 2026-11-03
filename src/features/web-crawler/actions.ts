@@ -1,6 +1,6 @@
 "use server"
 
-import { scrapeUrlsWithPlaywright } from "./lib/playwright-crawler"
+import { scrapeUrlsWithPlaywright } from "./lib/playwright-crawler-instagram"
 import type { CrawledPageNode } from "./types"
 
 interface CrawlResponse {

@@ -108,9 +108,9 @@ export async function handleChatRequest(body: ChatRequestBody) {
     }
   }
 
-  // Guardar estado inicial del chat
   if (!chat) {
     chat = await createChat({
+      id,
       messages: uiMessages,
       activeStreamId: streamId,
     })
@@ -186,12 +186,6 @@ export async function handleChatRequest(body: ChatRequestBody) {
     statusText: "OK",
     stream: createUIMessageStream({
       execute({ writer }) {
-        writer.write({
-          type: "data-chat-id",
-          data: { id: chat.id },
-          transient: true,
-        })
-
         if (exportablePrompt) {
           writer.write({
             type: "data-exportable-prompt",
@@ -252,6 +246,7 @@ async function persistChatAfterStream(
       messages,
       activeStreamId: undefined,
     })
+    revalidateTag("chat-list", "days")
     revalidatePath(`/chat/${id}`)
   } catch (err) {
     console.error("[/api/chat] Error al guardar la sesión:", err)

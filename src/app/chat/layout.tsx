@@ -5,8 +5,8 @@ import {
 } from "@/features/chat"
 import { InferenceDrawer } from "@/features/inference"
 import { SidebarProvider } from "@/shared/components/ui/sidebar"
-import { Metadata } from "next"
-import React, { Suspense } from "react"
+import type { Metadata } from "next"
+import { Suspense, type ReactNode } from "react"
 
 export const metadata: Metadata = {
   title: "Chat - LM Desk",
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default async function ChatLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }) {
   const chatListPromise = getChatList()
 

@@ -68,11 +68,10 @@ export async function applyTransformScript(
   if (!scriptName) return text
 
   const transformFn = await loadTransformFunction(scriptName)
-
   if (!transformFn) return text
 
   try {
-    const result = await transformFn(text)
+    const result = transformFn(text)
     return typeof result === "string" ? result : text
   } catch (error) {
     console.error(`[ScriptTransformer] Error ejecutando ${scriptName}:`, error)
@@ -150,7 +149,7 @@ export const createScriptTransformStream =
       async transform(chunk, controller) {
         if (chunk.type === "text-delta" && transformFn) {
           try {
-            const transformedText = await transformFn(chunk.text)
+            const transformedText = transformFn(chunk.text)
             controller.enqueue({
               ...chunk,
               text:

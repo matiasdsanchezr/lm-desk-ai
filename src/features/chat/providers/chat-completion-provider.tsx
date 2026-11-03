@@ -9,13 +9,11 @@ import { DefaultChatTransport, type FileUIPart } from "ai"
 import { useRouter } from "next/navigation"
 import {
   createContext,
-  type ReactNode,
   use,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
+  type ReactNode,
 } from "react"
 import { useChatStore } from "../store/chat-store"
 import type { Chat, ContextSource, FileSource, MyUIMessage } from "../types"
@@ -23,8 +21,9 @@ import { buildContextSourcesPayload } from "../utils/chat-utils"
 
 interface ChatCompletionContextType {
   chat?: Chat | null
+  chatId: string
   messages: MyUIMessage[]
-  error: Error | undefined
+  error?: Error
   isStreaming: boolean
   setMessages: (
     messages: MyUIMessage[] | ((messages: MyUIMessage[]) => MyUIMessage[])
@@ -39,16 +38,19 @@ const ChatCompletionContext = createContext<ChatCompletionContextType | null>(
 
 interface ChatCompletionProviderProps {
   children: ReactNode
+  chatId: string
   chatPromise?: Promise<Chat | null>
 }
 
 export function ChatCompletionProvider({
   children,
+  chatId,
   chatPromise,
 }: ChatCompletionProviderProps) {
   const router = useRouter()
+
   const chat = chatPromise ? use(chatPromise) : null
-  const currentChatId = chat?.id
+  const sessionId = chat?.id ?? chatId
 
   const getInferenceConfig = useCallback(() => {
     const settings = useInferenceStore.getState()
@@ -61,6 +63,29 @@ export function ChatCompletionProvider({
     }
   }, [])
 
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        prepareSendMessagesRequest(data) {
+          const { includeReasoningHistory } = useChatStore.getState()
+          const { includeDependencies } = useFileExplorerStore.getState()
+
+          return {
+            body: {
+              ...data,
+              id: sessionId,
+              ...getInferenceConfig(),
+              message: data.messages[data.messages.length - 1],
+              includeReasoningHistory,
+              includeDependencies,
+            },
+          }
+        },
+      }),
+    [sessionId, getInferenceConfig]
+  )
+
   const {
     messages,
     status,
@@ -70,31 +95,14 @@ export function ChatCompletionProvider({
     clearError,
     stop,
   } = useChat({
-    id: currentChatId || "new-chat",
+    id: sessionId,
     messages: chat?.messages ?? [],
     resume: true,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      prepareSendMessagesRequest(data) {
-        const { includeReasoningHistory } = useChatStore.getState()
-        const { includeDependencies } = useFileExplorerStore.getState()
-
-        return {
-          body: {
-            ...data,
-            ...getInferenceConfig(),
-            message: data.messages[data.messages.length - 1],
-            includeReasoningHistory,
-            includeDependencies,
-          },
-        }
-      },
-    }),
+    transport,
+    onFinish: () => {
+      router.refresh()
+    },
     onData: ({ data, type }: { type: string; data: unknown }) => {
-      if (type === "data-chat-id") {
-        const newChatId = (data as { id: string }).id
-        router.push(`/chat/${newChatId}`)
-      }
       if (type === "data-exportable-prompt") {
         const payload = data as {
           exportablePrompt: string
@@ -123,15 +131,6 @@ export function ChatCompletionProvider({
       }
     },
   })
-
-  const activeSessionRef = useRef<string | undefined>(currentChatId)
-
-  useEffect(() => {
-    if (activeSessionRef.current !== currentChatId) {
-      activeSessionRef.current = currentChatId
-      setMessages(chat?.messages ?? [])
-    }
-  }, [currentChatId, chat?.messages, setMessages])
 
   const isStreaming = status === "streaming" || status === "submitted"
 
@@ -171,12 +170,13 @@ export function ChatCompletionProvider({
         parts: [...fileUIParts, ...dataParts, { type: "text", text }],
       })
     },
-    [clearError, sendMessage, isStreaming]
+    [clearError, isStreaming, sendMessage]
   )
 
   const contextValue = useMemo<ChatCompletionContextType>(
     () => ({
       chat,
+      chatId: sessionId,
       messages,
       error,
       isStreaming,
@@ -184,7 +184,16 @@ export function ChatCompletionProvider({
       generateContent,
       stop,
     }),
-    [chat, messages, error, isStreaming, setMessages, generateContent, stop]
+    [
+      chat,
+      sessionId,
+      messages,
+      error,
+      isStreaming,
+      setMessages,
+      generateContent,
+      stop,
+    ]
   )
 
   return (

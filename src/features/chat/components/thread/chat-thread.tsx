@@ -13,9 +13,8 @@ import { ChatThreadHeader } from "./chat-thread-header"
 
 export function ChatThread() {
   const router = useRouter()
-  const { messages, error, isStreaming, setMessages, chat } =
+  const { messages, error, isStreaming, setMessages, chat, chatId } =
     useChatCompletion()
-  const chatId = chat?.id
 
   const [allExpanded, setAllExpanded] = useState<boolean>(false)
   const [optimisticTitle, setOptimisticTitle] = useOptimistic(
@@ -38,6 +37,7 @@ export function ChatThread() {
   const handleUpdateTitle = useCallback(
     async (newTitle: string) => {
       if (!chatId) return
+
       setOptimisticTitle(newTitle)
       const res = await updateChat(chatId, { title: newTitle })
       if (!res.error) {
@@ -86,7 +86,6 @@ export function ChatThread() {
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-transparent">
-      {/* Header con título editable optimista */}
       <ChatThreadHeader
         title={optimisticTitle}
         tokenCount={totalTokens}
@@ -96,7 +95,6 @@ export function ChatThread() {
         onUpdateTitle={chatId ? handleUpdateTitle : undefined}
       />
 
-      {/* Contenedor con Scroll de Mensajes */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
@@ -120,7 +118,6 @@ export function ChatThread() {
             </div>
           )}
 
-          {/* Error en tiempo de ejecución */}
           {error && (
             <div className="pt-2">
               <Alert
@@ -137,7 +134,6 @@ export function ChatThread() {
           )}
         </div>
 
-        {/* Botón flotante para regresar al fondo */}
         {!isAtBottom && messages.length > 0 && (
           <Button
             size="sm"
